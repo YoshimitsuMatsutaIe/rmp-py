@@ -75,7 +75,7 @@ n4.add_child(attracter)
 
 jl = rmp_leaf.JointLimitAvoidance(
     name="jl", parent=r,
-    calc_mappings=mappings.Id(),
+    calc_mappings=mappings.Identity(),
     gamma_p = 0.01,
     gamma_d = 0.05,
     lam = 1,

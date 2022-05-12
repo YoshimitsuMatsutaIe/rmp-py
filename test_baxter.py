@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import time
 from scipy import integrate
 
+# from functools import lru_cache
+# from numba import njit
+
 import rmp_tree
 import rmp_leaf
 import mappings
@@ -75,7 +78,7 @@ n_ee.add_child(attracter)
 jl = rmp_leaf.JointLimitAvoidance(
     name="jl",
     parent=r,
-    calc_mappings=mappings.Id(),
+    calc_mappings=mappings.Identity(),
     gamma_p = 0.01,
     gamma_d = 0.05,
     lam = 1,
@@ -90,7 +93,6 @@ r.add_child(jl)
 
 ### scipy使用 ###
 
-#@lru_cache()
 def dX(t, X):
     print("\nt = ", t)
     X = X.reshape(-1, 1)
@@ -140,7 +142,6 @@ ani = visualization.make_animation(
     t_data = sol.t,
     joint_data=joint_data,
     is3D=True,
-    epoch_max=500,
     goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
     save_dir_path=""
 )

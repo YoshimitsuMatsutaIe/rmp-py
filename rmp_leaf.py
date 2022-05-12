@@ -1,6 +1,6 @@
 from ast import Str
 import numpy as np
-from numpy import linalg as LA
+from numpy import linalg as LA, ndarray
 from math import exp, log
 from typing import Union
 
@@ -11,7 +11,7 @@ import attractor_xi_3d
 
 class GoalAttractor(rmp_tree.LeafBase):
     def __init__(
-        self, name: str, parent: Union[rmp_tree.Node, rmp_tree.LeafBase],
+        self, name: str, parent: rmp_tree.Node,
         dim: int, calc_mappings,
         max_speed: float, gain: float, f_alpha: float, sigma_alpha: float, sigma_gamma: float,
         wu: float, wl: float, alpha: float, epsilon: float
@@ -40,12 +40,12 @@ class GoalAttractor(rmp_tree.LeafBase):
         self.f = self.__force()
     
     
-    def __grad_phi(self,):
+    def __grad_phi(self,) -> ndarray:
         x_norm = LA.norm(self.x)
         return (1-exp(-2*self.alpha*x_norm)) / (1+exp(-2*self.alpha*x_norm)) * self.x / x_norm
     
     
-    def __inertia_matrix(self,):
+    def __inertia_matrix(self,) -> ndarray:
         x_norm = LA.norm(self.x)
         alpha_x = exp(-x_norm**2 / (2 * self.sigma_alpha**2))
         gamma_x = exp(-x_norm**2 / (2 * self.sigma_gamma**2))
@@ -55,7 +55,7 @@ class GoalAttractor(rmp_tree.LeafBase):
         return wx*((1-alpha_x) * grad @ grad.T + (alpha_x+self.epsilon) * np.eye(self.dim))
     
     
-    def __force(self,):
+    def __force(self,) -> ndarray:
         xi = self.xi_func(
             x = self.x,
             x_dot = self.x_dot,
@@ -136,7 +136,7 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
 
 class JointLimitAvoidance(rmp_tree.LeafBase):
     def __init__(
-        self, name, parent, calc_mappings,
+        self, name, parent: rmp_tree.Node, calc_mappings,
         gamma_p,
         gamma_d,
         lam,
@@ -213,7 +213,7 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
             xi.append(_xi)
         return np.array([xi]).T
     
-    def __inertia_matrix(self,):
+    def __inertia_matrix(self,) -> ndarray:
         diags = []
         for i in range(self.dim):
             _s = self.lam * self.__a(
@@ -225,7 +225,7 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         #print(diags)
         return np.diag(diags)
     
-    def __force(self,):
+    def __force(self,) -> ndarray:
         return self.M @ (self.gamma_p*(self.q_neutral - self.x) - self.gamma_d*self.x_dot) - self.__xi()
 
 

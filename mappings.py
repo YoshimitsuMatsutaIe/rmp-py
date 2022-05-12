@@ -2,7 +2,7 @@ import numpy as np
 from numpy import linalg as LA
 
 
-class Id:
+class Identity:
     """恒等写像"""
     def phi(self, x):
         return x.copy()
@@ -17,7 +17,7 @@ class Id:
         return np.zeros((x.shape[0], x.shape[0]))
 
 
-class Translation(Id):
+class Translation(Identity):
     def __init__(self, g, g_dot):
         self.g = g
         self.g_dot = g_dot
@@ -29,7 +29,7 @@ class Translation(Id):
         return x_dot - self.g_dot
 
 
-class Distance(Id):
+class Distance(Identity):
     """距離写像"""
     
     def __init__(self, o, o_dot):

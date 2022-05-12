@@ -1,14 +1,16 @@
 import numpy as np
-from numpy import linalg as LA
+from numpy import linalg as LA, ndarray
+from typing import Union
 
+from mappings import Identity
 
 class Node:
     def __init__(self, name, dim, parent, mappings,):
         self.name = name
         self.dim = dim
-        self.parent = parent
-        self.mappings = mappings
-        self.children = []
+        self.parent: Node = parent
+        self.mappings: Identity = mappings
+        self.children: list[Node] = []
         
         self.x = np.zeros((self.dim, 1))
         self.x_dot = np.zeros_like(self.x)
@@ -75,7 +77,7 @@ class Node:
 
 
 class Root(Node):
-    def __init__(self, x0, x0_dot):
+    def __init__(self, x0: ndarray, x0_dot: ndarray):
         super().__init__(
             name = "root",
             parent = None,

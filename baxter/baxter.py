@@ -158,12 +158,7 @@ class Common:
     JRZ_DOT = (jrz_0_dot, jrz_1_dot, jrz_2_dot, jrz_3_dot, jrz_4_dot, jrz_5_dot, jrz_6_dot, jrz_ee_dot)
 
 
-class CPoint(mappings.Id):
-    # C = np.array([
-    #     [1, 0, 0, 0],
-    #     [0, 1, 0, 0],
-    #     [0, 0, 1, 0],
-    # ])
+class CPoint(mappings.Identity):
     
     def __init__(self, flame_num, position_num):
         self.htm = Common.HTM[flame_num]

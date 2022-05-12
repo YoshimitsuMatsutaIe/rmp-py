@@ -3,7 +3,9 @@
 
 import matplotlib.animation as anm
 import numpy as np
+from numpy import ndarray
 import matplotlib.pyplot as plt
+from matplotlib import axes
 import time
 from functools import lru_cache  # これつけるとplt.show()でアニメーションがループしなくなる
 import pickle
@@ -90,7 +92,7 @@ def make_data(
 
 
 def make_animation(
-    t_data, joint_data,
+    t_data, joint_data: ndarray,
     q_data=None, ee_data=None, cpoint_data=None,
     goal_data=None, obs_data=None,
     is3D=True,
@@ -122,7 +124,7 @@ def make_animation(
     
     
     fig = plt.figure()
-    ax = fig.add_subplot(projection="3d") if is3D else fig.add_subplot()
+    ax: axes = fig.add_subplot(projection="3d") if is3D else fig.add_subplot()
     time_template = 'time = %.2f [s]'
     
     
@@ -207,7 +209,7 @@ def make_animation(
         frames = range(0, len(t_data), step)
     )
     
-    ani.save(save_dir_path + "animation.gif", fps=30, writer='pillow')
+    #ani.save(save_dir_path + "animation.gif", fps=30, writer='pillow')
     # with open(save_dir_path + 'animation.binaryfile', 'wb') as f:
     #     pickle.dump(ani, f)
     

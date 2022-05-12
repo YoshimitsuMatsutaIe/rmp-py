@@ -30,7 +30,7 @@ q_neutral = np.array([[
 ]]).T
 
 
-class X1(mappings.Id):
+class X1(mappings.Identity):
     def phi(self, q):
         return np.array([
             [l1*cos(q[0,0])],
@@ -50,7 +50,7 @@ class X1(mappings.Id):
         ])
 
 
-class X2(mappings.Id):
+class X2(mappings.Identity):
 
     def phi(self, q):
         return np.array([
@@ -71,7 +71,7 @@ class X2(mappings.Id):
         ])
 
 
-class X3(mappings.Id):
+class X3(mappings.Identity):
     def phi(self, q):
         return np.array([
             [l1*cos(q[0,0]) + l2*cos(q[0,0] + q[1,0]) + l3*cos(q[0,0] + q[1,0] + q[2,0])],
@@ -91,7 +91,7 @@ class X3(mappings.Id):
         ])
 
 
-class X4(mappings.Id):
+class X4(mappings.Identity):
     def phi(self, q):
             return np.array([
                 [l1*cos(q[0,0]) + l2*cos(q[0,0] + q[1,0]) + l3*cos(q[0,0] + q[1,0] + q[2,0]) + l4*cos(q[0,0] + q[1,0] + q[2,0] + q[3,0])],
