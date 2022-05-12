@@ -8,7 +8,7 @@ from functools import lru_cache
 import rmp_tree
 import rmp_leaf
 import mappings
-import robot_model_sice
+import sice.sice as sice
 import visualization
 
 TIME_SPAN = 60*3
@@ -27,23 +27,23 @@ r = rmp_tree.Root(
 
 n1 = rmp_tree.LeafBase(
     name="x1", parent=r, dim=2,
-    mappings=robot_model_sice.X1()
+    mappings=sice.X1()
 )
 r.add_child(n1)
 
 n2 = rmp_tree.LeafBase(
     name="x2", parent=r, dim=2,
-    mappings=robot_model_sice.X2()
+    mappings=sice.X2()
 )
 r.add_child(n2)
 
 n3 = rmp_tree.LeafBase(
     name="x3", parent=r, dim=2,
-    mappings=robot_model_sice.X3()
+    mappings=sice.X3()
 )
 r.add_child(n3)
 
-x4 = robot_model_sice.X4()
+x4 = sice.X4()
 n4 = rmp_tree.Node(
     name="x4", parent=r, dim=2,
     mappings=x4
@@ -60,7 +60,7 @@ g_dot = np.zeros_like(g)
 attracter = rmp_leaf.GoalAttractor(
     name="ee-attractor", parent=n4, dim=2,
     calc_mappings=mappings.Translation(g, g_dot),
-    max_speed = 5.0,
+    max_speed = 5,
     gain = 5.0,
     f_alpha = 0.15,
     sigma_alpha = 1.0,
@@ -80,9 +80,9 @@ jl = rmp_leaf.JointLimitAvoidance(
     gamma_d = 0.05,
     lam = 1,
     sigma = 0.1,
-    q_max = robot_model_sice.q_max,
-    q_min = robot_model_sice.q_min,
-    q_neutral = robot_model_sice.q_neutral
+    q_max = sice.q_max,
+    q_min = sice.q_min,
+    q_neutral = sice.q_neutral
 )
 r.add_child(jl)
 
@@ -245,10 +245,10 @@ print(sol.message)
 
 def x0(q):
     return np.zeros((2, 1))
-x1_map = robot_model_sice.X1()
-x2_map = robot_model_sice.X2()
-x3_map = robot_model_sice.X3()
-x4_map = robot_model_sice.X4()
+x1_map = sice.X1()
+x2_map = sice.X2()
+x3_map = sice.X3()
+x4_map = sice.X4()
 
 q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
     q_s = [sol.y[0], sol.y[1], sol.y[2], sol.y[3]],

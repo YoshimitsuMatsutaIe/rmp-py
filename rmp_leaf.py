@@ -1,6 +1,8 @@
+from ast import Str
 import numpy as np
 from numpy import linalg as LA
 from math import exp, log
+from typing import Union
 
 import rmp_tree
 import attractor_xi_2d
@@ -9,8 +11,10 @@ import attractor_xi_3d
 
 class GoalAttractor(rmp_tree.LeafBase):
     def __init__(
-        self, name, parent, dim, calc_mappings,
-        max_speed, gain, f_alpha, sigma_alpha, sigma_gamma, wu, wl, alpha, epsilon,
+        self, name: str, parent: Union[rmp_tree.Node, rmp_tree.LeafBase],
+        dim: int, calc_mappings,
+        max_speed: float, gain: float, f_alpha: float, sigma_alpha: float, sigma_gamma: float,
+        wu: float, wl: float, alpha: float, epsilon: float
     ):
         self.gain = gain
         self.damp = max_speed / gain

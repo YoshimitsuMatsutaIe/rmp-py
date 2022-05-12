@@ -10,7 +10,7 @@ import mappings
 import visualization
 import sys
 sys.path.append('.')
-import robot_model_baxter as baxter
+import baxter.baxter as baxter
 
 TIME_SPAN = 60
 TIME_INTERVAL = 1e-2
