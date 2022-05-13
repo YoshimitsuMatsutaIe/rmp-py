@@ -100,7 +100,7 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
             return 0
     
     def __w2_dot(self, s):
-        if self.sw - s > 0:
+        if self.rw - s > 0:
             return (-2*(self.rw-s)*s + (self.rw-s)) / s**2
         else:
             return 0
@@ -127,10 +127,14 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
         return self.gain * self.__w2(s) * self.__w2_dot(s)
     
     def __inertia_matrix(self):
-        return self.__w2(self.x[0,0]) * self.__delta(self.x[0,0], self.x_dot[0,0])
+        return np.array([[
+            self.__w2(self.x) * self.__delta(self.x_dot[0,0])
+        ]])
     
     def __force(self):
-        return -self.__grad_phi(self.x[0,0]) - self.__xi(self.x[0,0], self.x_dot[0,0])
+        return np.array([[
+            -self.__grad_phi(self.x) - self.__xi(self.x, self.x_dot[0,0])
+        ]])
 
 
 

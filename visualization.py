@@ -9,9 +9,15 @@ from matplotlib import axes
 import time
 from functools import lru_cache  # これつけるとplt.show()でアニメーションがループしなくなる
 import pickle
+from typing import Union
 
 
-def calc_scale(max_x, min_x, max_y, min_y, max_z=None, min_z=None):
+
+
+def calc_scale(
+    max_x, min_x, max_y, min_y,
+    max_z:Union[float, None]=None, min_z:Union[float, None]=None
+) -> Union[tuple[float, float, float, float], tuple[float, float, float, float, float, float]]:
     """軸範囲を計算"""
     assert max_x > min_x, "hoeg"
     assert max_y > min_y, "hoeg"
@@ -68,7 +74,7 @@ def make_data(
 
     
     if cpoint_phi_s is not None:
-        cpoint_data = []
+        cpoint_data: Union[list[Union[ndarray, None]], None] = []
         for n in range(N_JOINT):
             if len(cpoint_phi_s[n]) == 0:
                 cpoint_data.append(None)
@@ -77,7 +83,7 @@ def make_data(
                     np.empty((T_SIZE, task_dim*len(cpoint_phi_s[n])))
                 )
         
-        for i in T_SIZE:
+        for i in range(T_SIZE):
             temp_q = q[:, i:i+1]
             for j, phis in enumerate(cpoint_phi_s):
                 if cpoint_data[j] is not None:
@@ -92,12 +98,16 @@ def make_data(
 
 
 def make_animation(
-    t_data, joint_data: ndarray,
-    q_data=None, ee_data=None, cpoint_data=None,
-    goal_data=None, obs_data=None,
+    t_data: list[float],
+    joint_data: ndarray,
+    q_data: Union[ndarray, None]=None,
+    ee_data: Union[ndarray, None]=None,
+    cpoint_data: Union[ndarray, None]=None,
+    goal_data=None,
+    obs_data=None,
     is3D=True,
     epoch_max=100,
-    save_dir_path='',
+    isSave=False, save_dir_path='',
 ):
     start_time = time.time()
     
@@ -124,11 +134,10 @@ def make_animation(
     
     
     fig = plt.figure()
-    ax: axes = fig.add_subplot(projection="3d") if is3D else fig.add_subplot()
+    ax = fig.add_subplot(projection="3d") if is3D else fig.add_subplot()
     time_template = 'time = %.2f [s]'
     
-    
-    @lru_cache()
+
     def update(i):
         ax.cla()
         ax.grid(True)
@@ -179,24 +188,35 @@ def make_animation(
                 )
         
         if obs_data is not None:
-            os = obs_data[i]
-            os = os.reshape(len(os)//task_dim, task_dim)
-            if is3D:
-                ax.scatter(
-                    os[:, 0], os[:, 1], os[:, 2],
-                    label = 'obstacle point', marker = '.', color = 'k',
-                )
+            if len(obs_data) == len(t_data):
+                os = obs_data[i]
+                os = os.reshape(len(os)//task_dim, task_dim)
+                if is3D:
+                    ax.scatter(
+                        os[:, 0], os[:, 1], os[:, 2],
+                        label = 'obstacle point', marker = '.', color = 'k',
+                    )
+                else:
+                    ax.scatter(
+                        os[:, 0], os[:, 1],
+                        label = 'obstacle point', marker = '.', color = 'k',
+                    )
             else:
-                ax.scatter(
-                    os[:, 0], os[:, 1],
-                    label = 'obstacle point', marker = '.', color = 'k',
-                )
+                if is3D:
+                    ax.scatter(
+                        obs_data[:, 0], obs_data[:, 1], obs_data[:, 2],
+                        label = 'obstacle point', marker = '.', color = 'k',
+                    )
+                else:
+                    ax.scatter(
+                        obs_data[:, 0], obs_data[:, 1],
+                        label = 'obstacle point', marker = '.', color = 'k',
+                    )
         
         ax.set_title(time_template % t_data[i])
         ax.legend()
         
         return
-    
     
     if T_SIZE < epoch_max:
         step = 1
@@ -209,7 +229,8 @@ def make_animation(
         frames = range(0, len(t_data), step)
     )
     
-    #ani.save(save_dir_path + "animation.gif", fps=30, writer='pillow')
+    if isSave:
+        ani.save(save_dir_path + "animation.gif", fps=30, writer='pillow')
     # with open(save_dir_path + 'animation.binaryfile', 'wb') as f:
     #     pickle.dump(ani, f)
     

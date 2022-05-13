@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import time
 from scipy import integrate
 
+import environment
+
 # from functools import lru_cache
 # from numba import njit
 
@@ -15,9 +17,10 @@ import sys
 sys.path.append('.')
 import baxter.baxter as baxter
 
-TIME_SPAN = 60
+TIME_SPAN = 60*2
 TIME_INTERVAL = 1e-2
-q0 = baxter.Common.q_neutral
+
+q0 = baxter.Common.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
 
 r = rmp_tree.Root(
@@ -25,13 +28,30 @@ r = rmp_tree.Root(
     x0_dot = q0_dot
 )
 
+
+### 関節角度制限 ###
+jl = rmp_leaf.JointLimitAvoidance(
+    name="jl",
+    parent=r,
+    calc_mappings=mappings.Identity(),
+    gamma_p = 0.01,
+    gamma_d = 0.05,
+    lam = 1,
+    sigma = 0.1,
+    q_max = baxter.Common.q_max,
+    q_min = baxter.Common.q_min,
+    q_neutral = baxter.Common.q_neutral
+)
+r.add_child(jl)
+
+
 # tree construction
-ns = []
+ns: list[list[rmp_tree.Node]] = []
 for i, rs in enumerate(baxter.Common.R_BARS_ALL[:-1]):
-    n_ = []
+    n_: list[rmp_tree.Node] = []
     for j, _ in enumerate(rs):
         n_.append(
-            rmp_tree.LeafBase(
+            rmp_tree.Node(
                 name = 'x_' + str(i) + '_' + str(j),
                 dim = 3,
                 parent = r,
@@ -55,9 +75,10 @@ n_ee = rmp_tree.Node(
 )
 r.add_child(n_ee)
 
+
+### 目標 ###
 g = np.array([[0.3, -0.6, 1]]).T
 g_dot = np.zeros_like(g)
-
 
 attracter = rmp_leaf.GoalAttractor(
     name="ee-attractor", parent=n_ee, dim=3,
@@ -75,23 +96,25 @@ attracter = rmp_leaf.GoalAttractor(
 n_ee.add_child(attracter)
 
 
-jl = rmp_leaf.JointLimitAvoidance(
-    name="jl",
-    parent=r,
-    calc_mappings=mappings.Identity(),
-    gamma_p = 0.01,
-    gamma_d = 0.05,
-    lam = 1,
-    sigma = 0.1,
-    q_max = baxter.Common.q_max,
-    q_min = baxter.Common.q_min,
-    q_neutral = baxter.Common.q_neutral
+### 障害物 ###
+o_s = environment._set_cylinder(
+    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=400, alpha=0, beta=0, gamma=90
 )
-r.add_child(jl)
+for n in ns:
+    for m_ in n:
+        for o in o_s:
+            obs_node = rmp_leaf.ObstacleAvoidance(
+                name="obs-avoidance",
+                parent=m_,
+                calc_mappings=mappings.Distance(o, np.zeros_like(o)),
+                scale_rep=0.2,
+                scale_damp=1,
+                gain=5,
+                sigma=1,
+                rw=0.15
+            )
+            m_.add_child(obs_node)
 
-
-
-### scipy使用 ###
 
 def dX(t, X):
     print("\nt = ", t)
@@ -121,7 +144,7 @@ for i in range(2):
     axes[i].grid()
 
 
-fig.savefig("solver_bax.png")
+fig.savefig("solver_bax_2.png")
 
 
 
@@ -143,7 +166,9 @@ ani = visualization.make_animation(
     joint_data=joint_data,
     is3D=True,
     goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
-    save_dir_path=""
+    obs_data=o_s,
+    save_dir_path="pic/",
+    isSave=True
 )
 
 

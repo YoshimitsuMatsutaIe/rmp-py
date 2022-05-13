@@ -1,5 +1,5 @@
 import numpy as np
-
+from numpy import ndarray
 
 import mappings
 
@@ -17,49 +17,49 @@ from baxter.JRy_dots import *
 from baxter.JRz_dots import *
 
 
-def htm_0(q):
+def htm_0(q: ndarray):
     return np.block([
         [rx_0(q), ry_0(q), rz_0(q), o_0(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_1(q):
+def htm_1(q: ndarray):
     return np.block([
         [rx_1(q), ry_1(q), rz_1(q), o_1(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_2(q):
+def htm_2(q: ndarray):
     return np.block([
         [rx_2(q), ry_2(q), rz_2(q), o_2(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_3(q):
+def htm_3(q: ndarray):
     return np.block([
         [rx_3(q), ry_3(q), rz_3(q), o_3(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_4(q):
+def htm_4(q: ndarray):
     return np.block([
         [rx_4(q), ry_4(q), rz_4(q), o_4(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_5(q):
+def htm_5(q: ndarray):
     return np.block([
         [rx_5(q), ry_5(q), rz_5(q), o_5(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_6(q):
+def htm_6(q: ndarray):
     return np.block([
         [rx_6(q), ry_6(q), rz_6(q), o_6(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_ee(q):
+def htm_ee(q: ndarray):
     return np.block([
         [rx_ee(q), ry_ee(q), rz_ee(q), o_ee(q)],
         [np.array([[0, 0, 0, 1]])]
@@ -78,9 +78,9 @@ class Common:
     L5 = 10e-3
     L6 = 368.3e-3
 
-    q_neutral = np.array([[0, -31, 0, 43, 0, 72, 0]]).T * np.pi/180  # ニュートラルの姿勢
-    q_min = np.array([[-141, -123, -173, -3, -175, -90, -175]]).T * np.pi/180
-    q_max = np.array([[51, 60, 173, 150, 175, 120, 175]]).T * np.pi/180
+    q_neutral: ndarray = np.array([[0, -31, 0, 43, 0, 72, 0]]).T * np.pi/180  # ニュートラルの姿勢
+    q_min: ndarray = np.array([[-141, -123, -173, -3, -175, -90, -175]]).T * np.pi/180
+    q_max: ndarray = np.array([[51, 60, 173, 150, 175, 120, 175]]).T * np.pi/180
 
     # 制御点のローカル座標
     R = 0.05
@@ -172,13 +172,13 @@ class CPoint(mappings.Identity):
         self.jrz_dot = Common.JRZ_DOT[flame_num]
         self.r_bar = Common.R_BARS_ALL[flame_num][position_num]
     
-    def phi(self, q):
+    def phi(self, q: ndarray) -> ndarray:
         return (self.htm(q) @ self.r_bar)[:3, :]
     
-    def J(self, q):
+    def J(self, q: ndarray) -> ndarray:
         return (self.jrx(q)*self.r_bar[0,0] + self.jry(q)*self.r_bar[1,0] + self.jrz(q)*self.r_bar[2,0] + self.jo(q))
 
-    def J_dot(self, q, dq):
+    def J_dot(self, q: ndarray, dq: ndarray) -> ndarray:
         return (self.jrx_dot(q, dq)*self.r_bar[0,0] + self.jry_dot(q, dq)*self.r_bar[1,0] + self.jrz_dot(q, dq)*self.r_bar[2,0] + self.jo_dot(q, dq))
 
 

@@ -5,11 +5,11 @@ from typing import Union
 from mappings import Identity
 
 class Node:
-    def __init__(self, name, dim, parent, mappings,):
+    def __init__(self, name: str, dim: int, parent, mappings: Identity,):
         self.name = name
-        self.dim = dim
+        self.dim= dim
         self.parent: Node = parent
-        self.mappings: Identity = mappings
+        self.mappings = mappings
         self.children: list[Node] = []
         
         self.x = np.zeros((self.dim, 1))
