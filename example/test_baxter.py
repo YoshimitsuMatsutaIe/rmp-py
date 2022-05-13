@@ -3,6 +3,7 @@ from numpy import linalg as LA
 import matplotlib.pyplot as plt
 import time
 from scipy import integrate
+from multiprocessing import Process, Pool, Queue
 
 import environment
 
@@ -17,7 +18,7 @@ import sys
 sys.path.append('.')
 import baxter.baxter as baxter
 
-TIME_SPAN = 60*2
+TIME_SPAN = 6
 TIME_INTERVAL = 1e-2
 
 q0 = baxter.Common.q_neutral  #初期値
@@ -27,6 +28,7 @@ r = rmp_tree.Root(
     x0 = q0,
     x0_dot = q0_dot
 )
+
 
 
 ### 関節角度制限 ###
@@ -98,7 +100,7 @@ n_ee.add_child(attracter)
 
 ### 障害物 ###
 o_s = environment._set_cylinder(
-    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=400, alpha=0, beta=0, gamma=90
+    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=800, alpha=0, beta=0, gamma=90
 )
 for n in ns:
     for m_ in n:
@@ -174,4 +176,4 @@ ani = visualization.make_animation(
 
 
 
-plt.show()
+#plt.show()
