@@ -5,17 +5,14 @@ import time
 from scipy import integrate
 from multiprocessing import Process, Pool, Queue
 import concurrent.futures
-import environment
-
-# from functools import lru_cache
-# from numba import njit
+import sys
+sys.path.append('.')
 
 import rmp_tree
 import rmp_leaf
 import mappings
 import visualization
-import sys
-sys.path.append('.')
+import environment
 import baxter.baxter as baxter
 
 TIME_SPAN = 6
@@ -100,7 +97,7 @@ n_ee.add_child(attracter)
 
 ### 障害物 ###
 o_s = environment._set_cylinder(
-    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=800, alpha=0, beta=0, gamma=90
+    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=10, alpha=0, beta=0, gamma=90
 )
 for n in ns:
     for m_ in n:

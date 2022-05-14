@@ -1,11 +1,15 @@
+"""基本のノード
+"""
+
 import numpy as np
-from numpy import linalg as LA, ndarray
-from typing import Union
+from numpy import linalg as LA
+from typing import Union, Optional
 
 from mappings import Identity
+from numpy.typing import NDArray
 
 class Node:
-    def __init__(self, name: str, dim: int, parent, mappings: Identity,):
+    def __init__(self, name: str, dim: int, parent, mappings: Union[Identity, None]):
         self.name = name
         self.dim= dim
         self.parent: Node = parent
@@ -56,6 +60,7 @@ class Node:
     def pushforward(self):
         """push ノード"""
         for child in self.children:
+            assert child.mappings is not None
             child.x = child.mappings.phi(self.x)
             child.J = child.mappings.J(self.x)
             child.x_dot = child.mappings.velocity(child.J, self.x_dot)
@@ -64,20 +69,21 @@ class Node:
     
     
     def pullback(self):
-        self.f = np.zeros_like(self.f)
-        self.M = np.zeros_like(self.M)
+        self.f: NDArray[np.float64] = np.zeros_like(self.f)
+        self.M: NDArray[np.float64] = np.zeros_like(self.M)
         
         for child in self.children:
             child.pullback()
-        self.parent.f = self.parent.f + self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
-        self.parent.M = self.parent.M + self.J.T @ self.M @ self.J
+        
+        self.parent.f += self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
+        self.parent.M += self.J.T @ self.M @ self.J
         
         #print(self.name, "done")
 
 
 
 class Root(Node):
-    def __init__(self, x0: ndarray, x0_dot: ndarray):
+    def __init__(self, x0: NDArray[np.float64], x0_dot: NDArray[np.float64]):
         super().__init__(
             name = "root",
             parent = None,
@@ -89,13 +95,20 @@ class Root(Node):
         self.x_ddot = np.zeros_like(x0)
     
     
-    def update_state(self, q=None, q_dot=None, dt=None):
-        if q is None and q_dot is None and dt is not None:
-            self.x = self.x + self.x_dot * self.dt
-            self.x_dot = self.x_dot + self.x_ddot * self.dt
-        else:
+    def update_state(
+        self,
+        q: Union[None, NDArray[np.float64]]=None,
+        q_dot: Union[None, NDArray[np.float64]]=None,
+        dt: Union[None, float]=None
+    ):
+        if q is not None and q_dot is not None and dt is None:
             self.x = q
             self.x_dot = q_dot
+        else:
+            assert dt is not None
+            self.x += self.x_dot * dt
+            self.x_dot += self.x_ddot * dt
+
     
     
     def pullback(self):
@@ -131,7 +144,7 @@ class Root(Node):
 class LeafBase(Node):
     def __init__(self, name, dim, parent, mappings,):
         super().__init__(name, dim, parent, mappings)
-        self.children = None
+        self.children = []
     
     
     def print_all_state(self):
@@ -146,8 +159,8 @@ class LeafBase(Node):
     
     def pullback(self):
         self.calc_rmp_func()
-        self.parent.f = self.parent.f + self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
-        self.parent.M = self.parent.M + self.J.T @ self.M @ self.J
+        self.parent.f += self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
+        self.parent.M += self.J.T @ self.M @ self.J
         #print(self.name, "done")
     
     def calc_rmp_func(self,):

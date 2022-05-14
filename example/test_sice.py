@@ -5,11 +5,23 @@ import time
 from scipy import integrate
 from functools import lru_cache
 
+import sys
+sys.path.append('.')
+
 import rmp_tree
 import rmp_leaf
 import mappings
 import sice.sice as sice
 import visualization
+
+# from .. import rmp_tree
+# from .. import rmp_leaf
+# from .. import mappings
+# from ..sice import sice as sice
+# from .. import visualization
+
+
+
 
 TIME_SPAN = 60*3
 TIME_INTERVAL = 1e-2
@@ -175,34 +187,34 @@ def dX(t, X):
 
 
 
-def dX2(t, X):
-    """いつもの"""
-    print("\nt = ", t)
-    X = X.reshape(-1, 1)
-    q = X[:4, :]
-    q_dot = X[4:, :]
+# def dX2(t, X):
+#     """いつもの"""
+#     print("\nt = ", t)
+#     X = X.reshape(-1, 1)
+#     q = X[:4, :]
+#     q_dot = X[4:, :]
     
-    root_f = np.zeros((4, 1))
-    root_M = np.zeros((4, 4))
+#     root_f = np.zeros((4, 1))
+#     root_M = np.zeros((4, 4))
     
-    jl.set_state(q, q_dot)
-    jl.calc_rmp_func()
-    root_f += jl.f
-    root_M += jl.M
+#     jl.set_state(q, q_dot)
+#     jl.calc_rmp_func()
+#     root_f += jl.f
+#     root_M += jl.M
     
-    ee_x = x4.phi(q)
-    ee_J = x4.J(q)
-    ee_x_dot = x4.velocity(ee_J, q_dot)
-    ee_J_dot = x4.J_dot(q, q_dot)
-    attracter.set_state(ee_x-g, ee_x_dot-g_dot)
-    attracter.calc_rmp_func()
-    root_f += ee_J.T @ (attracter.f - attracter.M @ ee_J_dot @ q_dot)
-    root_M += ee_J.T @ attracter.M @ ee_J
+#     ee_x = x4.phi(q)
+#     ee_J = x4.J(q)
+#     ee_x_dot = x4.velocity(ee_J, q_dot)
+#     ee_J_dot = x4.J_dot(q, q_dot)
+#     attracter.set_state(ee_x-g, ee_x_dot-g_dot)
+#     attracter.calc_rmp_func()
+#     root_f += ee_J.T @ (attracter.f - attracter.M @ ee_J_dot @ q_dot)
+#     root_M += ee_J.T @ attracter.M @ ee_J
     
-    q_ddot = LA.pinv(root_M) @ root_f
+#     q_ddot = LA.pinv(root_M) @ root_f
     
-    X_dot = np.concatenate([q_dot, q_ddot])
-    return np.ravel(X_dot)
+#     X_dot = np.concatenate([q_dot, q_ddot])
+#     return np.ravel(X_dot)
 
 
 
@@ -210,8 +222,8 @@ def dX2(t, X):
 
 
 sol = integrate.solve_ivp(
-    #fun = dX,
-    fun = dX2,
+    fun = dX,
+    #fun = dX2,
     t_span = (0, TIME_SPAN),
     y0 = np.ravel(np.concatenate([q0, q0_dot])),
     t_eval=np.arange(0, TIME_SPAN, TIME_INTERVAL),

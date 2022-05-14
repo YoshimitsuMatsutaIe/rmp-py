@@ -1,34 +1,36 @@
 import numpy as np
-from numpy import float64, ndarray
-
+from numpy.typing import NDArray
 np.random.seed(0)  # 固定
 
 from math import cos, sin, tan, pi
 import matplotlib.pyplot as plt
 
 
-def rotate3d(alpha, beta, gamma) -> ndarray:
+def rotate3d(alpha: float, beta: float, gamma: float) -> NDArray[np.float64]:
     """3次元回転行列"""
-    return np.array([
+    rx: NDArray[np.float64] = np.array([
         [1, 0, 0],
         [0, cos(alpha), -sin(alpha)],
         [0, sin(alpha), cos(alpha)],
-    ]) @ np.array([
+    ])
+    ry:NDArray[np.float64] = np.array([
         [cos(beta), 0, sin(beta)],
         [0, 1, 0],
         [-sin(beta), 0, cos(beta)],
-    ]) @ np.array([
+    ])
+    rz:NDArray[np.float64] = np.array([
         [cos(gamma), -sin(gamma), 0],
         [sin(gamma), cos(gamma), 0],
         [0, 0, 1],
     ])
+    return rx @ ry @ rz
 
 
 def _set_point(x, y, z):
     """点を置く"""
     return [np.array([[x, y, z]]).T]
 
-def _set_sphere(r, center, n):
+def _set_sphere(r, center: NDArray[np.float64], n):
     """
     
     r : 半径
@@ -36,7 +38,7 @@ def _set_sphere(r, center, n):
     n : 点の数
     """
     
-    obs = []
+    obs: list[NDArray[np.float64]] = []
     rand = np.random.RandomState(123)
     for i in range(n):
         alpha = np.arccos(rand.uniform(-1, 1))
@@ -49,7 +51,7 @@ def _set_sphere(r, center, n):
     return obs
 
 
-def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,) -> list[ndarray]:
+def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,) -> list[NDArray[np.float64]]:
     """円筒を設置
     
     r : 半径
@@ -60,7 +62,7 @@ def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,) -> list[ndar
     gamma : 回転 [degree]
     """
     
-    obs: list[ndarray] = []
+    obs: list[NDArray[np.float64]] = []
     rand = np.random.RandomState(123)
     for i in range(n):
         _alpha = rand.uniform(0, 2*pi)
@@ -78,7 +80,7 @@ def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,) -> list[ndar
 def _set_field(lx, ly, x, y, z, n, alpha=0, beta=0, gamma=0):
     """面を表現"""
     
-    obs: list[ndarray] = []
+    obs: list[NDArray[np.float64]] = []
     
     rand = np.random.RandomState(123)
     for i in range(n):
@@ -98,97 +100,97 @@ def _set_box(lx, ly, lz, x, y, z, n, alpha=0, beta=0, gamma=0,):
     pass
 
 
-def set_obstacle(obs_param):
-    """固定障害物を返す"""
+# def set_obstacle(obs_param):
+#     """固定障害物を返す"""
     
-    def _choice(name):
-        if name == 'point':
-            return _set_point
-        elif name == "cylinder":
-            return _set_cylinder
-        elif name == "sphere":
-            return _set_sphere
-        elif name == 'field':
-            return _set_field
-    
-    
-    if obs_param is None:
-        return None
-    else:
-        obs = []
-        for d in obs_param:
-            obs.extend(
-                _choice(d['name'])(**d['data'])
-            )
-    return obs
-
-
-data1 =[
-    {
-        'name' : 'cylinder',
-        'data' : {
-            'r' : 0.1,
-            'L' : 1.0,
-            'center' : [[0.25, -0.7, 1]],
-            'n' : 100,
-            'alpha' : 0,
-            'beta' : 0,
-            'gamma' : 0,
-        },
-    },
-    {
-        'name' : 'cylinder',
-        'data' : {
-            'r' : 0.06,
-            'L' : 1.0,
-            'center' : [[-0.25, -0.4, 1.25]],
-            'n' : 100,
-            'alpha' : 60,
-            'beta' : 30,
-            'gamma' : 30,
-        },
-    },
-]
-
-
-
-
-class Goal:
-
-    def __init__(self, **kwargs):
-        
-        name = kwargs.pop('name')
-        
-        if name == 'static':
-            self.goal = self.static
-            self.center = np.array(kwargs.pop('center')).T
-        
-        elif name == 'tracking_circle':
-            self.goal = self.tracking_circle
-            self.center = np.array(kwargs.pop('center')).T
-            self.r = kwargs.pop('r')
-            self.omega = kwargs.pop('omega')
-            self.init_alpha = kwargs.pop('init_alpha')
-            self.alpha = kwargs.pop('alpha')
-            self.beta = kwargs.pop('beta')
-            self.gumma = kwargs.pop('gumma')
-        
-        return
+#     def _choice(name):
+#         if name == 'point':
+#             return _set_point
+#         elif name == "cylinder":
+#             return _set_cylinder
+#         elif name == "sphere":
+#             return _set_sphere
+#         elif name == 'field':
+#             return _set_field
     
     
-    def tracking_circle(self, t):
-        R = rotate3d(self.alpha, self.beta, self.gumma)
-        X = np.array([[
-            self.r * np.cos(self.omega*t),
-            self.r * np.sin(self.omega * t),
-            0,
-        ]]).T
+#     if obs_param is None:
+#         return None
+#     else:
+#         obs = []
+#         for d in obs_param:
+#             obs.extend(
+#                 _choice(d['name'])(**d['data'])
+#             )
+#     return obs
+
+
+# data1 =[
+#     {
+#         'name' : 'cylinder',
+#         'data' : {
+#             'r' : 0.1,
+#             'L' : 1.0,
+#             'center' : [[0.25, -0.7, 1]],
+#             'n' : 100,
+#             'alpha' : 0,
+#             'beta' : 0,
+#             'gamma' : 0,
+#         },
+#     },
+#     {
+#         'name' : 'cylinder',
+#         'data' : {
+#             'r' : 0.06,
+#             'L' : 1.0,
+#             'center' : [[-0.25, -0.4, 1.25]],
+#             'n' : 100,
+#             'alpha' : 60,
+#             'beta' : 30,
+#             'gamma' : 30,
+#         },
+#     },
+# ]
+
+
+
+
+# class Goal:
+
+#     def __init__(self, **kwargs):
         
-        return R @ X + self.center
+#         name = kwargs.pop('name')
+        
+#         if name == 'static':
+#             self.goal = self.static
+#             self.center = np.array(kwargs.pop('center')).T
+        
+#         elif name == 'tracking_circle':
+#             self.goal = self.tracking_circle
+#             self.center = np.array(kwargs.pop('center')).T
+#             self.r = kwargs.pop('r')
+#             self.omega = kwargs.pop('omega')
+#             self.init_alpha = kwargs.pop('init_alpha')
+#             self.alpha = kwargs.pop('alpha')
+#             self.beta = kwargs.pop('beta')
+#             self.gumma = kwargs.pop('gumma')
+        
+#         return
+    
+    
+#     def tracking_circle(self, t):
+#         R = rotate3d(self.alpha, self.beta, self.gumma)
+#         X = np.array([[
+#             self.r * np.cos(self.omega*t),
+#             self.r * np.sin(self.omega * t),
+#             0,
+#         ]]).T
+        
+#         return R @ X + self.center
 
 
-    def static(self, t):
-        return self.center
+#     def static(self, t):
+#         return self.center
 
 
 # def _test(data):

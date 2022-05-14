@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import time
 from scipy import integrate
 from multiprocessing import Process, Pool, Queue
-
+import sys
+sys.path.append('.')
 import environment
 
 # from functools import lru_cache
@@ -14,8 +15,8 @@ import rmp_tree
 import rmp_leaf
 import mappings
 import visualization
-import sys
-sys.path.append('.')
+
+
 import baxter.baxter as baxter
 
 TIME_SPAN = 6

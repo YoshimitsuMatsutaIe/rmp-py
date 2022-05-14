@@ -1,7 +1,8 @@
 import numpy as np
 from math import exp as ex
 from math import sqrt as sq
-def f(x, x_dot, alpha, w_l, sigma_alpha, w_u, sigma_gamma, epsilon):
+from numpy.typing import NDArray
+def f(x: NDArray[np.float64], x_dot: NDArray[np.float64], alpha: float, w_l, sigma_alpha, w_u, sigma_gamma, epsilon) -> NDArray[np.float64]:
     x0 = x[0, 0]
     x1 = x[1, 0]
     x2 = x[2, 0]
