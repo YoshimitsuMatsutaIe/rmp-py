@@ -27,24 +27,27 @@ import numpy as np
 
 
 ### シンプル ###
-def sample_func(initial_num):
+def sample_func(initial_num, h):
     name = str(initial_num)
     for i in range(100):
         initial_num += 1
-    return name, initial_num
+    hoge = np.array([[h, h]])
+    return name, initial_num, hoge
 
 
-initial_num_list = list(range(100000))
-
+initial_num_list = list(range(100))
+h_list = [2*i for i in initial_num_list]
 
 # for i in initial_num_list:
 #     sample_func(initial_num=i)
 
 
 with Pool() as p:
-    whw = p.map(
+    whw = p.starmap(
         func=sample_func,
-        iterable=initial_num_list,
+        iterable=[(n, h) for n, h in zip(initial_num_list, h_list)]
     )
 
 print(whw)
+
+print(whw[0][2] + whw[1][2])
