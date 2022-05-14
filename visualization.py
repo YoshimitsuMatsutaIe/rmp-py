@@ -3,7 +3,7 @@
 
 import matplotlib.animation as anm
 import numpy as np
-from numpy import ndarray
+from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 from matplotlib import axes
 import time
@@ -19,31 +19,25 @@ def calc_scale(
     max_z:Union[float, None]=None, min_z:Union[float, None]=None
 ) -> Union[tuple[float, float, float, float], tuple[float, float, float, float, float, float]]:
     """軸範囲を計算"""
-    assert max_x > min_x, "hoeg"
-    assert max_y > min_y, "hoeg"
-    if max_z is not None and min_z is not None:
-        assert max_z > min_z, "hoeg"
     
     mid_x = (max_x + min_x) * 0.5
     mid_y = (max_y + min_y) * 0.5
     if max_z is None and min_z is None:
         max_range = max(max_x-min_x, max_y-min_y) * 0.5
-    else:
-        max_range = max(max_x-min_x, max_y-min_y, max_z-min_z) * 0.5
-        mid_z = (max_z + min_z) * 0.5
-    
-    
-    if max_z is None and min_z is None:
         return (
             mid_x - max_range, mid_x + max_range,
             mid_y - max_range, mid_y + max_range
         )
     else:
+        assert max_z is not None and min_z is not None
+        max_range = max(max_x-min_x, max_y-min_y, max_z-min_z) * 0.5
+        mid_z = (max_z + min_z) * 0.5
         return (
             mid_x - max_range, mid_x + max_range,
             mid_y - max_range, mid_y + max_range,
             mid_z - max_range, mid_z + max_range
         )
+
 
 
 
@@ -74,7 +68,7 @@ def make_data(
 
     
     if cpoint_phi_s is not None:
-        cpoint_data: Union[list[Union[ndarray, None]], None] = []
+        cpoint_data: Union[list[Union[NDArray[np.float64], None]], None] = []
         for n in range(N_JOINT):
             if len(cpoint_phi_s[n]) == 0:
                 cpoint_data.append(None)
@@ -99,10 +93,10 @@ def make_data(
 
 def make_animation(
     t_data: list[float],
-    joint_data: ndarray,
-    q_data: Union[ndarray, None]=None,
-    ee_data: Union[ndarray, None]=None,
-    cpoint_data: Union[ndarray, None]=None,
+    joint_data: NDArray[np.float64],
+    q_data: Union[NDArray[np.float64], None]=None,
+    ee_data: Union[NDArray[np.float64], None]=None,
+    cpoint_data: Union[NDArray[np.float64], None]=None,
     goal_data=None,
     obs_data=None,
     is3D=True,

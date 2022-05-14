@@ -25,11 +25,8 @@ TIME_INTERVAL = 1e-2
 q0 = baxter.Common.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
 
-r = rmp_tree.Root(
-    x0 = q0,
-    x0_dot = q0_dot
-)
-
+r = rmp_tree.Root(dim=7, isMulti=False)
+r.set_state(q0, q0_dot)
 
 
 ### 関節角度制限 ###

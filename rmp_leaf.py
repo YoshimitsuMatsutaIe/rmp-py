@@ -1,9 +1,10 @@
-from ast import Str
 import numpy as np
-from numpy import linalg as LA, ndarray
+from numpy import linalg as LA
+from numpy.typing import NDArray
 from math import exp, log
 from typing import Union
 
+import mappings
 import rmp_tree
 import attractor_xi_2d
 import attractor_xi_3d
@@ -12,9 +13,11 @@ import attractor_xi_3d
 class GoalAttractor(rmp_tree.LeafBase):
     def __init__(
         self, name: str, parent: rmp_tree.Node,
-        dim: int, calc_mappings,
+        dim: int,
+        calc_mappings: mappings.Identity,
         max_speed: float, gain: float, f_alpha: float, sigma_alpha: float, sigma_gamma: float,
-        wu: float, wl: float, alpha: float, epsilon: float
+        wu: float, wl: float, alpha: float, epsilon: float,
+        isMulti: bool=False,
     ):
         self.gain = gain
         self.damp = max_speed / gain
@@ -25,14 +28,14 @@ class GoalAttractor(rmp_tree.LeafBase):
         self.wl = wl
         self.alpha = alpha
         self.epsilon = epsilon
+        
+        assert dim == 2 or dim == 3, "must dim = 2 or 3"
         if dim == 2:
             self.xi_func = attractor_xi_2d.f
-        elif dim == 3:
-            self.xi_func = attractor_xi_3d.f
         else:
-            print("xiは計算無理")
+            self.xi_func = attractor_xi_3d.f
         
-        super().__init__(name, dim, parent, calc_mappings)
+        super().__init__(name, dim, parent, calc_mappings, isMulti)
     
     
     def calc_rmp_func(self,):
@@ -40,12 +43,12 @@ class GoalAttractor(rmp_tree.LeafBase):
         self.f = self.__force()
     
     
-    def __grad_phi(self,) -> ndarray:
+    def __grad_phi(self,) -> NDArray[np.float64]:
         x_norm = LA.norm(self.x)
         return (1-exp(-2*self.alpha*x_norm)) / (1+exp(-2*self.alpha*x_norm)) * self.x / x_norm
     
     
-    def __inertia_matrix(self,) -> ndarray:
+    def __inertia_matrix(self,) -> NDArray[np.float64]:
         x_norm = LA.norm(self.x)
         alpha_x = exp(-x_norm**2 / (2 * self.sigma_alpha**2))
         gamma_x = exp(-x_norm**2 / (2 * self.sigma_gamma**2))
@@ -55,7 +58,7 @@ class GoalAttractor(rmp_tree.LeafBase):
         return wx*((1-alpha_x) * grad @ grad.T + (alpha_x+self.epsilon) * np.eye(self.dim))
     
     
-    def __force(self,) -> ndarray:
+    def __force(self,) -> NDArray[np.float64]:
         xi = self.xi_func(
             x = self.x,
             x_dot = self.x_dot,
@@ -77,7 +80,8 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
         scale_damp,
         gain,
         sigma,
-        rw
+        rw,
+        isMulti: bool=False,
     ):
         self.scale_rep = scale_rep
         self.scale_damp = scale_damp
@@ -85,7 +89,7 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
         self.sigma = sigma
         self.rw = rw
     
-        super().__init__(name, 1, parent, calc_mappings)
+        super().__init__(name, 1, parent, calc_mappings, isMulti)
     
     
     def calc_rmp_func(self,):
@@ -145,9 +149,10 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         gamma_d,
         lam,
         sigma,
-        q_max,
-        q_min,
-        q_neutral
+        q_max: NDArray[np.float64],
+        q_min: NDArray[np.float64],
+        q_neutral: NDArray[np.float64],
+        isMulti: bool=False
     ):
         self.gamma_p = gamma_p
         self.gamma_d = gamma_d
@@ -157,7 +162,7 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         self.q_min = q_min
         self.q_neutral = q_neutral
         
-        super().__init__(name, parent.dim, parent, calc_mappings)
+        super().__init__(name, parent.dim, parent, calc_mappings, isMulti)
     
     
     def calc_rmp_func(self,):
@@ -217,7 +222,7 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
             xi.append(_xi)
         return np.array([xi]).T
     
-    def __inertia_matrix(self,) -> ndarray:
+    def __inertia_matrix(self,) -> NDArray[np.float64]:
         diags = []
         for i in range(self.dim):
             _s = self.lam * self.__a(
@@ -229,7 +234,7 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         #print(diags)
         return np.diag(diags)
     
-    def __force(self,) -> ndarray:
+    def __force(self,) -> NDArray[np.float64]:
         return self.M @ (self.gamma_p*(self.q_neutral - self.x) - self.gamma_d*self.x_dot) - self.__xi()
 
 
@@ -237,54 +242,54 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
 
 
 
-class GoalAttractor_1(rmp_tree.LeafBase):
-    """曲率なし"""
-    def __init__(
-        self, name, parent, dim, calc_mappings,
-        max_speed, gain, a_damp_r, sigma_W, sigma_H, A_damp_r
-    ):
-        super().__init__(name, dim, parent, calc_mappings)
-        self.gain = gain
-        self.damp = gain / max_speed
-        self.a_damp_r = a_damp_r
-        self.sigma_W = sigma_W
-        self.sigma_H = sigma_H
-        self.A_damp_r = A_damp_r
+# class GoalAttractor_1(rmp_tree.LeafBase):
+#     """曲率なし"""
+#     def __init__(
+#         self, name, parent, dim, calc_mappings,
+#         max_speed, gain, a_damp_r, sigma_W, sigma_H, A_damp_r
+#     ):
+#         super().__init__(name, dim, parent, calc_mappings)
+#         self.gain = gain
+#         self.damp = gain / max_speed
+#         self.a_damp_r = a_damp_r
+#         self.sigma_W = sigma_W
+#         self.sigma_H = sigma_H
+#         self.A_damp_r = A_damp_r
     
     
-    def calc_rmp_func(self,):
-        a = self.__acceleration()
-        self.M = self.__inertia_matrix(a)
-        self.f = self.M @ a
+#     def calc_rmp_func(self,):
+#         a = self.__acceleration()
+#         self.M = self.__inertia_matrix(a)
+#         self.f = self.M @ a
     
-    def __soft_normal(self, v, alpha):
-        """ソフト正規化関数"""
-        v_norm = LA.norm(v)
-        softmax = v_norm + 1 / alpha * log(1 + exp(-2 * alpha * v_norm))
-        return v / softmax
+#     def __soft_normal(self, v, alpha):
+#         """ソフト正規化関数"""
+#         v_norm = LA.norm(v)
+#         softmax = v_norm + 1 / alpha * log(1 + exp(-2 * alpha * v_norm))
+#         return v / softmax
 
-    def __metric_stretch(self, v, alpha):
-        """空間を一方向に伸ばす計量"""
-        xi = self.__soft_normal(v, alpha)
-        return xi @ xi.T
+#     def __metric_stretch(self, v, alpha):
+#         """空間を一方向に伸ばす計量"""
+#         xi = self.__soft_normal(v, alpha)
+#         return xi @ xi.T
 
-    def __basic_metric_H(self, f, alpha, beta):
-        """基本の計量"""
-        f_norm = LA.norm(f)
-        f_softmax = f_norm + 1 / alpha * log(1 + exp(-2 * alpha * f_norm))
-        s = f / f_softmax
-        return beta * s @ s.T + (1 - beta) * np.eye(3)
+#     def __basic_metric_H(self, f, alpha, beta):
+#         """基本の計量"""
+#         f_norm = LA.norm(f)
+#         f_softmax = f_norm + 1 / alpha * log(1 + exp(-2 * alpha * f_norm))
+#         s = f / f_softmax
+#         return beta * s @ s.T + (1 - beta) * np.eye(3)
     
     
-    def __acceleration(self,):
-        return -self.gain * self.__soft_normal(self.x, self.a_damp_r) - self.damp * self.x_dot
+#     def __acceleration(self,):
+#         return -self.gain * self.__soft_normal(self.x, self.a_damp_r) - self.damp * self.x_dot
 
-    def __inertia_matrix(self, acceleration):
-        d = LA.norm(self.x)
-        weight = exp(- d/ self.sigma_W)
-        beta_attract = 1 - exp(-1 / 2 * (d / self.sigma_H) ** 2)
+#     def __inertia_matrix(self, acceleration):
+#         d = LA.norm(self.x)
+#         weight = exp(- d/ self.sigma_W)
+#         beta_attract = 1 - exp(-1 / 2 * (d / self.sigma_H) ** 2)
         
-        return weight * self.__basic_metric_H(acceleration, self.A_damp_r, beta_attract)
+#         return weight * self.__basic_metric_H(acceleration, self.A_damp_r, beta_attract)
 
 
 
