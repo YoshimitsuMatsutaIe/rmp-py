@@ -1,6 +1,7 @@
 """基本のノード
 """
-from __future__ import annotations  #一番初めに載せないとエラー
+from __future__ import annotations
+from unittest import result  #一番初めに載せないとエラー
 
 import numpy as np
 from numpy import linalg as LA
@@ -22,25 +23,25 @@ class Node:
         self,
         name: str, dim: int, parent: Union[Node, None],
         mappings: Union[Identity, None],
-        isMulti=False
     ) -> None:
         self.name = name
         self.dim= dim
         self.parent = parent
         self.mappings = mappings
         self.children: list[Node] = []
-        self.isMulti = isMulti
+        self.isMulti = False
         
         self.x = np.zeros((self.dim, 1))
         self.x_dot = np.zeros_like(self.x)
-        self.f = np.zeros_like(self.x)
-        self.M = np.zeros((self.dim, self.dim))
+        self.f: NDArray[np.float64] = np.zeros_like(self.x)
+        self.M: NDArray[np.float64] = np.zeros((self.dim, self.dim))
         if parent is not None:
             self.J = np.zeros((self.dim, parent.dim))
             self.J_dot = np.zeros_like(self.J)
     
     
     def add_child(self, child: Node) -> None:
+        child.isMulti = self.isMulti
         self.children.append(child)
     
     
@@ -62,33 +63,39 @@ class Node:
     
     
     def pullback(self):
-        self.f: NDArray[np.float64] = np.zeros_like(self.f)
-        self.M: NDArray[np.float64] = np.zeros_like(self.M)
+        self.f = np.zeros_like(self.f)
+        self.M = np.zeros_like(self.M)
         for child in self.children:
             child.pullback()
         
         assert self.parent is not None
-        self.parent.f += self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
-        self.parent.M += self.J.T @ self.M @ self.J
+        if not self.isMulti:
+            self.parent.f += self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
+            self.parent.M += self.J.T @ self.M @ self.J
     
     
-    def resolve(self,) -> None:
+    def solve(
+        self,
+        parent_x: NDArray[np.float64], parent_x_dot: NDArray[np.float64]
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """並列処理用"""
         assert self.isMulti == True
-        self.x_ddot = LA.pinv(self.M) @ self.f
-    
-    
-    def solve(self, x: NDArray[np.float64], x_dot: NDArray[np.float64]) -> NDArray[np.float64]:
-        """並列処理用"""
-        assert self.isMulti == True
+        
+        # 自分をpush
+        assert self.mappings is not None
+        self.x = self.mappings.phi(parent_x)
+        self.J = self.mappings.J(parent_x)
+        self.x_dot = self.mappings.velocity(self.J, parent_x_dot)
+        self.J_dot = self.mappings.J_dot(parent_x, parent_x_dot)
 
-        self.x = x
-        self.x_dot = x_dot
         
         self.pushforward()
         self.pullback()
-        self.resolve()
-        return self.x_ddot
+        
+        pulled_f = self.J.T @ (self.f - self.M @ self.J_dot @ parent_x_dot)
+        pulled_M = self.J.T @ self.M @ self.J
+        
+        return pulled_f, pulled_M
     
 
     def print_state(self,):
@@ -114,14 +121,18 @@ class Node:
 
 
 
+def multi_solve(child: Node, q, q_dot):
+    """並列処理用"""
+    return child.solve(q, q_dot)
+
+
 class Root(Node):
-    def __init__(self, dim: int, isMulti=False):
+    def __init__(self, dim: int, isMulti:bool=False):
         super().__init__(
             name = "root",
             parent = None,
             dim = dim,
             mappings = None,
-            isMulti = isMulti
         )
         self.x = np.zeros((dim, 1))
         self.x_dot = np.zeros_like(self.x)
@@ -134,27 +145,11 @@ class Root(Node):
         self.x_dot = q_dot
     
     
-    def add_child(self, child: Node) -> None:
-        return super().add_child(child)
+    def update_state(self, dt: float):
+        self.x += self.x_dot * dt
+        self.x_dot += self.x_ddot * dt
     
     
-    
-    
-    def update_state(
-        self,
-        q: Union[None, NDArray[np.float64]]=None,
-        q_dot: Union[None, NDArray[np.float64]]=None,
-        dt: Union[None, float]=None
-    ):
-        if q is not None and q_dot is not None and dt is None:
-            self.x = q
-            self.x_dot = q_dot
-        else:
-            assert dt is not None
-            self.x += self.x_dot * dt
-            self.x_dot += self.x_ddot * dt
-
-
     def pullback(self):
         # 初期化
         self.f = np.zeros_like(self.f)
@@ -172,14 +167,27 @@ class Root(Node):
     
     
     def solve(self, q=None, q_dot=None, dt=None):
+        self.set_state(q, q_dot)
         if self.isMulti == False:
-            self.update_state(q, q_dot, dt)
             self.pushforward()
             self.pullback()
             self.resolve()
             return self.x_ddot
         else:
-            return 
+            self.set_state(q, q_dot)
+            with Pool() as p:
+                result = p.starmap(
+                    func = multi_solve,
+                    iterable = ((child, self.x, self.x_dot) for child in self.children)
+                )
+            
+            for r in result:
+                self.f += r[0]
+                self.M += r[1]
+            
+            self.resolve()
+            
+            return self.x_ddot
 
 
 
@@ -191,9 +199,8 @@ class LeafBase(Node):
         dim: int,
         parent: Node,
         mappings: Identity,
-        isMulti: bool=False
     ):
-        super().__init__(name, dim, parent, mappings, isMulti)
+        super().__init__(name, dim, parent, mappings,)
         self.children = []
     
     

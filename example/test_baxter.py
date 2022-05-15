@@ -19,13 +19,13 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 6
+TIME_SPAN = 3
 TIME_INTERVAL = 1e-2
 
 q0 = baxter.Common.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
 
-r = rmp_tree.Root(dim=7, isMulti=False)
+r = rmp_tree.Root(dim=7, isMulti=True)
 r.set_state(q0, q0_dot)
 
 
@@ -98,7 +98,7 @@ n_ee.add_child(attracter)
 
 ### 障害物 ###
 o_s = environment._set_cylinder(
-    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=800, alpha=0, beta=0, gamma=90
+    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=10, alpha=0, beta=0, gamma=90
 )
 for n in ns:
     for m_ in n:

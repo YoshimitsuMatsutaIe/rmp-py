@@ -17,7 +17,6 @@ class GoalAttractor(rmp_tree.LeafBase):
         calc_mappings: mappings.Identity,
         max_speed: float, gain: float, f_alpha: float, sigma_alpha: float, sigma_gamma: float,
         wu: float, wl: float, alpha: float, epsilon: float,
-        isMulti: bool=False,
     ):
         self.gain = gain
         self.damp = max_speed / gain
@@ -35,7 +34,7 @@ class GoalAttractor(rmp_tree.LeafBase):
         else:
             self.xi_func = attractor_xi_3d.f
         
-        super().__init__(name, dim, parent, calc_mappings, isMulti)
+        super().__init__(name, dim, parent, calc_mappings,)
     
     
     def calc_rmp_func(self,):
@@ -80,8 +79,7 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
         scale_damp,
         gain,
         sigma,
-        rw,
-        isMulti: bool=False,
+        rw
     ):
         self.scale_rep = scale_rep
         self.scale_damp = scale_damp
@@ -89,7 +87,7 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
         self.sigma = sigma
         self.rw = rw
     
-        super().__init__(name, 1, parent, calc_mappings, isMulti)
+        super().__init__(name, 1, parent, calc_mappings,)
     
     
     def calc_rmp_func(self,):
@@ -152,7 +150,6 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         q_max: NDArray[np.float64],
         q_min: NDArray[np.float64],
         q_neutral: NDArray[np.float64],
-        isMulti: bool=False
     ):
         self.gamma_p = gamma_p
         self.gamma_d = gamma_d
@@ -162,7 +159,7 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         self.q_min = q_min
         self.q_neutral = q_neutral
         
-        super().__init__(name, parent.dim, parent, calc_mappings, isMulti)
+        super().__init__(name, parent.dim, parent, calc_mappings,)
     
     
     def calc_rmp_func(self,):

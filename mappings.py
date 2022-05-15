@@ -1,11 +1,12 @@
 import numpy as np
 from numpy import linalg as LA
 from numpy.typing import NDArray
+import numpy.typing as npt
 
 
 class Identity:
     """恒等写像"""
-    def phi(self, x: NDArray[np.float64]):
+    def phi(self, x: npt.NDArray[np.float64]):
         return x.copy()
     
     def velocity(self, J: NDArray[np.float64], x_dot: NDArray[np.float64]) -> NDArray[np.float64]:
