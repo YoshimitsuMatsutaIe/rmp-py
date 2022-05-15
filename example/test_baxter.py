@@ -183,29 +183,33 @@ def main(isMulti: bool, obs_num: int):
     # return sol, ani
 
 
-obs = 1000
 
-print("並列化無し")
-t0 = time.process_time()
-main(False, obs)
-print("cpu time = ", time.process_time() - t0)
+def main2(obs):
+    print("障害物の個数 :", obs)
+    print("並列化無し")
+    t0 = time.process_time()
+    main(False, obs)
+    print("cpu time = ", time.process_time() - t0)
 
-t1 = time.perf_counter()
-main(False, obs)
-print("real time = ", time.perf_counter() - t1)
-
-
-print("並列化有り")
-t0 = time.process_time()
-main(True, obs)
-print("cpu time = ", time.process_time() - t0)
-
-t1 = time.perf_counter()
-main(True, obs)
-print("real time = ", time.perf_counter() - t1)
+    t1 = time.perf_counter()
+    main(False, obs)
+    print("real time = ", time.perf_counter() - t1)
 
 
+    print("並列化有り")
+    t0 = time.process_time()
+    main(True, obs)
+    print("cpu time = ", time.process_time() - t0)
 
+    t1 = time.perf_counter()
+    main(True, obs)
+    print("real time = ", time.perf_counter() - t1)
+
+
+main2(10)
+main2(100)
+main2(500)
+main2(1000)
 
 
 
