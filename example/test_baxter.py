@@ -19,7 +19,7 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 3
+TIME_SPAN = 4
 TIME_INTERVAL = 1e-2
 
 q0 = baxter.Common.q_neutral  #初期値
@@ -77,7 +77,7 @@ r.add_child(n_ee)
 
 
 ### 目標 ###
-g = np.array([[0.3, -0.6, 1]]).T
+g = np.array([[0.4, -0.4, 1]]).T
 g_dot = np.zeros_like(g)
 
 attracter = rmp_leaf.GoalAttractor(
@@ -98,13 +98,13 @@ n_ee.add_child(attracter)
 
 ### 障害物 ###
 o_s = environment._set_cylinder(
-    r=0.1, L=1, x=0.25, y=-0.4, z=1, n=10, alpha=0, beta=0, gamma=90
+    r=0.1, L=1, x=0.2, y=-0.4, z=1, n=2, alpha=0, beta=0, gamma=90
 )
 for n in ns:
     for m_ in n:
         for o in o_s:
             obs_node = rmp_leaf.ObstacleAvoidance(
-                name="obs-avoidance",
+                name="obs",
                 parent=m_,
                 calc_mappings=mappings.Distance(o, np.zeros_like(o)),
                 scale_rep=0.2,
@@ -114,6 +114,19 @@ for n in ns:
                 rw=0.15
             )
             m_.add_child(obs_node)
+
+for o in o_s:
+    obs_node = rmp_leaf.ObstacleAvoidance(
+        name="obs",
+        parent=n_ee,
+        calc_mappings=mappings.Distance(o, np.zeros_like(o)),
+        scale_rep=0.2,
+        scale_damp=1,
+        gain=5,
+        sigma=1,
+        rw=0.15
+    )
+    n_ee.add_child(obs_node)
 
 
 def dX(t, X):
@@ -174,4 +187,4 @@ ani = visualization.make_animation(
 
 
 
-#plt.show()
+plt.show()

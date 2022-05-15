@@ -123,6 +123,8 @@ class Node:
 
 def multi_solve(child: Node, q, q_dot):
     """並列処理用"""
+    print("name = ", child.name)
+    print("  child = ", [c.name for c in child.children])
     return child.solve(q, q_dot)
 
 
