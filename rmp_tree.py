@@ -12,7 +12,7 @@ from numpy.typing import NDArray
 import typing
 
 
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 
 
@@ -123,8 +123,8 @@ class Node:
 
 def multi_solve(child: Node, q, q_dot):
     """並列処理用"""
-    print("name = ", child.name)
-    print("  child = ", [c.name for c in child.children])
+    #print("name = ", child.name)
+    #print("  child = ", [c.name for c in child.children])
     return child.solve(q, q_dot)
 
 
@@ -177,16 +177,21 @@ class Root(Node):
             return self.x_ddot
         else:
             self.set_state(q, q_dot)
-            with Pool() as p:
+            with Pool(processes=cpu_count()-1) as p:
                 result = p.starmap(
                     func = multi_solve,
                     iterable = ((child, self.x, self.x_dot) for child in self.children)
                 )
             
+            #print(result)
+            
+            self.f = np.zeros_like(self.f)
+            self.M = np.zeros_like(self.M)
             for r in result:
                 self.f += r[0]
                 self.M += r[1]
             
+            #print(self.f)
             self.resolve()
             
             return self.x_ddot

@@ -3,7 +3,7 @@ from numpy import linalg as LA
 import matplotlib.pyplot as plt
 import time
 from scipy import integrate
-from multiprocessing import Process, Pool, Queue
+
 import sys
 sys.path.append('.')
 import environment
@@ -19,7 +19,7 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 4
+TIME_SPAN = 60
 TIME_INTERVAL = 1e-2
 
 q0 = baxter.Common.q_neutral  #初期値
@@ -98,13 +98,13 @@ n_ee.add_child(attracter)
 
 ### 障害物 ###
 o_s = environment._set_cylinder(
-    r=0.1, L=1, x=0.2, y=-0.4, z=1, n=2, alpha=0, beta=0, gamma=90
+    r=0.1, L=1, x=0.2, y=-0.4, z=1, n=100, alpha=0, beta=0, gamma=90
 )
 for n in ns:
     for m_ in n:
-        for o in o_s:
+        for i, o in enumerate(o_s):
             obs_node = rmp_leaf.ObstacleAvoidance(
-                name="obs",
+                name="obs_" + str(i) + ", at " + m_.name,
                 parent=m_,
                 calc_mappings=mappings.Distance(o, np.zeros_like(o)),
                 scale_rep=0.2,
