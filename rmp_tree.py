@@ -14,6 +14,7 @@ import typing
 
 from multiprocessing import Pool, cpu_count
 
+import time
 
 
 class Node:
@@ -63,6 +64,7 @@ class Node:
     
     
     def pullback(self):
+        #print(self.name, ", pullback now")
         self.f = np.zeros_like(self.f)
         self.M = np.zeros_like(self.M)
         for child in self.children:
@@ -80,6 +82,7 @@ class Node:
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """並列処理用"""
         assert self.isMulti == True
+        #time.sleep(1)
         
         # 自分をpush
         assert self.mappings is not None
@@ -95,6 +98,7 @@ class Node:
         pulled_f = self.J.T @ (self.f - self.M @ self.J_dot @ parent_x_dot)
         pulled_M = self.J.T @ self.M @ self.J
         
+        #print(self.name, "done!")
         return pulled_f, pulled_M
     
 
@@ -123,9 +127,13 @@ class Node:
 
 def multi_solve(child: Node, q, q_dot):
     """並列処理用"""
-    #print("name = ", child.name)
+    print(child.name,"begin")
+    #time.sleep(5)
     #print("  child = ", [c.name for c in child.children])
-    return child.solve(q, q_dot)
+    
+    f, M = child.solve(q, q_dot)
+    print("    ", child.name, "done!")
+    return f, M
 
 
 class Root(Node):
@@ -178,12 +186,15 @@ class Root(Node):
         else:
             self.set_state(q, q_dot)
             with Pool(processes=cpu_count()-1) as p:
+                # result = p.starmap_async(
+                #     func = multi_solve,
+                #     iterable = ((child, self.x, self.x_dot) for child in self.children)
+                # ).get()
+            
                 result = p.starmap(
                     func = multi_solve,
                     iterable = ((child, self.x, self.x_dot) for child in self.children)
                 )
-            
-            #print(result)
             
             self.f = np.zeros_like(self.f)
             self.M = np.zeros_like(self.M)

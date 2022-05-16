@@ -91,7 +91,7 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
     
     
     def calc_rmp_func(self,):
-        #print(self.name, ", called")
+        #print(".", end='')
         self.M = self.__inertia_matrix()
         self.f = self.__force()
     
