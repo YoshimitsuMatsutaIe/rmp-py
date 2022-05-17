@@ -5,14 +5,60 @@ from math import exp, log
 from typing import Union
 
 import mappings
-import rmp_tree
+import rmp_node
 import attractor_xi_2d
 import attractor_xi_3d
 
 
-class GoalAttractor(rmp_tree.LeafBase):
+class LeafBase(rmp_node.Node):
     def __init__(
-        self, name: str, parent: rmp_tree.Node,
+        self,
+        name: str,
+        dim: int,
+        parent: Union[rmp_node.Node, None],
+        mappings: mappings.Identity,
+        parent_dim: Union[int, None]=None,
+    ):
+        super().__init__(
+            name = name,
+            dim = dim,
+            parent = parent,
+            mappings = mappings,
+            parent_dim = parent_dim
+        )
+        self.children = []
+    
+    
+    def print_all_state(self):
+        self.print_state()
+    
+    def add_child(self,):
+        pass
+    
+    def pushforward(self,):
+        pass
+    
+    
+    def pullback(self):
+        self.calc_rmp_func()
+        assert self.parent is not None, self.name
+        self.parent.f += self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
+        self.parent.M += self.J.T @ self.M @ self.J
+    
+    
+    def calc_rmp_func(self,):
+        pass
+    
+    
+    def set_state(self, x, x_dot):
+        self.x = x
+        self.x_dot = x_dot
+
+
+
+class GoalAttractor(LeafBase):
+    def __init__(
+        self, name: str, parent: rmp_node.Node,
         dim: int,
         calc_mappings: mappings.Identity,
         max_speed: float, gain: float, f_alpha: float, sigma_alpha: float, sigma_gamma: float,
@@ -72,7 +118,7 @@ class GoalAttractor(rmp_tree.LeafBase):
 
 
 
-class ObstacleAvoidance(rmp_tree.LeafBase):
+class ObstacleAvoidance(LeafBase):
     def __init__(
         self, name, parent, calc_mappings,
         scale_rep,
@@ -141,9 +187,9 @@ class ObstacleAvoidance(rmp_tree.LeafBase):
 
 
 
-class JointLimitAvoidance(rmp_tree.LeafBase):
+class JointLimitAvoidance(LeafBase):
     def __init__(
-        self, name, parent: rmp_tree.Node, calc_mappings,
+        self, name, parent: Union[rmp_node.Node, None], calc_mappings,
         gamma_p,
         gamma_d,
         lam,
@@ -151,6 +197,7 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         q_max: NDArray[np.float64],
         q_min: NDArray[np.float64],
         q_neutral: NDArray[np.float64],
+        parent_dim: Union[int, None]=None
     ):
         self.gamma_p = gamma_p
         self.gamma_d = gamma_d
@@ -160,7 +207,18 @@ class JointLimitAvoidance(rmp_tree.LeafBase):
         self.q_min = q_min
         self.q_neutral = q_neutral
         
-        super().__init__(name, parent.dim, parent, calc_mappings,)
+        if parent is not None:
+            super().__init__(name, parent.dim, parent, calc_mappings)
+        else:
+            assert parent_dim is not None
+            super().__init__(name, parent_dim, parent, calc_mappings)
+    
+    
+    def pullback(self):
+        if not self.isMulti:
+            super().pullback()
+        else:
+            pass
     
     
     def calc_rmp_func(self,):

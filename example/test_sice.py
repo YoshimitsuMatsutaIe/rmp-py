@@ -8,7 +8,7 @@ from functools import lru_cache
 import sys
 sys.path.append('.')
 
-import rmp_tree
+import rmp_node
 import rmp_leaf
 import mappings
 import sice.sice as sice
@@ -30,33 +30,33 @@ q0 = np.array([[np.pi/2, 0, 0, 0]]).T
 #q0_dot = np.array([[0.1, 0, 0, 0]]).T
 q0_dot = np.zeros_like(q0)
 
-r = rmp_tree.Root(
+r = rmp_node.Root(
     x0 = q0,
     x0_dot = q0_dot
 )
 
 
 
-n1 = rmp_tree.LeafBase(
+n1 = rmp_node.LeafBase(
     name="x1", parent=r, dim=2,
     mappings=sice.X1()
 )
 r.add_child(n1)
 
-n2 = rmp_tree.LeafBase(
+n2 = rmp_node.LeafBase(
     name="x2", parent=r, dim=2,
     mappings=sice.X2()
 )
 r.add_child(n2)
 
-n3 = rmp_tree.LeafBase(
+n3 = rmp_node.LeafBase(
     name="x3", parent=r, dim=2,
     mappings=sice.X3()
 )
 r.add_child(n3)
 
 x4 = sice.X4()
-n4 = rmp_tree.Node(
+n4 = rmp_node.Node(
     name="x4", parent=r, dim=2,
     mappings=x4
 )

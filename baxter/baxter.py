@@ -16,49 +16,49 @@ from baxter.JRy_dots import *
 from baxter.JRz_dots import *
 
 
-def htm_0(q: NDArray[np.float64]):
+def htm_0(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_0(q), ry_0(q), rz_0(q), o_0(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_1(q: NDArray[np.float64]):
+def htm_1(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_1(q), ry_1(q), rz_1(q), o_1(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_2(q: NDArray[np.float64]):
+def htm_2(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_2(q), ry_2(q), rz_2(q), o_2(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_3(q: NDArray[np.float64]):
+def htm_3(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_3(q), ry_3(q), rz_3(q), o_3(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_4(q: NDArray[np.float64]):
+def htm_4(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_4(q), ry_4(q), rz_4(q), o_4(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_5(q: NDArray[np.float64]):
+def htm_5(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_5(q), ry_5(q), rz_5(q), o_5(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_6(q: NDArray[np.float64]):
+def htm_6(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_6(q), ry_6(q), rz_6(q), o_6(q)],
         [np.array([[0, 0, 0, 1]])]
     ])
 
-def htm_ee(q: NDArray[np.float64]):
+def htm_ee(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.block([
         [rx_ee(q), ry_ee(q), rz_ee(q), o_ee(q)],
         [np.array([[0, 0, 0, 1]])]

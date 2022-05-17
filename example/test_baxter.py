@@ -10,8 +10,9 @@ import environment
 # from functools import lru_cache
 # from numba import njit
 
-import rmp_tree
+import rmp_node
 import rmp_leaf
+import tree_constructor
 import mappings
 import visualization
 
@@ -20,13 +21,16 @@ import baxter.baxter as baxter
 
 
 def main(isMulti: bool, obs_num: int):
-    TIME_SPAN = 1
+    TIME_SPAN = 30*5
     TIME_INTERVAL = 1e-2
 
     q0 = baxter.Common.q_neutral  #初期値
     q0_dot = np.zeros_like(q0)
 
-    r = rmp_tree.Root(7, isMulti)
+
+    print("constructing rmp-tree...")
+    t0 = time.perf_counter()
+    r = rmp_node.Root(7, isMulti)
     r.set_state(q0, q0_dot)
 
 
@@ -47,12 +51,12 @@ def main(isMulti: bool, obs_num: int):
 
 
     # tree construction
-    ns: list[list[rmp_tree.Node]] = []
+    ns: list[list[rmp_node.Node]] = []
     for i, rs in enumerate(baxter.Common.R_BARS_ALL[:-1]):
-        n_: list[rmp_tree.Node] = []
+        n_: list[rmp_node.Node] = []
         for j, _ in enumerate(rs):
             n_.append(
-                rmp_tree.Node(
+                rmp_node.Node(
                     name = 'x_' + str(i) + '_' + str(j),
                     dim = 3,
                     parent = r,
@@ -66,9 +70,9 @@ def main(isMulti: bool, obs_num: int):
             r.add_child(n)
 
 
-
+    print("t0.5 = ", time.perf_counter() - t0)
     # end-effector node
-    n_ee = rmp_tree.Node(
+    n_ee = rmp_node.Node(
         name = "ee",
         dim = 3,
         parent = r,
@@ -116,6 +120,7 @@ def main(isMulti: bool, obs_num: int):
                 )
                 m_.add_child(obs_node)
 
+    print("t1 = ", time.perf_counter() - t0)
     for o in o_s:
         obs_node = rmp_leaf.ObstacleAvoidance(
             name="obs",
@@ -129,10 +134,15 @@ def main(isMulti: bool, obs_num: int):
         )
         n_ee.add_child(obs_node)
 
-    print("construct rmp-tree done!")
+
+    print("construct rmp-tree done! time = ", time.perf_counter() - t0)
+
+
+    print("tree size = ", sys.getsizeof(r))
+    print("tree size = ", sys.getsizeof(r.children))
 
     def dX(t, X):
-        print("\nt = ", t)
+        #print("\nt = ", t)
         X = X.reshape(-1, 1)
         q_ddot = r.solve(q=X[:7, :], q_dot=X[7:, :])
         X_dot = np.concatenate([X[7:, :], q_ddot])
@@ -151,63 +161,138 @@ def main(isMulti: bool, obs_num: int):
     print(sol.message)
     
     
-    # ### 以下グラフ化 ###
-    # fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
-    # for i in range(7):
-    #     axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
-    #     axes[1].plot(sol.t, sol.y[i+7], label="dq" + str(i))
-    # for i in range(2):
-    #     axes[i].legend()
-    #     axes[i].grid()
-    # fig.savefig("solver_bax_2.png")
+    ### 以下グラフ化 ###
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
+    for i in range(7):
+        axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
+        axes[1].plot(sol.t, sol.y[i+7], label="dq" + str(i))
+    for i in range(2):
+        axes[i].legend()
+        axes[i].grid()
+    fig.savefig("solver_bax_2.png")
 
-    # def x0(q):
-    #     return np.zeros((3, 1))
+    def x0(q):
+        return np.zeros((3, 1))
 
-    # q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
-    #     q_s = [sol.y[i] for i in range(7)],
-    #     joint_phi_s=[x0, baxter.o_W0, baxter.o_BR, baxter.o_0, baxter.o_1, baxter.o_2, baxter.o_3, baxter.o_4, baxter.o_5, baxter.o_6, baxter.o_ee],
-    #     is3D=True,
-    #     ee_phi=baxter.o_ee
-    # )
+    q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+        q_s = [sol.y[i] for i in range(7)],
+        joint_phi_s=[x0, baxter.o_W0, baxter.o_BR, baxter.o_0, baxter.o_1, baxter.o_2, baxter.o_3, baxter.o_4, baxter.o_5, baxter.o_6, baxter.o_ee],
+        is3D=True,
+        ee_phi=baxter.o_ee
+    )
 
-    # ani = visualization.make_animation(
-    #     t_data = sol.t,
-    #     joint_data=joint_data,
-    #     is3D=True,
-    #     goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
-    #     obs_data=o_s,
-    #     save_dir_path="pic/",
-    #     isSave=True
-    # )
+    ani = visualization.make_animation(
+        t_data = sol.t,
+        joint_data=joint_data,
+        is3D=True,
+        goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
+        obs_data=o_s,
+        save_dir_path="pic/",
+        isSave=True
+    )
 
     # return sol, ani
 
 
 
-def main2(obs):
+def main2(isMulti: bool, obs_num: int):
+    """ノードをプロセス毎に再構築"""
+    TIME_SPAN = 8.7
+    TIME_INTERVAL = 1e-2
+
+    q0 = baxter.Common.q_neutral  #初期値
+    q0_dot = np.zeros_like(q0)
+
+
+    r = rmp_node.Root(7, isMulti)
+    r.set_state(q0, q0_dot)
+
+
+    ### 目標 ###
+    g = np.array([[0.4, -0.4, 1]]).T
+    g_dot = np.zeros_like(g)
+
+    ### 障害物 ###
+    o_s = environment._set_cylinder(
+        r=0.1, L=1, x=0.2, y=-0.4, z=1, n=obs_num, alpha=0, beta=0, gamma=90
+    )
+
+    def dX(t, X):
+        print("\nt = ", t)
+        X = X.reshape(-1, 1)
+        q_ddot = tree_constructor.solve(q=X[:7, :], q_dot=X[7:, :], g=g, o_s=o_s)
+        X_dot = np.concatenate([X[7:, :], q_ddot])
+        return np.ravel(X_dot)
+    
+    
+    
+    sol = integrate.solve_ivp(
+        fun = dX,
+        #fun = dX2,
+        t_span = (0, TIME_SPAN),
+        y0 = np.ravel(np.concatenate([q0, q0_dot])),
+        t_eval=np.arange(0, TIME_SPAN, TIME_INTERVAL),
+        #atol=1e-6
+    )
+    print(sol.message)
+    
+    
+    ### 以下グラフ化 ###
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
+    for i in range(7):
+        axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
+        axes[1].plot(sol.t, sol.y[i+7], label="dq" + str(i))
+    for i in range(2):
+        axes[i].legend()
+        axes[i].grid()
+    fig.savefig("solver_bax_2.png")
+
+    def x0(q):
+        return np.zeros((3, 1))
+
+    q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+        q_s = [sol.y[i] for i in range(7)],
+        joint_phi_s=[x0, baxter.o_W0, baxter.o_BR, baxter.o_0, baxter.o_1, baxter.o_2, baxter.o_3, baxter.o_4, baxter.o_5, baxter.o_6, baxter.o_ee],
+        is3D=True,
+        ee_phi=baxter.o_ee
+    )
+
+    ani = visualization.make_animation(
+        t_data = sol.t,
+        joint_data=joint_data,
+        is3D=True,
+        goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
+        obs_data=o_s,
+        save_dir_path="pic/",
+        isSave=True
+    )
+
+    return sol, ani
+
+
+def runner(obs):
     print("障害物の個数 :", obs)
 
-    # print("並列化無し")
-    # t0 = time.process_time()
-    # t1 = time.perf_counter()
-    # main(False, obs)
-    # print("cpu time = ", time.process_time() - t0)
-    # print("real time = ", time.perf_counter() - t1)
-
-
-    print("並列化有り")
+    print("並列化無し")
     t0 = time.process_time()
     t1 = time.perf_counter()
-    main(True, obs)
+    main(False, obs)
     print("cpu time = ", time.process_time() - t0)
     print("real time = ", time.perf_counter() - t1)
+
+
+    # print("並列化有り")
+    # t0 = time.process_time()
+    # t1 = time.perf_counter()
+    # main2(True, obs)
+    # print("cpu time = ", time.process_time() - t0)
+    # print("real time = ", time.perf_counter() - t1)
 
 
 #main2(10)
 #main2(100)
 # main2(500)
-main2(10000)
+runner(1)
 
 
 
