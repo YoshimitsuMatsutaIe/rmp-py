@@ -1,8 +1,11 @@
 import numpy as np
+from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 import time
 from scipy import integrate
-
+import datetime
+import os
+from pathlib import Path
 import sys
 sys.path.append('.')
 import environment
@@ -19,13 +22,18 @@ import visualization
 
 import baxter.baxter as baxter
 
+TIME_SPAN = 30
+TIME_INTERVAL = 1e-2
+
+q0 = baxter.Common.q_neutral  #初期値
+q0_dot = np.zeros_like(q0)
 
 def main(isMulti: bool, obs_num: int):
-    TIME_SPAN = 30*5
-    TIME_INTERVAL = 1e-2
-
-    q0 = baxter.Common.q_neutral  #初期値
-    q0_dot = np.zeros_like(q0)
+    date_now = datetime.datetime.now()
+    name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
+    base = "../rmp-py_result/" + name + "/"
+    os.makedirs(base, exist_ok=True)
+    
 
 
     print("constructing rmp-tree...")
@@ -169,7 +177,7 @@ def main(isMulti: bool, obs_num: int):
     for i in range(2):
         axes[i].legend()
         axes[i].grid()
-    fig.savefig("solver_bax_2.png")
+    fig.savefig(base+"solver_bax_2.png")
 
     def x0(q):
         return np.zeros((3, 1))
@@ -187,7 +195,7 @@ def main(isMulti: bool, obs_num: int):
         is3D=True,
         goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
         obs_data=o_s,
-        save_dir_path="pic/",
+        save_path=base+"animation.gif",
         isSave=True
     )
 
@@ -197,13 +205,13 @@ def main(isMulti: bool, obs_num: int):
 
 def main2(isMulti: bool, obs_num: int):
     """ノードをプロセス毎に再構築"""
-    TIME_SPAN = 8.7
-    TIME_INTERVAL = 1e-2
-
-    q0 = baxter.Common.q_neutral  #初期値
-    q0_dot = np.zeros_like(q0)
-
-
+    
+    date_now = datetime.datetime.now()
+    name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
+    base = "../rmp-py_result/" + name + "/"
+    os.makedirs(base, exist_ok=True)
+    
+    
     r = rmp_node.Root(7, isMulti)
     r.set_state(q0, q0_dot)
 
@@ -217,7 +225,7 @@ def main2(isMulti: bool, obs_num: int):
         r=0.1, L=1, x=0.2, y=-0.4, z=1, n=obs_num, alpha=0, beta=0, gamma=90
     )
 
-    def dX(t, X):
+    def dX(t, X: NDArray[np.float64]):
         print("\nt = ", t)
         X = X.reshape(-1, 1)
         q_ddot = tree_constructor.solve(q=X[:7, :], q_dot=X[7:, :], g=g, o_s=o_s)
@@ -228,7 +236,6 @@ def main2(isMulti: bool, obs_num: int):
     
     sol = integrate.solve_ivp(
         fun = dX,
-        #fun = dX2,
         t_span = (0, TIME_SPAN),
         y0 = np.ravel(np.concatenate([q0, q0_dot])),
         t_eval=np.arange(0, TIME_SPAN, TIME_INTERVAL),
@@ -245,7 +252,7 @@ def main2(isMulti: bool, obs_num: int):
     for i in range(2):
         axes[i].legend()
         axes[i].grid()
-    fig.savefig("solver_bax_2.png")
+    fig.savefig(base+"solver_bax_2.png")
 
     def x0(q):
         return np.zeros((3, 1))
@@ -263,7 +270,7 @@ def main2(isMulti: bool, obs_num: int):
         is3D=True,
         goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
         obs_data=o_s,
-        save_dir_path="pic/",
+        save_path=base+"animation.gif",
         isSave=True
     )
 
@@ -292,7 +299,7 @@ def runner(obs):
 #main2(10)
 #main2(100)
 # main2(500)
-runner(1)
+runner(1000)
 
 
 

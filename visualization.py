@@ -99,9 +99,10 @@ def make_animation(
     cpoint_data: Union[NDArray[np.float64], None]=None,
     goal_data=None,
     obs_data=None,
-    is3D=True,
-    epoch_max=100,
-    isSave=False, save_dir_path='',
+    is3D: bool=True,
+    epoch_max: int=100,
+    isSave=False,
+    save_path: Union[str, None]=None,
 ):
     start_time = time.time()
     
@@ -127,7 +128,7 @@ def make_animation(
     )
     
     
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(projection="3d") if is3D else fig.add_subplot()
     time_template = 'time = %.2f [s]'
     
@@ -141,6 +142,7 @@ def make_animation(
         ax.set_ylim(limits[2], limits[3])
         if is3D:
             ax.set_zlabel('Z[m]')
+            assert len(limits) == 6
             ax.set_zlim(limits[4], limits[5])
             
         ax.set_box_aspect((1,1,1)) if is3D else ax.set_aspect('equal')
@@ -224,7 +226,8 @@ def make_animation(
     )
     
     if isSave:
-        ani.save(save_dir_path + "animation.gif", fps=30, writer='pillow')
+        assert save_path is not None
+        ani.save(save_path, fps=30, writer='pillow')
     # with open(save_dir_path + 'animation.binaryfile', 'wb') as f:
     #     pickle.dump(ani, f)
     
