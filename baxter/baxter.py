@@ -66,6 +66,7 @@ def htm_ee(q: NDArray[np.float64]) -> NDArray[np.float64]:
 
 
 class Common:
+    """データ保管用"""
     L = 278e-3
     h = 64e-3
     H = 1104e-3

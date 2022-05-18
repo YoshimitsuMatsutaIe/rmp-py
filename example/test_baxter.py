@@ -23,8 +23,8 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 60
-TIME_INTERVAL = 1e-2
+TIME_SPAN = 1
+TIME_INTERVAL = 1e-2/2
 
 q0 = baxter.Common.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
@@ -171,7 +171,7 @@ def main(isMulti: bool, obs_num: int):
     
     
     ### 以下グラフ化 ###
-    fig, axes: Axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
     for i in range(7):
         axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
         axes[1].plot(sol.t, sol.y[i+7], label="dq" + str(i))
@@ -281,27 +281,28 @@ def main2(isMulti: bool, obs_num: int):
 def runner(obs):
     print("障害物の個数 :", obs)
 
-    print("並列化無し")
-    t0 = time.process_time()
-    t1 = time.perf_counter()
-    _, ani = main(False, obs)
-    plt.show()
-    print("cpu time = ", time.process_time() - t0)
-    print("real time = ", time.perf_counter() - t1)
-
-
-    # print("並列化有り")
+    # print("並列化無し")
     # t0 = time.process_time()
     # t1 = time.perf_counter()
-    # main2(True, obs)
+    # _, ani = main(False, obs)
     # print("cpu time = ", time.process_time() - t0)
     # print("real time = ", time.perf_counter() - t1)
 
 
+    print("並列化有り")
+    t0 = time.process_time()
+    t1 = time.perf_counter()
+    _, ani2 = main2(True, obs)
+    
+    print("cpu time = ", time.process_time() - t0)
+    print("real time = ", time.perf_counter() - t1)
+    
+    plt.show()
+
 #main2(10)
 #main2(100)
 # main2(500)
-runner(200)
+runner(5000)
 
 
 
