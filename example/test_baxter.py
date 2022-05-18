@@ -1,3 +1,4 @@
+from matplotlib.axes import Axes
 import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
@@ -22,7 +23,7 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 30
+TIME_SPAN = 60
 TIME_INTERVAL = 1e-2
 
 q0 = baxter.Common.q_neutral  #初期値
@@ -150,7 +151,7 @@ def main(isMulti: bool, obs_num: int):
     print("tree size = ", sys.getsizeof(r.children))
 
     def dX(t, X):
-        #print("\nt = ", t)
+        print("\nt = ", t)
         X = X.reshape(-1, 1)
         q_ddot = r.solve(q=X[:7, :], q_dot=X[7:, :])
         X_dot = np.concatenate([X[7:, :], q_ddot])
@@ -170,7 +171,7 @@ def main(isMulti: bool, obs_num: int):
     
     
     ### 以下グラフ化 ###
-    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
+    fig, axes: Axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
     for i in range(7):
         axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
         axes[1].plot(sol.t, sol.y[i+7], label="dq" + str(i))
@@ -199,7 +200,7 @@ def main(isMulti: bool, obs_num: int):
         isSave=True
     )
 
-    # return sol, ani
+    return sol, ani
 
 
 
@@ -273,7 +274,7 @@ def main2(isMulti: bool, obs_num: int):
         save_path=base+"animation.gif",
         isSave=True
     )
-
+    
     return sol, ani
 
 
@@ -283,7 +284,8 @@ def runner(obs):
     print("並列化無し")
     t0 = time.process_time()
     t1 = time.perf_counter()
-    main(False, obs)
+    _, ani = main(False, obs)
+    plt.show()
     print("cpu time = ", time.process_time() - t0)
     print("real time = ", time.perf_counter() - t1)
 
@@ -299,7 +301,7 @@ def runner(obs):
 #main2(10)
 #main2(100)
 # main2(500)
-runner(1000)
+runner(200)
 
 
 
