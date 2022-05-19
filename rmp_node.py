@@ -9,11 +9,7 @@ from typing import Union
 
 from mappings import Identity
 from numpy.typing import NDArray
-import typing
 
-
-from multiprocessing import Pool, cpu_count
-from concurrent.futures import ProcessPoolExecutor
 import time
 
 
@@ -192,32 +188,7 @@ class Root(Node):
             self.resolve()
             return self.x_ddot
         else:
-            self.set_state(q, q_dot)
-            with Pool(processes=cpu_count()-1) as p:
-                ### ルートに構築したサブツリーをコピーして計算 ###
-                result = p.starmap_async(
-                    func = multi_solve,
-                    iterable = ((child, self.x, self.x_dot) for child in self.children)
-                ).get()
-            
-                # result = p.starmap(
-                #     func = multi_solve,
-                #     iterable = ((child, self.x, self.x_dot) for child in self.children)
-                # )
-            
-        
-            
-            
-            self.f = np.zeros_like(self.f)
-            self.M = np.zeros_like(self.M)
-            for r in result:
-                self.f += r[0]
-                self.M += r[1]
-            
-            #print(self.f)
-            self.resolve()
-            
-            return self.x_ddot
+            pass
 
 
 

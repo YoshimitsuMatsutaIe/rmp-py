@@ -121,11 +121,11 @@ class GoalAttractor(LeafBase):
 class ObstacleAvoidance(LeafBase):
     def __init__(
         self, name, parent, calc_mappings,
-        scale_rep,
-        scale_damp,
-        gain,
-        sigma,
-        rw
+        scale_rep: float,
+        scale_damp: float,
+        gain: float,
+        sigma: float,
+        rw: float
     ):
         self.scale_rep = scale_rep
         self.scale_damp = scale_damp
@@ -161,6 +161,7 @@ class ObstacleAvoidance(LeafBase):
             return 0
     
     def __u2_dot(self, s_dot):
+        #print(s_dot)
         if s_dot < 0:
             return -exp(s_dot**2 / (2*self.sigma**2)) * (-s_dot/self.sigma**3)
         else:
@@ -190,10 +191,10 @@ class ObstacleAvoidance(LeafBase):
 class JointLimitAvoidance(LeafBase):
     def __init__(
         self, name, parent: Union[rmp_node.Node, None], calc_mappings,
-        gamma_p,
-        gamma_d,
-        lam,
-        sigma,
+        gamma_p: float,
+        gamma_d: float,
+        lam: float,
+        sigma: float,
         q_max: NDArray[np.float64],
         q_min: NDArray[np.float64],
         q_neutral: NDArray[np.float64],
@@ -346,14 +347,6 @@ class JointLimitAvoidance(LeafBase):
 #         beta_attract = 1 - exp(-1 / 2 * (d / self.sigma_H) ** 2)
         
 #         return weight * self.__basic_metric_H(acceleration, self.A_damp_r, beta_attract)
-
-
-
-
-
-
-
-
 
 
 

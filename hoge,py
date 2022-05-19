@@ -1,0 +1,9 @@
+import numpy as np
+
+def func(x):
+    return x.reshape(-1, 1)
+
+
+from numpy.typing import NDArray
+def func2(x: NDArray[np.float64]):
+    return x.reshape(-1, 1)

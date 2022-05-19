@@ -1,14 +1,14 @@
 import numpy as np
 from numpy.typing import NDArray
 from multiprocessing import Pool, cpu_count
-
+import time
 
 import baxter
 import mappings
-from rmp_node import Node, Root
+from rmp_node import Node
 from rmp_leaf import GoalAttractor, ObstacleAvoidance, JointLimitAvoidance
 
-
+np.set_printoptions(precision=2)
 
 
 def multi_solve2(
@@ -19,8 +19,7 @@ def multi_solve2(
 ):
     """並列用 : 毎回ノード作成
     """
-    #print(node_id)
-    
+    #print(node_id, end="  ")
     if node_id == (-1, 0):
         node = JointLimitAvoidance(
             name="jl",
@@ -65,25 +64,29 @@ def multi_solve2(
         for i, o in enumerate(o_s):
             obs_node = ObstacleAvoidance(
                 name="obs_" + str(i) + ", at " + node.name,
-                parent=node,
-                calc_mappings=mappings.Distance(o, np.zeros_like(o)),
-                scale_rep=0.2,
-                scale_damp=1,
-                gain=5,
-                sigma=1,
-                rw=0.15
+                parent = node,
+                calc_mappings = mappings.Distance(o, np.zeros_like(o)),
+                scale_rep = 0.2,
+                scale_damp = 1,
+                gain = 5,
+                sigma = 1,
+                rw = 0.2
             )
             node.add_child(obs_node)
 
     node.isMulti = True
     f, M = node.solve(q, q_dot)
-    
+    #print(node.name)
+    #print("  f = ", f.T)
+    #print("  M = ", np.linalg.eigvals(M))
     return f, M
 
 
 
 def solve(q, q_dot, g, o_s):
-    with Pool(processes=cpu_count()-1) as p:
+    #core=1
+    core = processes=cpu_count()-1
+    with Pool(core) as p:
         ### プロセス毎にサブツリーを再構成して計算 ###
         node_ids = []
         node_ids.append((-1, 0))

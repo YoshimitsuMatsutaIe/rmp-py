@@ -42,22 +42,27 @@ def calc_scale(
 
 
 def make_data(
-    q_s, joint_phi_s, is3D=True, ee_phi=None, cpoint_phi_s=None,
+    q_s: list[list[float]],
+    joint_phi_s,
+    is3D: bool,
+    ee_phi=None,
+    cpoint_phi_s=None,
 ):
     """描写したい点列を生成
     """
     task_dim = 3 if is3D else 2
-    T_SIZE = len(q_s[0])  # 回数
-    N_JOINT = len(joint_phi_s)
+    T_SIZE = len(q_s[0])  # ループ回数
     
     q = np.array(q_s)  # 縦にくっつくける
     
-    joint_data = np.empty((T_SIZE, task_dim*N_JOINT))
+    joint_data = []
     for i in range(T_SIZE):
-        temp_q = q[:, i:i+1]
-        for j, phi in enumerate(joint_phi_s):
-            joint_data[i:i+1, task_dim*j:task_dim*(j+1)] = phi(temp_q).T
-    
+        q_ = q[:, i:i+1]
+        temp = []
+        for phi in joint_phi_s:
+            temp.append(phi(q_))
+        temp = np.concatenate(temp, axis=1)
+        joint_data.append(temp.tolist())
 
     if ee_phi is not None:
         ee_data = np.empty((T_SIZE, task_dim))
@@ -68,22 +73,14 @@ def make_data(
 
     
     if cpoint_phi_s is not None:
-        cpoint_data: Union[list[Union[NDArray[np.float64], None]], None] = []
-        for n in range(N_JOINT):
-            if len(cpoint_phi_s[n]) == 0:
-                cpoint_data.append(None)
-            else:
-                cpoint_data.append(
-                    np.empty((T_SIZE, task_dim*len(cpoint_phi_s[n])))
-                )
-        
+        cpoint_data = []
         for i in range(T_SIZE):
-            temp_q = q[:, i:i+1]
-            for j, phis in enumerate(cpoint_phi_s):
-                if cpoint_data[j] is not None:
-                    for k, phi in enumerate(phis):
-                        cpoint_data[j][i:i+1, task_dim*k:task_dim*(k+1)] = phi(temp_q).T
-    
+            q_ = q[:, i:i+1]
+            temp = []
+            for phi in cpoint_phi_s:
+                temp.append(phi(q_))
+            temp = np.concatenate(temp, axis=1)
+            cpoint_data.append(temp.tolist())
     else:
         cpoint_data = None
     
@@ -93,10 +90,10 @@ def make_data(
 
 def make_animation(
     t_data: list[float],
-    joint_data: NDArray[np.float64],
+    joint_data: list[list[list[float]]],
     q_data: Union[NDArray[np.float64], None]=None,
     ee_data: Union[NDArray[np.float64], None]=None,
-    cpoint_data: Union[NDArray[np.float64], None]=None,
+    cpoint_data: Union[list[list[list[float]]], None]=None,
     goal_data=None,
     obs_data=None,
     is3D: bool=True,
@@ -105,26 +102,26 @@ def make_animation(
     save_path: Union[str, None]=None,
 ):
     start_time = time.time()
-    
-    assert len(t_data) == len(joint_data), "データ数があってない"
-    
-
     task_dim = 3 if is3D else 2
     
     T_SIZE = len(t_data)
-    N_JOINT = joint_data.shape[1] // task_dim
     
-    # 描写範囲を決定
-    
-    all_data = joint_data.reshape(T_SIZE*N_JOINT, task_dim)
+    ### 描写範囲を決定 ##
+
+    all_data = []
+    for i in range(task_dim):
+        temp = []
+        for j in range(T_SIZE):
+            temp.extend(joint_data[j][i])
+        all_data.append(temp)
     
     limits = calc_scale(
-        min_x=all_data[:, 0:1].min(),
-        max_x=all_data[:, 0:1].max(),
-        min_y=all_data[:, 1:2].min(),
-        max_y=all_data[:, 1:2].max(),
-        min_z=all_data[:, 2:3].min() if is3D else None,
-        max_z=all_data[:, 2:3].max() if is3D else None,
+        min_x=min(all_data[0]),
+        max_x=max(all_data[0]),
+        min_y=min(all_data[1]),
+        max_y=max(all_data[1]),
+        min_z=min(all_data[2]) if is3D else None,
+        max_z=max(all_data[2]) if is3D else None,
     )
     
     
@@ -133,7 +130,7 @@ def make_animation(
     time_template = 'time = %.2f [s]'
     
 
-    def update(i):
+    def update(i: int):
         ax.cla()
         ax.grid(True)
         ax.set_xlabel('X[m]')
@@ -147,11 +144,10 @@ def make_animation(
             
         ax.set_box_aspect((1,1,1)) if is3D else ax.set_aspect('equal')
         
-        js = joint_data[i:i+1, :].reshape(N_JOINT, task_dim)
         if is3D:
-            ax.plot(js[:, 0], js[:, 1], js[:, 2], label="joints", marker="o")
+            ax.plot(joint_data[i][0], joint_data[i][1], joint_data[i][2], label="joints", marker="o")
         else:
-            ax.plot(js[:, 0], js[:, 1], label="joints", marker="o")
+            ax.plot(joint_data[i][0], joint_data[i][1], label="joints", marker="o")
         
         if ee_data is not None:
             if is3D:
@@ -160,14 +156,10 @@ def make_animation(
                 ax.scatter(ee_data[i, 0], ee_data[i, 1], lanel="ee")
         
         if cpoint_data is not None:
-            xc = []
-            for m, cs in enumerate(cpoint_data):
-                if cs is not None:
-                    c = cs[i:i+1, :].reshape(cs.shape[1]//task_dim, task_dim)
-                    if is3D:
-                        ax.scatter(c[:, 0], c[:, 1], c[:, 2], label=str(m))
-                    else:
-                        ax.scatter(c[:, 0], c[:, 1], label=str(m))
+            if is3D:
+                ax.scatter(cpoint_data[i][0], cpoint_data[i][1], cpoint_data[i][2])
+            else:
+                ax.scatter(cpoint_data[i][0], cpoint_data[i][1])
         
         if goal_data is not None:
             if is3D:

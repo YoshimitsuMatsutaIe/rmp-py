@@ -33,17 +33,18 @@ class Translation(Identity):
 
 class Distance(Identity):
     """距離写像"""
-    
-    
-    
     def __init__(self, o: NDArray[np.float64], o_dot: NDArray[np.float64]):
         self.o = o
         self.o_dot = o_dot
     
     def phi(self, x: NDArray[np.float64]) -> float:
+        #print("s = ", LA.norm(x - self.o),)# end="  ")
         return LA.norm(x - self.o)
     
     def velocity(self, J: NDArray[np.float64], x_dot: NDArray[np.float64]):
+        #print("ds = ", J @ (x_dot - self.o_dot), end="  ")
+        #print("J = ", J)
+        #print("x_dot = ", x_dot.T)
         return J @ (x_dot - self.o_dot)
     
     def J(self, x):
