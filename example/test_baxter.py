@@ -25,7 +25,7 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 30
+TIME_SPAN = 10
 TIME_INTERVAL = 1e-3
 
 q0 = baxter.Common.q_neutral  #初期値
@@ -56,7 +56,7 @@ def main(isMulti: bool, obs_num: int):
         name="jl",
         parent=r,
         calc_mappings=mappings.Identity(),
-        gamma_p = 0.01,
+        gamma_p = 0.1,
         gamma_d = 0.05,
         lam = 1,
         sigma = 0.1,
@@ -224,10 +224,8 @@ def main2(isMulti: bool, obs_num: int):
     base = "../rmp-py_result/" + name + "/"
     os.makedirs(base, exist_ok=True)
     
-    
     r = rmp_node.Root(7, isMulti)
     r.set_state(q0, q0_dot)
-
 
 
     ### 障害物 ###
@@ -242,7 +240,6 @@ def main2(isMulti: bool, obs_num: int):
         print("ddq = ", q_ddot.T)
         X_dot = np.concatenate([X[7:, :], q_ddot])
         return np.ravel(X_dot)
-    
     
     
     sol = integrate.solve_ivp(
@@ -304,20 +301,20 @@ def main2(isMulti: bool, obs_num: int):
 def runner(obs):
     print("障害物の個数 :", obs)
 
-    print("並列化無し")
-    t0 = time.process_time()
-    t1 = time.perf_counter()
-    _, ani = main(False, obs)
-    print("cpu time = ", time.process_time() - t0)
-    print("real time = ", time.perf_counter() - t1)
-
-
-    # print("並列化有り")
+    # print("並列化無し")
     # t0 = time.process_time()
     # t1 = time.perf_counter()
-    # _, ani2 = main2(True, obs)
+    # _, ani = main(False, obs)
     # print("cpu time = ", time.process_time() - t0)
     # print("real time = ", time.perf_counter() - t1)
+
+
+    print("並列化有り")
+    t0 = time.process_time()
+    t1 = time.perf_counter()
+    _, ani2 = main2(True, obs)
+    print("cpu time = ", time.process_time() - t0)
+    print("real time = ", time.perf_counter() - t1)
     
     plt.show()
 
@@ -325,7 +322,7 @@ def runner(obs):
 #main2(10)
 #main2(100)
 # main2(500)
-runner(1)
+runner(100)
 
 
 

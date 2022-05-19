@@ -25,7 +25,7 @@ def multi_solve2(
             name="jl",
             parent=None,
             calc_mappings=mappings.Identity(),
-            gamma_p = 0.01,
+            gamma_p = 0.1,
             gamma_d = 0.05,
             lam = 1,
             sigma = 0.1,
@@ -85,7 +85,7 @@ def multi_solve2(
 
 def solve(q, q_dot, g, o_s):
     #core=1
-    core = processes=cpu_count()-1
+    core = cpu_count()-1
     with Pool(core) as p:
         ### プロセス毎にサブツリーを再構成して計算 ###
         node_ids = []

@@ -38,8 +38,10 @@ class Distance(Identity):
         self.o_dot = o_dot
     
     def phi(self, x: NDArray[np.float64]) -> float:
-        #print("s = ", LA.norm(x - self.o),)# end="  ")
-        return LA.norm(x - self.o)
+        s = LA.norm(x - self.o)
+        if s < 0.01:
+            print("s = ", s)
+        return s
     
     def velocity(self, J: NDArray[np.float64], x_dot: NDArray[np.float64]):
         #print("ds = ", J @ (x_dot - self.o_dot), end="  ")
