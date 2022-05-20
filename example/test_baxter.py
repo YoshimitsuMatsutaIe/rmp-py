@@ -25,7 +25,7 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 30
+TIME_SPAN = 3
 TIME_INTERVAL = 1e-3
 
 q0 = baxter.Common.q_neutral  #初期値
@@ -322,7 +322,7 @@ def runner(obs):
 #main2(10)
 #main2(100)
 # main2(500)
-runner(1)
+runner(300)
 
 
 
