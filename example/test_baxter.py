@@ -25,7 +25,7 @@ import visualization
 
 import baxter.baxter as baxter
 
-TIME_SPAN = 10
+TIME_SPAN = 30
 TIME_INTERVAL = 1e-3
 
 q0 = baxter.Common.q_neutral  #初期値
@@ -247,7 +247,7 @@ def main2(isMulti: bool, obs_num: int):
         t_span = (0, TIME_SPAN),
         y0 = np.ravel(np.concatenate([q0, q0_dot])),
         t_eval=np.arange(0, TIME_SPAN, TIME_INTERVAL),
-        #atol=1e-6
+        #atol=1e-10
     )
     print(sol.message)
     
@@ -322,7 +322,7 @@ def runner(obs):
 #main2(10)
 #main2(100)
 # main2(500)
-runner(100)
+runner(1)
 
 
 

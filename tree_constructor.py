@@ -49,7 +49,7 @@ def multi_solve2(
                 name="ee-attractor", parent=node, dim=3,
                 calc_mappings=mappings.Translation(g, g_dot),
                 max_speed = 5.0,
-                gain = 5.0,
+                gain = 10.0,
                 f_alpha = 0.15,
                 sigma_alpha = 1.0,
                 sigma_gamma = 1.0,
@@ -68,7 +68,7 @@ def multi_solve2(
                 calc_mappings = mappings.Distance(o, np.zeros_like(o)),
                 scale_rep = 0.2,
                 scale_damp = 1,
-                gain = 5,
+                gain = 50,
                 sigma = 1,
                 rw = 0.2
             )

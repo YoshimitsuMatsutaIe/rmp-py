@@ -92,7 +92,6 @@ class Node:
         self.x_dot = self.mappings.velocity(self.J, parent_x_dot)
         self.J_dot = self.mappings.J_dot(parent_x, parent_x_dot)
 
-        
         self.pushforward()
         self.pullback()
         
@@ -181,6 +180,7 @@ class Root(Node):
     
     
     def solve(self, q=None, q_dot=None, dt=None, g=None, o_s=None):
+        """resolvwの反対"""
         self.set_state(q, q_dot)
         if self.isMulti == False:
             self.pushforward()

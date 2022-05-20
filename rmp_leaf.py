@@ -220,7 +220,7 @@ class JointLimitAvoidance(LeafBase):
         if not self.isMulti:
             super().pullback()
         else:
-            pass
+            self.calc_rmp_func()
     
     
     def calc_rmp_func(self,):
@@ -295,9 +295,6 @@ class JointLimitAvoidance(LeafBase):
     
     def __force(self,) -> NDArray[np.float64]:
         return self.M @ (self.gamma_p*(self.q_neutral - self.x) - self.gamma_d*self.x_dot) - self.__xi()
-
-
-
 
 
 
