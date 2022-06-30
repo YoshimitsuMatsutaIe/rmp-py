@@ -48,8 +48,8 @@ def multi_solve2(
             attracter = GoalAttractor(
                 name="ee-attractor", parent=node, dim=3,
                 calc_mappings=mappings.Translation(g, g_dot),
-                max_speed = 5.0,
-                gain = 10.0,
+                max_speed = 8.0,
+                gain = 5.0,
                 f_alpha = 0.15,
                 sigma_alpha = 1.0,
                 sigma_gamma = 1.0,
