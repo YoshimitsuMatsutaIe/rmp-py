@@ -97,7 +97,7 @@ def make_animation(
     goal_data=None,
     obs_data=None,
     is3D: bool=True,
-    epoch_max: int=100,
+    epoch_max: int=60,
     isSave=False,
     save_path: Union[str, None]=None,
 ):
@@ -211,6 +211,7 @@ def make_animation(
     else:
         step = T_SIZE // epoch_max
     
+    print("step = ", step)
     ani = anm.FuncAnimation(
         fig = fig,
         func = update,
@@ -219,7 +220,7 @@ def make_animation(
     
     if isSave:
         assert save_path is not None
-        ani.save(save_path, fps=30, writer='pillow')
+        ani.save(save_path, fps=60, writer='pillow')
     # with open(save_dir_path + 'animation.binaryfile', 'wb') as f:
     #     pickle.dump(ani, f)
     

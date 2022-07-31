@@ -5,15 +5,15 @@ import mappings
 import sys
 sys.path.append('.')
 
-from baxter.htm import *
-from baxter.Jos import *
-from baxter.JRxs import *
-from baxter.JRys import *
-from baxter.JRzs import *
-from baxter.Jo_dots import *
-from baxter.JRx_dots import *
-from baxter.JRy_dots import *
-from baxter.JRz_dots import *
+from franka_emika.htm import *
+from franka_emika.Jos import *
+from franka_emika.JRxs import *
+from franka_emika.JRys import *
+from franka_emika.JRzs import *
+from franka_emika.Jo_dots import *
+from franka_emika.JRx_dots import *
+from franka_emika.JRy_dots import *
+from franka_emika.JRz_dots import *
 
 
 def htm_0(q: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -68,81 +68,78 @@ def htm_ee(q: NDArray[np.float64]) -> NDArray[np.float64]:
 
 class Common:
     """データ保管用"""
-    L = 278e-3
-    h = 64e-3
-    H = 1104e-3
-    L0 = 270.35e-3
-    L1 = 69e-3
-    L2 = 364.35e-3
-    L3 = 69e-3
-    L4 = 374.29e-3
-    L5 = 10e-3
-    L6 = 368.3e-3
 
     q_neutral: NDArray[np.float64] = np.array([[0, -31, 0, 43, 0, 72, 0]]).T * np.pi/180  # ニュートラルの姿勢
     q_min: NDArray[np.float64] = np.array([[-141, -123, -173, -3, -175, -90, -175]]).T * np.pi/180
     q_max: NDArray[np.float64] = np.array([[51, 60, 173, 150, 175, 120, 175]]).T * np.pi/180
 
     # 制御点のローカル座標
-    R = 0.05
+
+
+    d1 = 0.333
+    d3 = 0.316
+    d5 = 0.384
+    df = 0.107
+    a4 = 0.0825
+    a5 = -0.0825
+    a7 = 0.088
+
+
+    R = a7
 
     r_bars_in_0 = (
-        np.array([[0, L1/2, -L0/2, 1]]).T,
-        np.array([[0, -L1/2, -L0/2, 1]]).T,
-        np.array([[L1/2, 0, -L0/2, 1]]).T,
-        np.array([[-L1/2, 0, -L0/2, 1]]).T,
+        np.array([[R/2, R/2, -d1/2, 1]]).T,
+        np.array([[R/2, -R/2, -d1/2, 1]]).T,
+        np.array([[-R/2, R/2, -d1/2, 1]]).T,
+        np.array([[-R/2, -R/2, -d1/2, 1]]).T,
     )  # 1座標系からみた制御点位置
 
     r_bars_in_1 = (
-        np.array([[0, 0, L3/2, 1]]).T,
-        np.array([[0, 0, -L3/2, 1]]).T,
+        np.array([[0, 0, 0, 1]]).T,
     )
 
     r_bars_in_2 = (
-        np.array([[0, L3/2, -L2*2/3, 1]]).T,
-        np.array([[0, -L3/2, -L2*2/3, 1]]).T,
-        np.array([[L3/2, 0, -L2*2/3, 1]]).T,
-        np.array([[-L3/2, 0, -L2*2/3, 1]]).T,
-        np.array([[0, L3/2, -L2*1/3, 1]]).T,
-        np.array([[0, -L3/2, -L2*1/3, 1]]).T,
-        np.array([[L3/2, 0, -L2*1/3, 1]]).T,
-        np.array([[-L3/2, 0, -L2*1/3, 1]]).T,
+        np.array([[R/2, R/2, -d1/3, 1]]).T,
+        np.array([[R/2, -R/2, -d1/3, 1]]).T,
+        np.array([[-R/2, R/2, -d1/3, 1]]).T,
+        np.array([[-R/2, -R/2, -d1/3, 1]]).T,
+        np.array([[R/2, R/2, -d1*2/3, 1]]).T,
+        np.array([[R/2, -R/2, -d1*2/3, 1]]).T,
+        np.array([[-R/2, R/2, -d1*2/3, 1]]).T,
+        np.array([[-R/2, -R/2, -d1*2/3, 1]]).T,
     )
 
     r_bars_in_3 = (
-        np.array([[0, 0, L3/2, 1]]).T,
-        np.array([[0, 0, -L3/2, 1]]).T,
+        np.array([[0, 0, -R/2, 1]]).T,
+        np.array([[0, 0, R/2, 1]]).T,
     )
 
     r_bars_in_4 = (
-        np.array([[0, R/2, -L4/3, 1]]).T,
-        np.array([[0, -R/2, -L4/3, 1]]).T,
-        np.array([[R/2, 0, -L4/3, 1]]).T,
-        np.array([[-R/2, 0, -L4/3, 1]]).T,
-        np.array([[0, R/2, -L4/3*2, 1]]).T,
-        np.array([[0, -R/2, -L4/3*2, 1]]).T,
-        np.array([[R/2, 0, -L4/3*2, 1]]).T,
-        np.array([[-R/2, 0, -L4/3*2, 1]]).T,
+        np.array([[R/2, R/2, -d5*2/3, 1]]).T,
+        np.array([[R/2, -R/2, -d5*2/3, 1]]).T,
+        np.array([[-R/2, R/2, -d5*2/3, 1]]).T,
+        np.array([[-R/2, -R/2, -d5*2/3, 1]]).T,
+        np.array([[R/2.5, R/2.5, -d5/4, 1]]).T,
+        np.array([[R/2.5, -R/2.5, -d5/4, 1]]).T,
+        np.array([[-R/2.5, R/2.5, -d5/4, 1]]).T,
+        np.array([[-R/2.5, -R/2.5, -d5/4, 1]]).T,
     )
 
     r_bars_in_5 = (
-        np.array([[0, 0, L5/2, 1]]).T,
-        np.array([[0, 0, -L5/2, 1]]).T,
+        np.array([[0, 0, R/2, 1]]).T,
+        np.array([[0, 0, -R/2, 1]]).T,
     )
 
     r_bars_in_6 = (
-        np.array([[0, R/2, L6/3, 1]]).T,
-        np.array([[0, -R/2, L6/3, 1]]).T,
-        np.array([[R/2, 0, L6/3, 1]]).T,
-        np.array([[-R/2, 0, L6/3, 1]]).T,
-        np.array([[0, R/2, L6/3*2, 1]]).T,
-        np.array([[0, -R/2, L6/3*2, 1]]).T,
-        np.array([[R/2, 0, L6/3*2, 1]]).T,
-        np.array([[-R/2, 0, L6/3*2, 1]]).T,
+        np.array([[0, 0, -R, 1]]).T,
+        np.array([[R/2, R/2, R, 1]]).T,
+        np.array([[R/2, -R/2, R, 1]]).T,
+        np.array([[-R/2, R/2, R, 1]]).T,
+        np.array([[-R/2, -R/2, R, 1]]).T,
     )
 
     r_bars_in_GL = (
-        np.array([[0, 0, 0, 1]]).T,
+        np.array([[0, 0, R/2, 1]]).T,
     )
 
     # 追加
@@ -192,14 +189,4 @@ class CPoint(mappings.Identity):
 
 
 if __name__ == "__main__":
-    q = Common.q_neutral
-    dq = np.zeros_like(q)+0.1
-    
-    
-    
-    c = CPoint(6, 2)
-    
-    print(c.phi(q))
-    print(c.J(q))
-    print(c.J_dot(q, dq))
-    print(c.velocity(c.J_dot(q, dq), dq))
+    pass
