@@ -49,15 +49,17 @@ rmp_param_ex = {
 
 def multi_solve2(
     node_id: tuple[int, int],
-    q, q_dot,g, o_s, rmp_param, robot_name
+    q, q_dot,g, o_s, rmp_param, robot_name: str
 ):
     """並列用 : 毎回ノード作成
     """
     
     if robot_name == 'baxter':
         robot_model = baxter
-    elif robot_name == 'fanka_emika':
+    elif robot_name == 'franka_emika':
         robot_model = franka_emika
+    else:
+        print('!!!!!!!')
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):

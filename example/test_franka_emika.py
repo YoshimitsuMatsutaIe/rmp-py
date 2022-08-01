@@ -1,7 +1,8 @@
 """franka emikaロボットのテスト"""
 
+
 import numpy as np
-from numpy.typing import NDArray
+
 import matplotlib.pyplot as plt
 import time
 from scipy import integrate
@@ -23,20 +24,24 @@ import mappings
 import visualization
 
 
-import baxter.baxter as baxter
+import franka_emika.franka_emika as franka_emika
 
-TIME_SPAN = 20
+
+
+
+ROBOT_NAME = 'franka_emika'
+
+
+TIME_SPAN = 300
 TIME_INTERVAL = 1e-2
 
-q0 = baxter.Common.q_neutral  #初期値
+q0 = franka_emika.CPoint.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
 
 ### 目標 ###
-#g = np.array([[0.0, -0.4, 1]]).T
-g = np.array([[-0.2, -0.6, 0.99]]).T
+g = np.array([[0.5, 0.05, 1.2]]).T
 
 g_dot = np.zeros_like(g)
-
 
 
 
@@ -53,15 +58,48 @@ def main2(isMulti: bool, obs_num: int):
     r.set_state(q0, q0_dot)
 
 
+    rmp_param = {
+        'jl' : {
+            'gamma_p' : 0.1,
+            'gamma_d' : 0.05,
+            'lam' : 1,
+            'sigma' : 0.1
+        },
+        'attractor' : {
+            'max_speed' : 8.0,
+            'gain' : 5.0,
+            'f_alpha' : 0.15,
+            'sigma_alpha' : 1.0,
+            'sigma_gamma' : 1.0,
+            'wu' : 10.0,
+            'wl' : 0.1,
+            'alpha' : 0.15,
+            'epsilon' : 0.5,
+        },
+        'obs' : {
+            'scale_rep' : 0.2,
+            'scale_damp' : 1,
+            'gain' : 50,
+            'sigma' : 1,
+            'rw' : 0.2
+        }
+    }
+
+
+
     ### 障害物 ###
     o_s = environment._set_cylinder(
-        r=0.1, L=0.8, x=-0.2, y=-0.4, z=0.8, n=obs_num, alpha=0, beta=0, gamma=90
+        r=0.05, L=1.5, x=0.35, y=0.0, z=0.5, n=obs_num, alpha=0, beta=0, gamma=90
     )
 
-    def dX(t, X: NDArray[np.float64]):
+    def dX(t, X):
         print("\nt = ", t)
         X = X.reshape(-1, 1)
-        q_ddot = tree_constructor.solve(q=X[:7, :], q_dot=X[7:, :], g=g, o_s=o_s)
+        q_ddot = tree_constructor.solve(
+            q=X[:7, :], q_dot=X[7:, :], g=g, o_s=o_s,
+            robot_name=ROBOT_NAME,
+            rmp_param=rmp_param
+        )
         print("ddq = ", q_ddot.T)
         X_dot = np.concatenate([X[7:, :], q_ddot])
         return np.ravel(X_dot)
@@ -89,12 +127,12 @@ def main2(isMulti: bool, obs_num: int):
 
 
     cpoint_phis = []
-    for i, rs in enumerate(baxter.Common.R_BARS_ALL[:-1]):
+    for i, rs in enumerate(franka_emika.CPoint.R_BARS_ALL[:-1]):
         for j, _ in enumerate(rs):
-            map_ = baxter.CPoint(i, j)
+            map_ = franka_emika.CPoint(i, j)
             cpoint_phis.append(map_.phi)
 
-    map_ = baxter.CPoint(7, 0)
+    map_ = franka_emika.CPoint(7, 0)
     cpoint_phis.append(map_.phi)
 
 
@@ -104,9 +142,9 @@ def main2(isMulti: bool, obs_num: int):
     q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
         q_s = [sol.y[i] for i in range(7)],
         cpoint_phi_s=cpoint_phis,
-        joint_phi_s=[x0, baxter.o_W0, baxter.o_BR, baxter.o_0, baxter.o_1, baxter.o_2, baxter.o_3, baxter.o_4, baxter.o_5, baxter.o_6, baxter.o_ee],
+        joint_phi_s=[x0, franka_emika.o_0, franka_emika.o_1, franka_emika.o_2, franka_emika.o_3, franka_emika.o_4, franka_emika.o_5, franka_emika.o_6, franka_emika.o_ee],
         is3D=True,
-        ee_phi=baxter.o_ee
+        ee_phi=franka_emika.o_ee
     )
 
     ani = visualization.make_animation(
@@ -144,5 +182,11 @@ def runner(obs):
     plt.show()
 
 
-runner(300)
+#main2(10)
+#main2(100)
+# main2(500)
+runner(1)
 
+
+
+# plt.show()

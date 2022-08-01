@@ -276,7 +276,7 @@ def main2(isMulti: bool, obs_num: int):
         r=0.1, L=0.8, x=-0.2, y=-0.4, z=0.8, n=obs_num, alpha=0, beta=0, gamma=90
     )
 
-    def dX(t, X: NDArray[np.float64]):
+    def dX(t, X):
         print("\nt = ", t)
         X = X.reshape(-1, 1)
         q_ddot = tree_constructor.solve(
@@ -369,7 +369,7 @@ def runner(obs):
 #main2(10)
 #main2(100)
 # main2(500)
-runner(300)
+runner(1)
 
 
 

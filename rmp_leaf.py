@@ -83,6 +83,7 @@ class GoalAttractor(LeafBase):
     
     
     def calc_rmp_func(self,):
+        print("error = ", self.x.T)
         self.M = self.__inertia_matrix()
         self.f = self.__force()
     
