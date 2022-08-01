@@ -67,8 +67,8 @@ def htm_ee(q):
 
 
 
-class Common:
-    """データ保管用"""
+
+class CPoint(mappings.Identity):
     L = 278e-3
     h = 64e-3
     H = 1104e-3
@@ -165,22 +165,19 @@ class Common:
     
     
     ee_id = (7, 0)
-
-
-
-class CPoint(mappings.Identity):
+    
     
     def __init__(self, flame_num, position_num):
-        self.htm = Common.HTM[flame_num]
-        self.jo = Common.JO[flame_num]
-        self.jrx = Common.JRX[flame_num]
-        self.jry = Common.JRY[flame_num]
-        self.jrz = Common.JRZ[flame_num]
-        self.jo_dot = Common.JO_DOT[flame_num]
-        self.jrx_dot = Common.JRX_DOT[flame_num]
-        self.jry_dot = Common.JRY_DOT[flame_num]
-        self.jrz_dot = Common.JRZ_DOT[flame_num]
-        self.r_bar = Common.R_BARS_ALL[flame_num][position_num]
+        self.htm = self.HTM[flame_num]
+        self.jo = self.JO[flame_num]
+        self.jrx = self.JRX[flame_num]
+        self.jry = self.JRY[flame_num]
+        self.jrz = self.JRZ[flame_num]
+        self.jo_dot = self.JO_DOT[flame_num]
+        self.jrx_dot = self.JRX_DOT[flame_num]
+        self.jry_dot = self.JRY_DOT[flame_num]
+        self.jrz_dot = self.JRZ_DOT[flame_num]
+        self.r_bar = self.R_BARS_ALL[flame_num][position_num]
     
     def phi(self, q):
         return (self.htm(q) @ self.r_bar)[:3, :]

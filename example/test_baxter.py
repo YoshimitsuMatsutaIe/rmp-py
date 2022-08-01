@@ -25,10 +25,21 @@ import visualization
 
 import baxter.baxter as baxter
 
+
+
+
+ROBOT_NAME = 'baxter'
+
+
+
+
+
+
+
 TIME_SPAN = 20
 TIME_INTERVAL = 1e-2
 
-q0 = baxter.Common.q_neutral  #初期値
+q0 = baxter.CPoint.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
 
 ### 目標 ###
@@ -270,6 +281,7 @@ def main2(isMulti: bool, obs_num: int):
         X = X.reshape(-1, 1)
         q_ddot = tree_constructor.solve(
             q=X[:7, :], q_dot=X[7:, :], g=g, o_s=o_s,
+            robot_name=ROBOT_NAME,
             rmp_param=rmp_param
         )
         print("ddq = ", q_ddot.T)
@@ -299,7 +311,7 @@ def main2(isMulti: bool, obs_num: int):
 
 
     cpoint_phis = []
-    for i, rs in enumerate(baxter.Common.R_BARS_ALL[:-1]):
+    for i, rs in enumerate(baxter.CPoint.R_BARS_ALL[:-1]):
         for j, _ in enumerate(rs):
             map_ = baxter.CPoint(i, j)
             cpoint_phis.append(map_.phi)

@@ -6,8 +6,8 @@ from multiprocessing import Pool, cpu_count
 import numpy as np
 
 # ロボットモデルの導入
-import baxter as robot_model
-#import franka_emika as robot_model
+import baxter.baxter as baxter
+import franka_emika.franka_emika as franka_emika
 
 import mappings
 from rmp_leaf import GoalAttractor, JointLimitAvoidance, ObstacleAvoidance
@@ -49,10 +49,16 @@ rmp_param_ex = {
 
 def multi_solve2(
     node_id: tuple[int, int],
-    q, q_dot,g, o_s, rmp_param
+    q, q_dot,g, o_s, rmp_param, robot_name
 ):
     """並列用 : 毎回ノード作成
     """
+    
+    if robot_name == 'baxter':
+        robot_model = baxter
+    elif robot_name == 'fanka_emika':
+        robot_model = franka_emika
+    
     #print(node_id, end="  ")
     if node_id == (-1, 0):
         node = JointLimitAvoidance(
@@ -63,10 +69,10 @@ def multi_solve2(
             gamma_d = rmp_param['jl']['gamma_d'],
             lam = rmp_param['jl']['lam'],
             sigma = rmp_param['jl']['sigma'],
-            q_max = robot_model.Common.q_max,
-            q_min = robot_model.Common.q_min,
-            q_neutral = robot_model.Common.q_neutral,
-            parent_dim=robot_model.Common.q_neutral.shape[0]
+            q_max = robot_model.CPoint.q_max,
+            q_min = robot_model.CPoint.q_min,
+            q_neutral = robot_model.CPoint.q_neutral,
+            parent_dim=robot_model.CPoint.q_neutral.shape[0]
         )
     else:
         temp_map = robot_model.CPoint(*node_id)
@@ -76,7 +82,7 @@ def multi_solve2(
             parent = None,
             mappings = temp_map
         )
-        if node_id == robot_model.Common.ee_id:
+        if node_id == robot_model.CPoint.ee_id:
             ### 目標 ###
             g_dot = np.zeros_like(g)
             attracter = GoalAttractor(
@@ -119,18 +125,26 @@ def multi_solve2(
 
 
 
-def solve(q, q_dot, g, o_s, rmp_param=rmp_param_ex):
+def solve(q, q_dot, g, o_s, robot_name, rmp_param=rmp_param_ex):
+    
+    
+    if robot_name == 'baxter':
+        robot_model = baxter
+    elif robot_name == 'franka_emika':
+        robot_model = franka_emika
+    
+    
     #core=1
     core = cpu_count()-1
     with Pool(core) as p:
         ### プロセス毎にサブツリーを再構成して計算 ###
         node_ids = []
         node_ids.append((-1, 0))
-        for i, Rs in enumerate(robot_model.Common.R_BARS_ALL):
+        for i, Rs in enumerate(robot_model.CPoint.R_BARS_ALL):
             node_ids += [(i, j) for j in range(len(Rs))]
         result = p.starmap(
             func = multi_solve2,
-            iterable = ((node_id, q, q_dot, g, o_s, rmp_param) for node_id in node_ids)
+            iterable = ((node_id, q, q_dot, g, o_s, rmp_param, robot_name) for node_id in node_ids)
         )
     
     
