@@ -1,4 +1,4 @@
-""""""
+"""baxterロボットのテスト"""
 
 import numpy as np
 from numpy.typing import NDArray
@@ -218,6 +218,7 @@ g_dot = np.zeros_like(g)
 
 
 
+
 def main2(isMulti: bool, obs_num: int):
     """ノードをプロセス毎に再構築"""
     
@@ -230,6 +231,35 @@ def main2(isMulti: bool, obs_num: int):
     r.set_state(q0, q0_dot)
 
 
+    rmp_param = {
+        'jl' : {
+            'gamma_p' : 0.1,
+            'gamma_d' : 0.05,
+            'lam' : 1,
+            'sigma' : 0.1
+        },
+        'attractor' : {
+            'max_speed' : 8.0,
+            'gain' : 5.0,
+            'f_alpha' : 0.15,
+            'sigma_alpha' : 1.0,
+            'sigma_gamma' : 1.0,
+            'wu' : 10.0,
+            'wl' : 0.1,
+            'alpha' : 0.15,
+            'epsilon' : 0.5,
+        },
+        'obs' : {
+            'scale_rep' : 0.2,
+            'scale_damp' : 1,
+            'gain' : 50,
+            'sigma' : 1,
+            'rw' : 0.2
+        }
+    }
+
+
+
     ### 障害物 ###
     o_s = environment._set_cylinder(
         r=0.1, L=0.8, x=-0.2, y=-0.4, z=0.8, n=obs_num, alpha=0, beta=0, gamma=90
@@ -238,7 +268,10 @@ def main2(isMulti: bool, obs_num: int):
     def dX(t, X: NDArray[np.float64]):
         print("\nt = ", t)
         X = X.reshape(-1, 1)
-        q_ddot = tree_constructor.solve(q=X[:7, :], q_dot=X[7:, :], g=g, o_s=o_s)
+        q_ddot = tree_constructor.solve(
+            q=X[:7, :], q_dot=X[7:, :], g=g, o_s=o_s,
+            rmp_param=rmp_param
+        )
         print("ddq = ", q_ddot.T)
         X_dot = np.concatenate([X[7:, :], q_ddot])
         return np.ravel(X_dot)

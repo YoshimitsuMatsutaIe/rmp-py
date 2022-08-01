@@ -14,10 +14,7 @@ from typing import Union
 
 
 
-def calc_scale(
-    max_x, min_x, max_y, min_y,
-    max_z:Union[float, None]=None, min_z:Union[float, None]=None
-) -> Union[tuple[float, float, float, float], tuple[float, float, float, float, float, float]]:
+def calc_scale(max_x, min_x, max_y, min_y,max_z=None, min_z=None):
     """軸範囲を計算"""
     
     mid_x = (max_x + min_x) * 0.5

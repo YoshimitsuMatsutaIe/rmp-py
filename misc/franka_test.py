@@ -10,7 +10,7 @@ sys.path.append('.')
 
 from franka_emika.htm import *
 
-from franka_emika.main import *
+from franka_emika.franka_emika import *
 
 
 

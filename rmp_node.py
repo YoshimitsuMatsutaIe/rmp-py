@@ -8,7 +8,6 @@ from numpy import linalg as LA
 from typing import Union
 
 from mappings import Identity
-from numpy.typing import NDArray
 
 import time
 
@@ -32,8 +31,8 @@ class Node:
         
         self.x = np.zeros((self.dim, 1))
         self.x_dot = np.zeros_like(self.x)
-        self.f: NDArray[np.float64] = np.zeros_like(self.x)
-        self.M: NDArray[np.float64] = np.zeros((self.dim, self.dim))
+        self.f = np.zeros_like(self.x)
+        self.M = np.zeros((self.dim, self.dim))
         if parent is not None and parent_dim is None:
             self.J = np.zeros((self.dim, parent.dim))
             self.J_dot = np.zeros_like(self.J)
@@ -77,10 +76,7 @@ class Node:
             self.parent.M += self.J.T @ self.M @ self.J
     
     
-    def solve(
-        self,
-        parent_x: NDArray[np.float64], parent_x_dot: NDArray[np.float64]
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    def solve(self, parent_x, parent_x_dot):
         """並列処理用"""
         assert self.isMulti == True
         #time.sleep(1)
@@ -153,7 +149,7 @@ class Root(Node):
         self.isMulti = isMulti
     
     
-    def set_state(self, q: NDArray[np.float64], q_dot: NDArray[np.float64]):
+    def set_state(self, q, q_dot):
         self.x = q
         self.x_dot = q_dot
     

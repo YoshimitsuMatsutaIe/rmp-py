@@ -1,7 +1,6 @@
 import numpy as np
 from numpy import linalg as LA
-from numpy.typing import NDArray
-from math import exp, log
+from math import exp
 from typing import Union
 
 import mappings
@@ -88,12 +87,12 @@ class GoalAttractor(LeafBase):
         self.f = self.__force()
     
     
-    def __grad_phi(self,) -> NDArray[np.float64]:
+    def __grad_phi(self,):
         x_norm = LA.norm(self.x)
         return (1-exp(-2*self.alpha*x_norm)) / (1+exp(-2*self.alpha*x_norm)) * self.x / x_norm
     
     
-    def __inertia_matrix(self,) -> NDArray[np.float64]:
+    def __inertia_matrix(self,):
         x_norm = LA.norm(self.x)
         alpha_x = exp(-x_norm**2 / (2 * self.sigma_alpha**2))
         gamma_x = exp(-x_norm**2 / (2 * self.sigma_gamma**2))
@@ -103,7 +102,7 @@ class GoalAttractor(LeafBase):
         return wx*((1-alpha_x) * grad @ grad.T + (alpha_x+self.epsilon) * np.eye(self.dim))
     
     
-    def __force(self,) -> NDArray[np.float64]:
+    def __force(self,):
         xi = self.xi_func(
             x = self.x,
             x_dot = self.x_dot,
@@ -196,9 +195,9 @@ class JointLimitAvoidance(LeafBase):
         gamma_d: float,
         lam: float,
         sigma: float,
-        q_max: NDArray[np.float64],
-        q_min: NDArray[np.float64],
-        q_neutral: NDArray[np.float64],
+        q_max,
+        q_min,
+        q_neutral,
         parent_dim: Union[int, None]=None
     ):
         self.gamma_p = gamma_p
@@ -281,7 +280,7 @@ class JointLimitAvoidance(LeafBase):
             xi.append(_xi)
         return np.array([xi]).T
     
-    def __inertia_matrix(self,) -> NDArray[np.float64]:
+    def __inertia_matrix(self,):
         diags = []
         for i in range(self.dim):
             _s = self.lam * self.__a(
@@ -293,7 +292,7 @@ class JointLimitAvoidance(LeafBase):
         #print(diags)
         return np.diag(diags)
     
-    def __force(self,) -> NDArray[np.float64]:
+    def __force(self,):
         return self.M @ (self.gamma_p*(self.q_neutral - self.x) - self.gamma_d*self.x_dot) - self.__xi()
 
 
