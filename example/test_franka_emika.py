@@ -30,16 +30,14 @@ import franka_emika.franka_emika as franka_emika
 
 
 ROBOT_NAME = 'franka_emika'
-
-
-TIME_SPAN = 300
+TIME_SPAN = 60*3
 TIME_INTERVAL = 1e-2
 
 q0 = franka_emika.CPoint.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
 
 ### 目標 ###
-g = np.array([[0.5, 0.05, 1.2]]).T
+g = np.array([[0.65, -0.08, 0.5]]).T
 
 g_dot = np.zeros_like(g)
 
@@ -60,7 +58,7 @@ def main2(isMulti: bool, obs_num: int):
 
     rmp_param = {
         'jl' : {
-            'gamma_p' : 0.1,
+            'gamma_p' : 0.05,
             'gamma_d' : 0.05,
             'lam' : 1,
             'sigma' : 0.1
@@ -77,11 +75,11 @@ def main2(isMulti: bool, obs_num: int):
             'epsilon' : 0.5,
         },
         'obs' : {
-            'scale_rep' : 0.2,
+            'scale_rep' : 0.1,
             'scale_damp' : 1,
-            'gain' : 50,
+            'gain' : 5,
             'sigma' : 1,
-            'rw' : 0.2
+            'rw' : 0.1
         }
     }
 
@@ -89,7 +87,7 @@ def main2(isMulti: bool, obs_num: int):
 
     ### 障害物 ###
     o_s = environment._set_cylinder(
-        r=0.05, L=1.5, x=0.35, y=0.0, z=0.5, n=obs_num, alpha=0, beta=0, gamma=90
+        r=0.05, L=1.5, x=0.3, y=0.0, z=0.5, n=obs_num, alpha=0, beta=0, gamma=90
     )
 
     def dX(t, X):
@@ -127,7 +125,7 @@ def main2(isMulti: bool, obs_num: int):
 
 
     cpoint_phis = []
-    for i, rs in enumerate(franka_emika.CPoint.R_BARS_ALL[:-1]):
+    for i, rs in enumerate(franka_emika.CPoint.R_BARS_ALL):#[:-1]):
         for j, _ in enumerate(rs):
             map_ = franka_emika.CPoint(i, j)
             cpoint_phis.append(map_.phi)
@@ -185,7 +183,7 @@ def runner(obs):
 #main2(10)
 #main2(100)
 # main2(500)
-runner(1)
+runner(200)
 
 
 

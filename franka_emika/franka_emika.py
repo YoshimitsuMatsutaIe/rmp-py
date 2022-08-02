@@ -84,16 +84,25 @@ class CPoint(mappings.Identity):
 
 
     R = a7
+    
+    R0 = 108e-3
 
     r_bars_in_0 = (
-        np.array([[R/2, R/2, -d1/2, 1]]).T,
-        np.array([[R/2, -R/2, -d1/2, 1]]).T,
-        np.array([[-R/2, R/2, -d1/2, 1]]).T,
-        np.array([[-R/2, -R/2, -d1/2, 1]]).T,
-    )  # 1座標系からみた制御点位置
+        np.array([[R0/2, R0/2, -d1/3, 1]]).T,
+        np.array([[R0/2, -R0/2, -d1/3, 1]]).T,
+        np.array([[-R0/2, R0/2, -d1/3, 1]]).T,
+        np.array([[-R0/2, -R0/2, -d1/3, 1]]).T,
+        np.array([[0, -R0, 0, 1]]).T,
+        np.array([[R0/2, 0, 0, 1]]).T,
+        np.array([[-R0/2, 0, 0, 1]]).T,
+    )  # ジョイント1によって回転する制御点
 
     r_bars_in_1 = (
-        np.array([[0, 0, 0, 1]]).T,
+        np.array([[0, 0, R0, 1]]).T,
+        np.array([[R0/2, -d3/4, R0/2, 1]]).T,
+        np.array([[R0/2, -d3/4, -R0/2, 1]]).T,
+        np.array([[-R0/2, -d3/4, R0/2, 1]]).T,
+        np.array([[-R0/2, -d3/4, -R0/2, 1]]).T
     )
 
     r_bars_in_2 = (
@@ -101,10 +110,10 @@ class CPoint(mappings.Identity):
         np.array([[R/2, -R/2, -d1/3, 1]]).T,
         np.array([[-R/2, R/2, -d1/3, 1]]).T,
         np.array([[-R/2, -R/2, -d1/3, 1]]).T,
-        np.array([[R/2, R/2, -d1*2/3, 1]]).T,
-        np.array([[R/2, -R/2, -d1*2/3, 1]]).T,
-        np.array([[-R/2, R/2, -d1*2/3, 1]]).T,
-        np.array([[-R/2, -R/2, -d1*2/3, 1]]).T,
+        # np.array([[R/2, R/2, -d1*2/3, 1]]).T,
+        # np.array([[R/2, -R/2, -d1*2/3, 1]]).T,
+        # np.array([[-R/2, R/2, -d1*2/3, 1]]).T,
+        # np.array([[-R/2, -R/2, -d1*2/3, 1]]).T,
     )
 
     r_bars_in_3 = (
@@ -137,7 +146,11 @@ class CPoint(mappings.Identity):
     )
 
     r_bars_in_GL = (
-        np.array([[0, 0, R/2, 1]]).T,
+        np.array([[0, 0, d5/2, 1]]).T,  # エンドエフェクタの代表位置
+        np.array([[0, R0, d5/2-0.03, 1]]).T,
+        np.array([[0, -R0, d5/2-0.03, 1]]).T,
+        np.array([[0.02, 0, d5/2-0.03, 1]]).T,
+        np.array([[-0.02, 0, d5/2-0.03, 1]]).T,
     )
 
     # 追加

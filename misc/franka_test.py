@@ -14,7 +14,7 @@ from franka_emika.franka_emika import *
 
 
 
-q = np.array([[0, 30, 0, 30, 0, 45, 0]]).T * np.pi/180
+q = np.array([[0, 0, 0, 0, 0, 0, 0]]).T * np.pi/180
 dq = np.zeros_like(q)
 
 
@@ -58,10 +58,10 @@ ax.plot(body[0,:], body[1,:], body[2,:], marker='o', label="body")
 
 
 
-for n, r_bars in enumerate(Common.R_BARS_ALL):
+for n, r_bars in enumerate(CPoint.R_BARS_ALL):
     cs = []
     for r_bar in r_bars:
-        cs.append((Common.HTM[n](q) @ r_bar)[:3, :])
+        cs.append((CPoint.HTM[n](q) @ r_bar)[:3, :])
     cs = np.concatenate(cs,axis=1)
     ax.scatter(cs[0,:], cs[1,:], cs[2,:], label=str(n),)
 
@@ -69,6 +69,10 @@ for n, r_bars in enumerate(Common.R_BARS_ALL):
 ax.set_xlim(mid_x - max_range, mid_x + max_range)
 ax.set_ylim(mid_y - max_range, mid_y + max_range)
 ax.set_zlim(mid_z - max_range, mid_z + max_range)
+
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
 
 ax.set_box_aspect((1,1,1))
 ax.legend()
