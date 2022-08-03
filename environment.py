@@ -1,24 +1,23 @@
 import numpy as np
-from numpy.typing import NDArray
 np.random.seed(0)  # 固定
 
 from math import cos, sin, tan, pi
 import matplotlib.pyplot as plt
 
 
-def rotate3d(alpha: float, beta: float, gamma: float) -> NDArray[np.float64]:
+def rotate3d(alpha: float, beta: float, gamma: float):
     """3次元回転行列"""
-    rx: NDArray[np.float64] = np.array([
+    rx = np.array([
         [1, 0, 0],
         [0, cos(alpha), -sin(alpha)],
         [0, sin(alpha), cos(alpha)],
     ])
-    ry:NDArray[np.float64] = np.array([
+    ry = np.array([
         [cos(beta), 0, sin(beta)],
         [0, 1, 0],
         [-sin(beta), 0, cos(beta)],
     ])
-    rz:NDArray[np.float64] = np.array([
+    rz = np.array([
         [cos(gamma), -sin(gamma), 0],
         [sin(gamma), cos(gamma), 0],
         [0, 0, 1],
@@ -30,7 +29,7 @@ def _set_point(x, y, z):
     """点を置く"""
     return [np.array([[x, y, z]]).T]
 
-def _set_sphere(r, center: NDArray[np.float64], n):
+def _set_sphere(r, center, n):
     """
     
     r : 半径
@@ -38,7 +37,7 @@ def _set_sphere(r, center: NDArray[np.float64], n):
     n : 点の数
     """
     
-    obs: list[NDArray[np.float64]] = []
+    obs = []
     rand = np.random.RandomState(123)
     for i in range(n):
         alpha = np.arccos(rand.uniform(-1, 1))
@@ -51,7 +50,7 @@ def _set_sphere(r, center: NDArray[np.float64], n):
     return obs
 
 
-def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,) -> list[NDArray[np.float64]]:
+def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,):
     """円筒を設置
     
     r : 半径
@@ -61,8 +60,8 @@ def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,) -> list[NDAr
     beta : 回転 [degree]
     gamma : 回転 [degree]
     """
-    
-    obs: list[NDArray[np.float64]] = []
+    R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
+    obs = []
     rand = np.random.RandomState(123)
     for i in range(n):
         _alpha = rand.uniform(0, 2*pi)
@@ -71,16 +70,15 @@ def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,) -> list[NDAr
             [r * sin(_alpha)],
             [rand.uniform(-L/2, L/2)],
             ])
-        obs.append(X)
+        obs.append(R @ X + np.array([[x, y, z]]).T)
     
-    R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
-    return R @ obs + np.array([[x, y, z]]).T
+    return obs
 
 
 def _set_field(lx, ly, x, y, z, n, alpha=0, beta=0, gamma=0):
     """面を表現"""
     
-    obs: list[NDArray[np.float64]] = []
+    obs = []
     
     rand = np.random.RandomState(123)
     for i in range(n):

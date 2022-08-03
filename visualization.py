@@ -3,7 +3,6 @@
 
 import matplotlib.animation as anm
 import numpy as np
-from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 from matplotlib import axes
 import time
@@ -88,9 +87,9 @@ def make_data(
 def make_animation(
     t_data: list[float],
     joint_data: list[list[list[float]]],
-    q_data: Union[NDArray[np.float64], None]=None,
-    ee_data: Union[NDArray[np.float64], None]=None,
-    cpoint_data: Union[list[list[list[float]]], None]=None,
+    q_data=None,
+    ee_data=None,
+    cpoint_data=None,
     goal_data=None,
     obs_data=None,
     is3D: bool=True,

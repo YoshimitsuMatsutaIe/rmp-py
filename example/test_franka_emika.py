@@ -30,14 +30,14 @@ import franka_emika.franka_emika as franka_emika
 
 
 ROBOT_NAME = 'franka_emika'
-TIME_SPAN = 60*3
-TIME_INTERVAL = 1e-2
+TIME_SPAN = 60
+TIME_INTERVAL = 1e-2/2
 
 q0 = franka_emika.CPoint.q_neutral  #初期値
 q0_dot = np.zeros_like(q0)
 
 ### 目標 ###
-g = np.array([[0.65, -0.08, 0.5]]).T
+g = np.array([[0.5, -0.08, 0.5]]).T
 
 g_dot = np.zeros_like(g)
 
@@ -87,8 +87,13 @@ def main2(isMulti: bool, obs_num: int):
 
     ### 障害物 ###
     o_s = environment._set_cylinder(
-        r=0.05, L=1.5, x=0.3, y=0.0, z=0.5, n=obs_num, alpha=0, beta=0, gamma=90
+        r=0.05, L=1.2, x=0.3, y=-0.16+0.05, z=0.6, n=obs_num, alpha=0, beta=0, gamma=90
     )
+    print(type(o_s))
+    o_s += environment._set_cylinder(
+        r=0.05, L=1.2, x=0.3, y=0.16+0.05, z=0.6, n=obs_num, alpha=0, beta=0, gamma=90
+    )
+    #print(o_s)
 
     def dX(t, X):
         print("\nt = ", t)
@@ -151,9 +156,10 @@ def main2(isMulti: bool, obs_num: int):
         cpoint_data=cpoint_data,
         is3D=True,
         goal_data=np.array([[g[0,0], g[1,0], g[2,0]]*len(sol.t)]).reshape(len(sol.t), 3),
-        obs_data=o_s,
+        obs_data=np.concatenate(o_s, axis=1).T,
         save_path=base+"animation.gif",
         isSave=True,
+        #epoch_max=120
     )
     
     return sol, ani
