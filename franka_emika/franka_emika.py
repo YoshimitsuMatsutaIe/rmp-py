@@ -65,7 +65,6 @@ def htm_ee(q):
 
 
 
-
 class CPoint(mappings.Identity):
     q_neutral = np.array([[0, 0, 0, 0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
     q_min = np.array([[-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973]]).T
@@ -73,6 +72,7 @@ class CPoint(mappings.Identity):
 
     # 制御点のローカル座標
 
+    dim = 7
 
     d1 = 0.333
     d3 = 0.316
@@ -160,6 +160,7 @@ class CPoint(mappings.Identity):
 
     r_bar_zero = np.array([[0, 0, 0, 1]]).T
 
+    JOINT_PHI = (lambda x: np.zeros((3,1)), o_0, o_1, o_2, o_3, o_4, o_5, o_6, o_ee)
     HTM = (htm_0, htm_1, htm_2, htm_3, htm_4, htm_5, htm_6, htm_ee)
     JO = (jo_0, jo_1, jo_2, jo_3, jo_4, jo_5, jo_6, jo_ee)
     JRX = (jrx_0, jrx_1, jrx_2, jrx_3, jrx_4, jrx_5, jrx_6, jrx_ee)

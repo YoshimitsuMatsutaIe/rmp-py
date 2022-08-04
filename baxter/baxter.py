@@ -69,6 +69,7 @@ def htm_ee(q):
 
 
 class CPoint(mappings.Identity):
+    dim = 7
     L = 278e-3
     h = 64e-3
     H = 1104e-3
@@ -153,6 +154,7 @@ class CPoint(mappings.Identity):
 
     r_bar_zero = np.array([[0, 0, 0, 1]]).T
 
+    JOINT_PHI = (lambda x: np.zeros((3,1)), o_0, o_1, o_2, o_3, o_4, o_5, o_6, o_ee)
     HTM = (htm_0, htm_1, htm_2, htm_3, htm_4, htm_5, htm_6, htm_ee)
     JO = (jo_0, jo_1, jo_2, jo_3, jo_4, jo_5, jo_6, jo_ee)
     JRX = (jrx_0, jrx_1, jrx_2, jrx_3, jrx_4, jrx_5, jrx_6, jrx_ee)

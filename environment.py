@@ -50,7 +50,7 @@ def _set_sphere(r, center, n):
     return obs
 
 
-def _set_cylinder(r, L, x, y, z, n: int, alpha=0, beta=0, gamma=0,):
+def _set_cylinder(r, L, x, y, z, n: int, alpha=0.0, beta=0.0, gamma=0.0,):
     """円筒を設置
     
     r : 半径

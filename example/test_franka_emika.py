@@ -56,7 +56,7 @@ def main2(isMulti: bool, obs_num: int):
     r.set_state(q0, q0_dot)
 
 
-    rmp_param = {
+    rmp_param: dict = {
         'jl' : {
             'gamma_p' : 0.05,
             'gamma_d' : 0.05,
@@ -82,7 +82,6 @@ def main2(isMulti: bool, obs_num: int):
             'rw' : 0.1
         }
     }
-
 
 
     ### 障害物 ###
