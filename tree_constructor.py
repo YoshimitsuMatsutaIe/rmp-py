@@ -59,7 +59,7 @@ def multi_solve2(
     elif robot_name == 'franka_emika':
         robot_model = franka_emika
     else:
-        print('!!!!!!!')
+        assert False
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
@@ -67,14 +67,15 @@ def multi_solve2(
             name="jl",
             parent=None,
             calc_mappings=mappings.Identity(),
-            gamma_p = rmp_param['jl']['gamma_p'],
-            gamma_d = rmp_param['jl']['gamma_d'],
-            lam = rmp_param['jl']['lam'],
-            sigma = rmp_param['jl']['sigma'],
+            # gamma_p = rmp_param['jl']['gamma_p'],
+            # gamma_d = rmp_param['jl']['gamma_d'],
+            # lam = rmp_param['jl']['lam'],
+            # sigma = rmp_param['jl']['sigma'],
             q_max = robot_model.CPoint.q_max,
             q_min = robot_model.CPoint.q_min,
             q_neutral = robot_model.CPoint.q_neutral,
-            parent_dim=robot_model.CPoint.q_neutral.shape[0]
+            parent_dim=robot_model.CPoint.q_neutral.shape[0],
+            **rmp_param["joint_limit_avoidance"]
         )
     else:
         temp_map = robot_model.CPoint(*node_id)
@@ -92,15 +93,16 @@ def multi_solve2(
                 parent=node,
                 dim=3,
                 calc_mappings=mappings.Translation(g, g_dot),
-                max_speed = rmp_param['attractor']['max_speed'],
-                gain = rmp_param['attractor']['gain'],
-                f_alpha = rmp_param['attractor']['f_alpha'],
-                sigma_alpha = rmp_param['attractor']['sigma_alpha'],
-                sigma_gamma = rmp_param['attractor']['sigma_gamma'],
-                wu = rmp_param['attractor']['wu'],
-                wl = rmp_param['attractor']['wl'],
-                alpha = rmp_param['attractor']['alpha'],
-                epsilon = rmp_param['attractor']['epsilon'],
+                # max_speed = rmp_param['attractor']['max_speed'],
+                # gain = rmp_param['attractor']['gain'],
+                # f_alpha = rmp_param['attractor']['f_alpha'],
+                # sigma_alpha = rmp_param['attractor']['sigma_alpha'],
+                # sigma_gamma = rmp_param['attractor']['sigma_gamma'],
+                # wu = rmp_param['attractor']['wu'],
+                # wl = rmp_param['attractor']['wl'],
+                # alpha = rmp_param['attractor']['alpha'],
+                # epsilon = rmp_param['attractor']['epsilon'],
+                **rmp_param["goal_attractor"]
             )
             node.add_child(attracter)
 
@@ -110,11 +112,12 @@ def multi_solve2(
                 name="obs_" + str(i) + ", at " + node.name,
                 parent = node,
                 calc_mappings = mappings.Distance(o, np.zeros_like(o)),
-                scale_rep = rmp_param['obs']['scale_rep'],
-                scale_damp = rmp_param['obs']['scale_damp'],
-                gain = rmp_param['obs']['gain'],
-                sigma = rmp_param['obs']['sigma'],
-                rw = rmp_param['obs']['rw']
+                # scale_rep = rmp_param['obs']['scale_rep'],
+                # scale_damp = rmp_param['obs']['scale_damp'],
+                # gain = rmp_param['obs']['gain'],
+                # sigma = rmp_param['obs']['sigma'],
+                # rw = rmp_param['obs']['rw']
+                **rmp_param["obstacle_avoidance"]
             )
             node.add_child(obs_node)
 

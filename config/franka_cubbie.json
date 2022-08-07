@@ -1,0 +1,58 @@
+{
+    "//" : "キャビン",
+    "robot_name" : "franka_emika",
+    "time_span" : 60,
+    "time_interval" : 0.01,
+    "rmp_param" : {
+        "goal_attractor" : {
+            "max_speed" : 20.0,
+            "gain" : 10.0,
+            "sigma_alpha" : 0.5,
+            "sigma_gamma" : 0.5,
+            "wu" : 10.0,
+            "wl" : 0.1,
+            "alpha" : 0.1,
+            "epsilon" : 0.05
+        },
+        "obstacle_avoidance" : {
+            "scale_rep" : 0.1,
+            "scale_damp" : 1.0,
+            "gain" : 5.0,
+            "sigma" : 1.0,
+            "rw" : 0.15
+        },
+        "joint_limit_avoidance" : {
+            "gamma_p" : 0.05,
+            "gamma_d" : 0.05,
+            "lam" : 1.0,
+            "sigma" : 0.1
+        }
+    },
+    "env_param" : {
+        "goal" : {
+            "type" : "static",
+            "param" : {
+                "x" : 0.6,
+                "y" : 0.0,
+                "z" : 0.7
+            }
+        },
+        "obstacle" : [
+            {
+                "type" : "cubbie",
+                "param" : {
+                    "n" : 500,
+                    "lx" : 0.4,
+                    "ly" : 0.3,
+                    "lz" : 0.3,
+                    "x" : 0.6,
+                    "y" : 0.0,
+                    "z" : 0.7,
+                    "alpha" : 0,
+                    "beta" : 45,
+                    "gamma" : -90
+                }
+            }
+        ]
+    }
+}

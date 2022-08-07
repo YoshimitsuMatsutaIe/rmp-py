@@ -1,8 +1,7 @@
 {
-    "//" : "franka emika のテスト用。シリンダー障害物の背後に目標点",
-    "robot_name" : "franka_emika",
-    "time_span" : 60.0,
-    "time_interval" : 0.001,
+    "robot_name" : "baxter",
+    "time_span" : 1.0,
+    "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
             "max_speed" : 8.0,

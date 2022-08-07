@@ -8,6 +8,8 @@ from typing import Union
 import datetime
 import os
 #from pathlib import Path
+import shutil
+import json
 import sys
 sys.path.append('.')
 import environment
@@ -43,7 +45,8 @@ def dx(t, x, g, o_s, robot_name, rmp_param):
     return np.ravel(x_dot)
 
 
-def main(param: dict):
+
+def main(param_path):
     
     date_now = datetime.datetime.now()
     name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
@@ -51,11 +54,23 @@ def main(param: dict):
     os.makedirs(base, exist_ok=True)
     
     
+    with open(param_path) as f:
+        param = json.load(f)
+    
+    shutil.copy2(param_path, base)  # 設定ファイルのコピー作成
+    
+    
     env = param["env_param"]
     obstacle = []
-    for obs_param in env["obstacle"].values():
-        if obs_param["name"] == "cylinder":
-            obstacle += environment._set_cylinder(**obs_param["param"])
+    for obs_param in env["obstacle"]:
+        if obs_param["type"] == "cylinder":
+            obstacle += environment.set_cylinder(**obs_param["param"])
+        elif obs_param["type"] == "sphere":
+            obstacle += environment.set_sphere(**obs_param["param"])
+        elif obs_param["type"] == "box":
+            obstacle += environment.set_box(**obs_param["param"])
+        elif obs_param["type"] == "cubbie":
+            obstacle += environment.set_cubbie(**obs_param["param"])
         else:
             assert False
     
@@ -78,7 +93,7 @@ def main(param: dict):
         t_span = (0, param["time_span"]),
         y0 = np.ravel(np.concatenate([robot_model.CPoint.q_neutral, np.zeros_like(robot_model.CPoint.q_neutral)])),
         t_eval=np.arange(0, param["time_span"], param["time_interval"]),
-        args=(goal, obstacle, param["rmp_param"])
+        args=(goal, obstacle, param["robot_name"], param["rmp_param"])
         #atol=1e-10
     )
     print(sol.message)
@@ -90,14 +105,15 @@ def main(param: dict):
     for i in range(robot_model.CPoint.dim):
         axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
         axes[1].plot(sol.t, sol.y[i+7], label="dq" + str(i))
-    for i in range(robot_model.CPoint.dim):
+    for i in range(2):
         axes[i].legend()
         axes[i].grid()
+        axes[i].set_xlabel("time [s]")
     fig.savefig(base+"solver_bax_2.png")
 
 
     cpoint_phis = []
-    for i, rs in enumerate(robot_model.CPoint.R_BARS_ALL):#[:-1]):
+    for i, rs in enumerate(robot_model.CPoint.R_BARS_ALL):
         for j, _ in enumerate(rs):
             map_ = robot_model.CPoint(i, j)
             cpoint_phis.append(map_.phi)
@@ -106,8 +122,6 @@ def main(param: dict):
     cpoint_phis.append(map_.phi)
 
 
-    def x0(q):
-        return np.zeros((3, 1))
 
     q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
         q_s = [sol.y[i] for i in range(7)],
@@ -128,6 +142,8 @@ def main(param: dict):
         isSave=True,
         #epoch_max=120
     )
+    
+    plt.show()
 
 
 

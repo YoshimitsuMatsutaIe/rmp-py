@@ -60,17 +60,16 @@ class GoalAttractor(LeafBase):
         self, name: str, parent: rmp_node.Node,
         dim: int,
         calc_mappings: mappings.Identity,
-        max_speed: float, gain: float, f_alpha: float, sigma_alpha: float, sigma_gamma: float,
+        max_speed: float, gain: float, sigma_alpha: float, sigma_gamma: float,
         wu: float, wl: float, alpha: float, epsilon: float,
     ):
         self.gain = gain
         self.damp = max_speed / gain
-        self.f_alpha = f_alpha
         self.sigma_alpha = sigma_alpha
         self.sigma_gamma = sigma_gamma
         self.wu = wu
         self.wl = wl
-        self.alpha = alpha
+        self.alpha = alpha  # ポテンシャルのスケーリング係数
         self.epsilon = epsilon
         
         assert dim == 2 or dim == 3, "must dim = 2 or 3"

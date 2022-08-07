@@ -25,11 +25,15 @@ def rotate3d(alpha: float, beta: float, gamma: float):
     return rx @ ry @ rz
 
 
-def _set_point(x, y, z):
+def set_point(x, y, z=None):
     """点を置く"""
-    return [np.array([[x, y, z]]).T]
+    if z is None:
+        return [np.array([[x, y]]).T]
+    else:
+        return [np.array([[x, y, z]]).T]
 
-def _set_sphere(r, center, n):
+
+def set_sphere(n, r, x, y, z=None):
     """
     
     r : 半径
@@ -37,20 +41,31 @@ def _set_sphere(r, center, n):
     n : 点の数
     """
     
+    if z is None:
+        center = np.array([[x, y]]).T
+    else:
+        center = np.array([[x, y, z]]).T
+    
     obs = []
     rand = np.random.RandomState(123)
     for i in range(n):
         alpha = np.arccos(rand.uniform(-1, 1))
         beta = rand.uniform(0, 2*pi)
-        x = r * sin(alpha) * cos(beta)
-        y = r * sin(alpha) * sin(beta)
-        z = r * cos(alpha)
-        obs.append(np.array([[x, y, z]]).T + center)
+        
+        if z is None:
+            x = r * sin(alpha)
+            y = r * sin(alpha)
+            obs.append(np.array([[x, y]]).T + center)
+        else:
+            x = r * sin(alpha) * cos(beta)
+            y = r * sin(alpha) * sin(beta)
+            z = r * cos(alpha)
+            obs.append(np.array([[x, y, z]]).T + center)
     
     return obs
 
 
-def _set_cylinder(r, L, x, y, z, n: int, alpha=0.0, beta=0.0, gamma=0.0,):
+def set_cylinder(n: int, r, L, x, y, z, alpha=0.0, beta=0.0, gamma=0.0,):
     """円筒を設置
     
     r : 半径
@@ -75,9 +90,11 @@ def _set_cylinder(r, L, x, y, z, n: int, alpha=0.0, beta=0.0, gamma=0.0,):
     return obs
 
 
-def _set_field(lx, ly, x, y, z, n, alpha=0, beta=0, gamma=0):
+def set_field(n: int, lx, ly, x, y, z, alpha=0, beta=0, gamma=0):
     """面を表現"""
     
+    R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
+    center = np.array([[x, y, z]]).T
     obs = []
     
     rand = np.random.RandomState(123)
@@ -87,69 +104,71 @@ def _set_field(lx, ly, x, y, z, n, alpha=0, beta=0, gamma=0):
             [rand.uniform(-1, 1) * ly/2],
             [0],
             ])
-        obs.append(X)
+        obs.append(R @ X + center)
     
-    return rotate3d(alpha, beta, gamma) @ obs + np.array([[x, y, z]]).T
+    return obs
 
 
 
-def _set_box(lx, ly, lz, x, y, z, n, alpha=0, beta=0, gamma=0,):
+def set_box(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
+    """箱型障害物"""
     
-    pass
-
-
-# def set_obstacle(obs_param):
-#     """固定障害物を返す"""
+    R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
+    center = np.array([[x, y, z]]).T
     
-#     def _choice(name):
-#         if name == 'point':
-#             return _set_point
-#         elif name == "cylinder":
-#             return _set_cylinder
-#         elif name == "sphere":
-#             return _set_sphere
-#         elif name == 'field':
-#             return _set_field
+    s1 = lx * ly
+    s2 = lx * lz
+    s3 = ly * lz
     
+    sum_s = s1 + s2 + s3
     
-#     if obs_param is None:
-#         return None
-#     else:
-#         obs = []
-#         for d in obs_param:
-#             obs.extend(
-#                 _choice(d['name'])(**d['data'])
-#             )
-#     return obs
+    n1 = int(n * s1 / sum_s / 2)
+    n2 = int(n * s2 / sum_s / 2)
+    n3 = int(n * s3 / sum_s / 2)
+    
+    obs = []
+    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=lz/2)
+    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=-lz/2)
+    obs += set_field(n2, lx=lx, ly=lz, x=0, y=ly/2, z=0, alpha=90)
+    obs += set_field(n2, lx=lx, ly=lz, x=0, y=-ly/2, z=0, alpha=90)
+    obs += set_field(n3, lx=lz, ly=ly, x=lx/2, y=0, z=0, beta=90)
+    obs += set_field(n3, lx=lz, ly=ly, x=-lx/2, y=0, z=0, beta=90)
+    
+    for i, o in enumerate(obs):
+        obs[i] = R @ o + center
+    
+    return obs
 
 
-# data1 =[
-#     {
-#         'name' : 'cylinder',
-#         'data' : {
-#             'r' : 0.1,
-#             'L' : 1.0,
-#             'center' : [[0.25, -0.7, 1]],
-#             'n' : 100,
-#             'alpha' : 0,
-#             'beta' : 0,
-#             'gamma' : 0,
-#         },
-#     },
-#     {
-#         'name' : 'cylinder',
-#         'data' : {
-#             'r' : 0.06,
-#             'L' : 1.0,
-#             'center' : [[-0.25, -0.4, 1.25]],
-#             'n' : 100,
-#             'alpha' : 60,
-#             'beta' : 30,
-#             'gamma' : 30,
-#         },
-#     },
-# ]
 
+def set_cubbie(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
+    """キャビネット"""
+    
+    R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
+    center = np.array([[x, y, z]]).T
+    
+    s1 = lx * ly
+    s2 = lx * lz
+    s3 = ly * lz
+    
+    sum_s = s1 + s2 + s3
+    
+    n1 = int(n * s1 / sum_s / 2)
+    n2 = int(n * s2 / sum_s / 2)
+    n3 = int(n * s3 / sum_s / 2)
+    
+    obs = []
+    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=lz/2)
+    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=-lz/2)
+    obs += set_field(n2, lx=lx, ly=lz, x=0, y=ly/2, z=0, alpha=90)
+    #obs += set_field(n2, lx=lx, ly=lz, x=0, y=-ly/2, z=0, alpha=90)
+    obs += set_field(n3, lx=lz, ly=ly, x=lx/2, y=0, z=0, beta=90)
+    obs += set_field(n3, lx=lz, ly=ly, x=-lx/2, y=0, z=0, beta=90)
+    
+    for i, o in enumerate(obs):
+        obs[i] = R @ o + center
+    
+    return obs
 
 
 
