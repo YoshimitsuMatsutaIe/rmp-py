@@ -143,6 +143,10 @@ class CPoint(mappings.Identity):
         np.array([[R/2, -R/2, R, 1]]).T,
         np.array([[-R/2, R/2, R, 1]]).T,
         np.array([[-R/2, -R/2, R, 1]]).T,
+        np.array([[R/2, R/2, 1.5*R, 1]]).T,
+        np.array([[R/2, -R/2, 1.5*R, 1]]).T,
+        np.array([[-R/2, R/2, 1.5*R, 1]]).T,
+        np.array([[-R/2, -R/2, 1.5*R, 1]]).T,
     )
 
     r_bars_in_GL = (
@@ -151,6 +155,8 @@ class CPoint(mappings.Identity):
         np.array([[0, -R0, d5/2-0.03, 1]]).T,
         np.array([[0.02, 0, d5/2-0.03, 1]]).T,
         np.array([[-0.02, 0, d5/2-0.03, 1]]).T,
+        np.array([[R/2, 0, d5/2-0.07, 1]]).T,
+        np.array([[-R/2, 0, d5/2-0.07, 1]]).T
     )
 
     # 追加
