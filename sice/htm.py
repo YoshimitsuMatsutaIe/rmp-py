@@ -4,7 +4,9 @@ from math import sin as s
 from math import tan as ta
 from math import sqrt as sq
 
-from params import SiceParam
+import sys
+sys.path.append('.')
+from sice.params import SiceParam
 
 class HTM(SiceParam):
     @classmethod
@@ -58,4 +60,3 @@ class HTM(SiceParam):
 
 if __name__ == "__main__":
     q = np.array([[1, 0]]).T
-    print(htm.o_1(q))

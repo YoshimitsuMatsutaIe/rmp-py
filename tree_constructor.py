@@ -8,6 +8,7 @@ import numpy as np
 # ロボットモデルの導入
 import baxter.baxter as baxter
 import franka_emika.franka_emika as franka_emika
+import sice.sice as sice
 
 import mappings
 from rmp_leaf import GoalAttractor, JointLimitAvoidance, ObstacleAvoidance
@@ -58,6 +59,8 @@ def multi_solve2(
         robot_model = baxter
     elif robot_name == 'franka_emika':
         robot_model = franka_emika
+    elif robot_name == "sice":
+        robot_model = sice
     else:
         assert False
     
@@ -67,10 +70,6 @@ def multi_solve2(
             name="jl",
             parent=None,
             calc_mappings=mappings.Identity(),
-            # gamma_p = rmp_param['jl']['gamma_p'],
-            # gamma_d = rmp_param['jl']['gamma_d'],
-            # lam = rmp_param['jl']['lam'],
-            # sigma = rmp_param['jl']['sigma'],
             q_max = robot_model.CPoint.q_max,
             q_min = robot_model.CPoint.q_min,
             q_neutral = robot_model.CPoint.q_neutral,
@@ -81,7 +80,7 @@ def multi_solve2(
         temp_map = robot_model.CPoint(*node_id)
         node = Node(
             name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
-            dim = 3,
+            dim = robot_model.CPoint.t_dim,
             parent = None,
             mappings = temp_map
         )
@@ -91,17 +90,8 @@ def multi_solve2(
             attracter = GoalAttractor(
                 name="ee-attractor",
                 parent=node,
-                dim=3,
+                dim=g.shape[0],
                 calc_mappings=mappings.Translation(g, g_dot),
-                # max_speed = rmp_param['attractor']['max_speed'],
-                # gain = rmp_param['attractor']['gain'],
-                # f_alpha = rmp_param['attractor']['f_alpha'],
-                # sigma_alpha = rmp_param['attractor']['sigma_alpha'],
-                # sigma_gamma = rmp_param['attractor']['sigma_gamma'],
-                # wu = rmp_param['attractor']['wu'],
-                # wl = rmp_param['attractor']['wl'],
-                # alpha = rmp_param['attractor']['alpha'],
-                # epsilon = rmp_param['attractor']['epsilon'],
                 **rmp_param["goal_attractor"]
             )
             node.add_child(attracter)
@@ -112,11 +102,6 @@ def multi_solve2(
                 name="obs_" + str(i) + ", at " + node.name,
                 parent = node,
                 calc_mappings = mappings.Distance(o, np.zeros_like(o)),
-                # scale_rep = rmp_param['obs']['scale_rep'],
-                # scale_damp = rmp_param['obs']['scale_damp'],
-                # gain = rmp_param['obs']['gain'],
-                # sigma = rmp_param['obs']['sigma'],
-                # rw = rmp_param['obs']['rw']
                 **rmp_param["obstacle_avoidance"]
             )
             node.add_child(obs_node)
@@ -132,19 +117,22 @@ def multi_solve2(
 
 def solve(q, q_dot, g, o_s, robot_name, rmp_param=rmp_param_ex):
     
-    
     if robot_name == 'baxter':
         robot_model = baxter
     elif robot_name == 'franka_emika':
         robot_model = franka_emika
+    elif robot_name == "sice":
+        robot_model = sice
+    else:
+        assert False, robot_name + "is not exit"
     
     
     #core=1
     core = cpu_count()-1
+    #core = 2
     with Pool(core) as p:
         ### プロセス毎にサブツリーを再構成して計算 ###
-        node_ids = []
-        node_ids.append((-1, 0))
+        node_ids = [(-1, 0)]
         for i, Rs in enumerate(robot_model.CPoint.R_BARS_ALL):
             node_ids += [(i, j) for j in range(len(Rs))]
         result = p.starmap(

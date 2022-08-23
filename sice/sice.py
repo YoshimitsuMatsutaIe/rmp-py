@@ -52,7 +52,8 @@ class CPoint(mappings.Identity):
 
     # 制御点のローカル座標
 
-    dim = 4
+    c_dim = 4
+    t_dim = 2
 
     r_bars_in_0 = (
         np.array([[0, 0, 1]]).T,

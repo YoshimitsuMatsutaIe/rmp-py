@@ -1,6 +1,7 @@
 {
-    "robot_name" : "baxter",
-    "time_span" : 1.0,
+    "//" : "siceのテスト",
+    "robot_name" : "sice",
+    "time_span" : 10.0,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
@@ -31,24 +32,18 @@
         "goal" : {
             "type" : "static",
             "param" : {
-                "x" : 0.5,
-                "y" : -0.08,
-                "z" : 0.5
+                "x" : 2.0,
+                "y" : 3.0
             }
         },
         "obstacle" : [
             {
-                "type" : "cylinder",
+                "type" : "sphere",
                 "param" : {
-                    "r" : 0.05,
-                    "L" : 1.2,
-                    "x" : 0.3,
-                    "y" : 0.0,
-                    "z" : 0.6,
-                    "n" : 200,
-                    "alpha" : 0.0,
-                    "beta" : 0.0,
-                    "gamma" : 90.0
+                    "n" : 20,
+                    "r" : 0.6,
+                    "x" : 0.5,
+                    "y" : 1.0
                 }
             }
         ]

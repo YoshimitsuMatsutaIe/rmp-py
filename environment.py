@@ -33,7 +33,7 @@ def set_point(x, y, z=None):
         return [np.array([[x, y, z]]).T]
 
 
-def set_sphere(n, r, x, y, z=None):
+def set_sphere(n: int, r, x, y, z=None):
     """
     
     r : 半径
@@ -53,8 +53,8 @@ def set_sphere(n, r, x, y, z=None):
         beta = rand.uniform(0, 2*pi)
         
         if z is None:
-            x = r * sin(alpha)
-            y = r * sin(alpha)
+            x = r * cos(beta)
+            y = r * sin(beta)
             obs.append(np.array([[x, y]]).T + center)
         else:
             x = r * sin(alpha) * cos(beta)

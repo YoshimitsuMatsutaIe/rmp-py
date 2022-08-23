@@ -69,7 +69,8 @@ def htm_ee(q):
 
 
 class CPoint(mappings.Identity):
-    dim = 7
+    c_dim = 7
+    t_dim = 3
     L = 278e-3
     h = 64e-3
     H = 1104e-3

@@ -16,4 +16,6 @@ import simulator
 
 #simulator.main("./config/franka_box.json")
 
-simulator.main("./config/franka_cubbie.json")
+#simulator.main("./config/franka_cubbie.json")
+
+simulator.main("./config/test_sice.json")

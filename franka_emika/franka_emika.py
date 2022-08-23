@@ -72,7 +72,8 @@ class CPoint(mappings.Identity):
 
     # 制御点のローカル座標
 
-    dim = 7
+    c_dim = 7
+    t_dim = 3
 
     d1 = 0.333
     d3 = 0.316

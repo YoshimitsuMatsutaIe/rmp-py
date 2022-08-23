@@ -40,7 +40,7 @@ class LeafBase(rmp_node.Node):
     
     def pullback(self):
         self.calc_rmp_func()
-        assert self.parent is not None, self.name
+        assert self.parent is not None, "pulled at " + self.name + ", error"
         self.parent.f += self.J.T @ (self.f - self.M @ self.J_dot @ self.parent.x_dot)
         self.parent.M += self.J.T @ self.M @ self.J
     

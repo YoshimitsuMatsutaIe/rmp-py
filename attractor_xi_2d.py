@@ -1,4 +1,3 @@
-import typing
 import numpy as np
 from math import exp, sqrt
 def f(x, x_dot, sigma_alpha, sigma_gamma, w_u, w_l, alpha, epsilon):
