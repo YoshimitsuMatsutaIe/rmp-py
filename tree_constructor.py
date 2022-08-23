@@ -6,9 +6,9 @@ from multiprocessing import Pool, cpu_count
 import numpy as np
 
 # ロボットモデルの導入
-import baxter.baxter as baxter
-import franka_emika.franka_emika as franka_emika
-import sice.sice as sice
+import robot_baxter.baxter as baxter
+import robot_franka_emika.franka_emika as franka_emika
+import robot_sice.sice as sice
 
 import mappings
 from rmp_leaf import GoalAttractor, JointLimitAvoidance, ObstacleAvoidance

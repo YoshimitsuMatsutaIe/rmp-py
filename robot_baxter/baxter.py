@@ -6,15 +6,15 @@ import mappings
 import sys
 sys.path.append('.')
 
-from baxter.htm import *
-from baxter.Jos import *
-from baxter.JRxs import *
-from baxter.JRys import *
-from baxter.JRzs import *
-from baxter.Jo_dots import *
-from baxter.JRx_dots import *
-from baxter.JRy_dots import *
-from baxter.JRz_dots import *
+from robot_baxter.htm import *
+from robot_baxter.Jos import *
+from robot_baxter.JRxs import *
+from robot_baxter.JRys import *
+from robot_baxter.JRzs import *
+from robot_baxter.Jo_dots import *
+from robot_baxter.JRx_dots import *
+from robot_baxter.JRy_dots import *
+from robot_baxter.JRz_dots import *
 
 
 def htm_0(q):

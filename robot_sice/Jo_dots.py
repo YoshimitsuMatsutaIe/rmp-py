@@ -6,7 +6,7 @@ from math import sqrt as sq
 
 import sys
 sys.path.append('.')
-from sice.params import SiceParam
+from robot_sice.params import SiceParam
 
 class JO_DOT(SiceParam):
     @classmethod

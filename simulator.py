@@ -24,9 +24,9 @@ import tree_constructor
 import visualization
 
 
-import franka_emika.franka_emika as franka_emika
-import baxter.baxter as baxter
-import sice.sice as sice
+import robot_franka_emika.franka_emika as franka_emika
+import robot_baxter.baxter as baxter
+import robot_sice.sice as sice
 
 
 

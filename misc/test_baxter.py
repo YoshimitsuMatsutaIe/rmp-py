@@ -23,7 +23,7 @@ import mappings
 import visualization
 
 
-import baxter.baxter as baxter
+import robot_baxter.baxter as baxter
 
 
 

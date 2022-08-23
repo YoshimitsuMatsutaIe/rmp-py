@@ -4,15 +4,15 @@ import mappings
 import sys
 sys.path.append('.')
 
-from franka_emika.htm import *
-from franka_emika.Jos import *
-from franka_emika.JRxs import *
-from franka_emika.JRys import *
-from franka_emika.JRzs import *
-from franka_emika.Jo_dots import *
-from franka_emika.JRx_dots import *
-from franka_emika.JRy_dots import *
-from franka_emika.JRz_dots import *
+from robot_franka_emika.htm import *
+from robot_franka_emika.Jos import *
+from robot_franka_emika.JRxs import *
+from robot_franka_emika.JRys import *
+from robot_franka_emika.JRzs import *
+from robot_franka_emika.Jo_dots import *
+from robot_franka_emika.JRx_dots import *
+from robot_franka_emika.JRy_dots import *
+from robot_franka_emika.JRz_dots import *
 
 
 def htm_0(q):

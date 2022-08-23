@@ -4,13 +4,13 @@ import mappings
 import sys
 sys.path.append('.')
 
-from sice.htm import HTM
-from sice.Jos import JO
-from sice.JRxs import JRX
-from sice.JRys import JRY
-from sice.Jo_dots import JO_DOT
-from sice.JRx_dots import JRX_DOT
-from sice.JRy_dots import JRY_DOT
+from robot_sice.htm import HTM
+from robot_sice.Jos import JO
+from robot_sice.JRxs import JRX
+from robot_sice.JRys import JRY
+from robot_sice.Jo_dots import JO_DOT
+from robot_sice.JRx_dots import JRX_DOT
+from robot_sice.JRy_dots import JRY_DOT
 
 
 def htm_0(q):
