@@ -33,7 +33,7 @@ def set_point(x, y, z=None):
         return [np.array([[x, y, z]]).T]
 
 
-def set_sphere(n: int, r, x, y, z=None):
+def set_sphere(n: int, r: float, x: float, y: float, z=None):
     """
     
     r : 半径

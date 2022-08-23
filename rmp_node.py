@@ -10,8 +10,6 @@ from typing import Union
 from mappings import Identity
 
 
-
-
 class Node:
     """node base and control point's node"""
     
