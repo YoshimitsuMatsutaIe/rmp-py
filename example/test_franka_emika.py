@@ -57,7 +57,7 @@ def main2(isMulti: bool, obs_num: int):
 
 
     rmp_param: dict = {
-        'jl' : {
+        'joint_limit_avoidance' : {
             'gamma_p' : 0.05,
             'gamma_d' : 0.05,
             'lam' : 1,
@@ -74,7 +74,7 @@ def main2(isMulti: bool, obs_num: int):
             'alpha' : 0.15,
             'epsilon' : 0.5,
         },
-        'obs' : {
+        'obstacle_avoidance' : {
             'scale_rep' : 0.1,
             'scale_damp' : 1,
             'gain' : 5,
@@ -85,11 +85,11 @@ def main2(isMulti: bool, obs_num: int):
 
 
     ### 障害物 ###
-    o_s = environment._set_cylinder(
+    o_s = environment.set_cylinder(
         r=0.05, L=1.2, x=0.3, y=-0.16+0.05, z=0.6, n=obs_num, alpha=0, beta=0, gamma=90
     )
     print(type(o_s))
-    o_s += environment._set_cylinder(
+    o_s += environment.set_cylinder(
         r=0.05, L=1.2, x=0.3, y=0.16+0.05, z=0.6, n=obs_num, alpha=0, beta=0, gamma=90
     )
     #print(o_s)
@@ -185,11 +185,12 @@ def runner(obs):
     plt.show()
 
 
-#main2(10)
-#main2(100)
-# main2(500)
-runner(200)
+if __name__ == "__main__":
+    #main2(10)
+    #main2(100)
+    # main2(500)
+    runner(200)
 
 
 
-# plt.show()
+    # plt.show()

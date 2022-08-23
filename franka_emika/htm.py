@@ -3,6 +3,8 @@ from math import cos as c
 from math import sin as s
 from math import tan as ta
 from math import sqrt as sq
+
+
 d1 = 0.333
 d3 = 0.316
 d5 = 0.384
@@ -10,6 +12,7 @@ df = 0.107
 a4 = 0.0825
 a5 = -0.0825
 a7 = 0.088
+
 def o_0(q):
     return np.array([[0], [0], [d1]])
 def o_1(q):

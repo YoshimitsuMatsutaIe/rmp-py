@@ -26,6 +26,7 @@ import visualization
 
 import franka_emika.franka_emika as franka_emika
 import baxter.baxter as baxter
+import sice.sice as sice
 
 
 
@@ -85,6 +86,8 @@ def main(param_path):
         robot_model = baxter
     elif param["robot_name"] == "franka_emika":
         robot_model = franka_emika
+    elif param["robot_name"] == "sice":
+        robot_model = sice
     else:
         assert False
     
