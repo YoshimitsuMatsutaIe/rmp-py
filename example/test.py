@@ -18,4 +18,7 @@ import simulator
 
 #simulator.main("./config/franka_cubbie.json")
 
-simulator.main("./config/test_sice.json")
+#simulator.main("./config/test_sice.json")
+
+
+simulator.main("./../rmp-cpp/config/sice.json")

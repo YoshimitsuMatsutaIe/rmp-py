@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from scipy import integrate
 #from typing import Union
 import datetime
+import time
 import os
 #from pathlib import Path
 import shutil
@@ -34,7 +35,7 @@ import robot_sice.sice as sice
 
 def dx(t, x, g, o_s, robot_name, rmp_param):
     """ODE"""
-    print("\nt = ", t)
+    #print("\nt = ", t)
     dim = x.shape[0] // 2
     x = x.reshape(-1, 1)
     q_ddot = tree_constructor.solve(
@@ -42,7 +43,7 @@ def dx(t, x, g, o_s, robot_name, rmp_param):
         robot_name=robot_name,
         rmp_param=rmp_param
     )
-    print("ddq = ", q_ddot.T)
+    #print("ddq = ", q_ddot.T)
     x_dot = np.concatenate([x[dim:, :], q_ddot])
     return np.ravel(x_dot)
 
@@ -93,6 +94,7 @@ def main(param_path):
     else:
         assert False
     
+    t0 = time.time()
     sol = integrate.solve_ivp(
         fun = dx,
         t_span = (0, param["time_span"]),
@@ -104,6 +106,7 @@ def main(param_path):
         args=(goal, obstacle, param["robot_name"], param["rmp_param"])
         #atol=1e-10
     )
+    print("sim time = ", time.time() - t0)
     print(sol.message)
     
     

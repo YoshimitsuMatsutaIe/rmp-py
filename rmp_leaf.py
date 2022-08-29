@@ -82,7 +82,7 @@ class GoalAttractor(LeafBase):
     
     
     def calc_rmp_func(self,):
-        print("error = ", self.x.T)
+        #print("error = ", self.x.T)
         self.M = self.__inertia_matrix()
         self.f = self.__force()
     
@@ -139,8 +139,8 @@ class ObstacleAvoidance(LeafBase):
         #print(".", end='')
         self.M = self.__inertia_matrix()
         self.f = self.__force()
-        if abs(self.f[0, 0]) > 0.1:
-            print("obs_f = ", self.f[0,0], ", obs_m = ", self.M[0, 0])
+        # if abs(self.f[0, 0]) > 0.1:
+        #     print("obs_f = ", self.f[0,0], ", obs_m = ", self.M[0, 0])
     
     def __w2(self, s):
         if self.rw - s > 0:
@@ -225,7 +225,7 @@ class JointLimitAvoidance(LeafBase):
     def calc_rmp_func(self,):
         self.M = self.__inertia_matrix()
         self.f = self.__force()
-        print("jl_f = ", self.f.T)
+        #print("jl_f = ", self.f.T)
     
     def __alpha_upper(self, q_dot):
         return 1 - exp(-max(q_dot, 0)**2 / (2*self.sigma**2))
