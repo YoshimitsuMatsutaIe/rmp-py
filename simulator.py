@@ -110,6 +110,31 @@ def main(param_path):
     print(sol.message)
     
     
+    ## CSV保存
+    # まずはヘッダーを準備
+    header = "t"
+    for i in range(robot_model.CPoint.c_dim):
+        header += ",x" + str(i)
+    for i in range(robot_model.CPoint.c_dim):
+        header += ",dx" + str(i)
+    
+
+    # 時刻歴tと解xを一つのndarrayにする
+    data = np.concatenate(
+        [sol.t.reshape(1, len(sol.t)).T, sol.y.T],  # sol.tは1次元配列なので2次元化する
+        axis=1
+    )
+
+    # csvで保存
+    np.savetxt(
+        base + 'configration.csv',
+        data,
+        header = header,  # ヘッダーは無くても良い
+        comments = '',
+        delimiter = ","  # 区切り文字を指定
+    )
+        
+    
 
     ### 以下グラフ化 ###
 

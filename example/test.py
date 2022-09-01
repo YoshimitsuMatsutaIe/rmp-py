@@ -21,4 +21,10 @@ import simulator
 #simulator.main("./config/test_sice.json")
 
 
-simulator.main("./../rmp-cpp/config/sice.json")
+#simulator.main("./../rmp-cpp/config/sice.json")
+
+
+
+# cppのやつ
+#simulator.main("../rmp-cpp/config/sice.json")
+simulator.main("../rmp-cpp/config/franka_sphere.json")
