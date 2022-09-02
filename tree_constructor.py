@@ -55,9 +55,9 @@ def multi_solve2(
     """並列用 : 毎回ノード作成
     """
     
-    if robot_name == 'baxter':
+    if robot_name == "baxter":
         robot_model = baxter
-    elif robot_name == 'franka_emika':
+    elif robot_name == "franka_emika":
         robot_model = franka_emika
     elif robot_name == "sice":
         robot_model = sice

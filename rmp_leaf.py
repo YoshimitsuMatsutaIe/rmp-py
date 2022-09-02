@@ -75,8 +75,10 @@ class GoalAttractor(LeafBase):
         assert dim == 2 or dim == 3, "must dim = 2 or 3"
         if dim == 2:
             self.xi_func = attractor_xi_2d.f
-        else:
+        elif dim == 3:
             self.xi_func = attractor_xi_3d.f
+        else:
+            assert False
         
         super().__init__(name, dim, parent, calc_mappings,)
     

@@ -133,7 +133,7 @@ def main(param_path):
         comments = '',
         delimiter = ","  # 区切り文字を指定
     )
-        
+    
     
 
     ### 以下グラフ化 ###
@@ -149,8 +149,10 @@ def main(param_path):
         axes[i].legend()
         axes[i].grid()
         axes[i].set_xlabel("time [s]")
-    fig.savefig(base+"solver_bax_2.png")
+    fig.savefig(base+"configration.png")
 
+
+    #### 以下アニメ化 ###
 
     cpoint_phis = []
     for i, rs in enumerate(robot_model.CPoint.R_BARS_ALL):

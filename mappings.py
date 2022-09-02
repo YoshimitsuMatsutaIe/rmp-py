@@ -19,6 +19,7 @@ class Identity:
 
 
 class Translation(Identity):
+    """平行移動"""
     def __init__(self, g, g_dot):
         self.g = g
         self.g_dot = g_dot
