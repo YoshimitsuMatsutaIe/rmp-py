@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from multiprocessing import Pool, cpu_count
+
 #import time
 from scipy import integrate
 #from typing import Union
@@ -32,59 +32,25 @@ import robot_franka_emika.franka_emika as franka_emika
 import robot_baxter.baxter as baxter
 import robot_sice.sice as sice
 
-def temp(node: Node, q, q_dot):
-    return node.solve(q, q_dot)
+
+
 
 class Simulator:
     
+    def __init__(self):
+        pass
     
     
-    def dx2(self, t, x):
-        """なぜか遅い"""
-        #print("\nt = ", t)
-        dim = x.shape[0] // 2
-        x = x.reshape(-1, 1)
-        q=x[:dim, :]
-        q_dot=x[dim:, :]
-        
-
-
-        
-        core = cpu_count()-1
-        #core = 2
-        with Pool(core) as p:
-            ### プロセス毎にサブツリーを再構成して計算 ###
-            result = p.starmap(
-                func = temp,
-                iterable = ((node, q, q_dot) for node in self.nodes)
-            )
-        
-        
-        f = np.zeros_like(result[0][0])
-        M = np.zeros_like(result[0][1])
-        for r in result:
-            f += r[0]
-            M += r[1]
-        
-        #print(self.f)
-        q_ddot = np.linalg.pinv(M) @ f
-        
-
-        #print("ddq = ", q_ddot.T)
-        x_dot = np.concatenate([x[dim:, :], q_ddot])
-        return np.ravel(x_dot)
-    
-    
-    def dx(self, t, x, g, o_s, robot_name, rmp_param):
+    def dx(self, t, x):
         """ODE"""
         #print("\nt = ", t)
         dim = x.shape[0] // 2
         x = x.reshape(-1, 1)
         q_ddot = tree_constructor.solve(
-            q=x[:dim, :], q_dot=x[dim:, :], g=g, o_s=o_s,
+            q=x[:dim, :], q_dot=x[dim:, :], g=self.goal, o_s=self.obstacle,
             node_ids=self.node_ids,
-            robot_name=robot_name,
-            rmp_param=rmp_param
+            robot_name=self.robot_name,
+            rmp_param=self.rmp_param
         )
         #print("ddq = ", q_ddot.T)
         x_dot = np.concatenate([x[dim:, :], q_ddot])
@@ -107,7 +73,8 @@ class Simulator:
         
         shutil.copy2(param_path, base)  # 設定ファイルのコピー作成
         
-        
+        self.robot_name = param["robot_name"]
+        self.rmp_param = param["rmp_param"]
         env = param["env_param"]
         
         ### 障害物 ###
@@ -126,8 +93,10 @@ class Simulator:
             else:
                 assert False
         
+        self.obstacle = obstacle
+        
         ### goal ###
-        goal = environment.set_point(**env["goal"]["param"])[0]
+        self.goal = environment.set_point(**env["goal"]["param"])[0]
         
         
         if param["robot_name"] == "baxter":
@@ -153,22 +122,9 @@ class Simulator:
                 np.zeros_like(robot_model.CPoint.q_neutral)
             ])),
             t_eval=np.arange(0, param["time_span"], param["time_interval"]),
-            args=(goal, obstacle, param["robot_name"], param["rmp_param"])
             #atol=1e-10
         )
 
-        
-        # self.nodes = tree_constructor.make_tree(goal, obstacle, param["robot_name"], param["rmp_param"])
-        # sol = integrate.solve_ivp(
-        #     fun = self.dx2,
-        #     t_span = (0, param["time_span"]),
-        #     y0 = np.ravel(np.concatenate([
-        #         robot_model.CPoint.q_neutral,
-        #         np.zeros_like(robot_model.CPoint.q_neutral)
-        #     ])),
-        #     t_eval=np.arange(0, param["time_span"], param["time_interval"]),
-        #     #atol=1e-10
-        # )
         
         print("sim time = ", time.time() - t0)
         print(sol.message)
@@ -238,10 +194,10 @@ class Simulator:
 
         if t_dim == 3:
             is3D = True
-            goal_data = np.array([[goal[0,0], goal[1,0], goal[2,0]]*len(sol.t)]).reshape(len(sol.t), 3)
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0], self.goal[2,0]]*len(sol.t)]).reshape(len(sol.t), 3)
         elif t_dim == 2:
             is3D = False
-            goal_data = np.array([[goal[0,0], goal[1,0],] * len(sol.t)]).reshape(len(sol.t), 2)
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0],] * len(sol.t)]).reshape(len(sol.t), 2)
         else:
             assert False
 

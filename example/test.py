@@ -16,7 +16,8 @@ s = Simulator()
 
 #simulator.main("./config/franka_box.json")
 
-#simulator.main("./config/franka_cubbie.json")
+s.main("./config/franka_cubbie.json")
+
 
 #simulator.main("./config/test_sice.json")
 
@@ -27,4 +28,4 @@ s = Simulator()
 
 # cppのやつ
 #simulator.main("../rmp-cpp/config/sice.json")
-s.main("../rmp-cpp/config/franka_sphere.json")
+#s.main("../rmp-cpp/config/franka_sphere.json")
