@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from multiprocessing import Pool, cpu_count
 #import time
 from scipy import integrate
 #from typing import Union
@@ -12,6 +13,8 @@ import os
 import shutil
 import json
 import sys
+
+from rmp_node import Node
 sys.path.append('.')
 import environment
 
@@ -29,172 +32,232 @@ import robot_franka_emika.franka_emika as franka_emika
 import robot_baxter.baxter as baxter
 import robot_sice.sice as sice
 
+def temp(node: Node, q, q_dot):
+    return node.solve(q, q_dot)
+
+class Simulator:
+    
+    
+    
+    def dx2(self, t, x):
+        """なぜか遅い"""
+        #print("\nt = ", t)
+        dim = x.shape[0] // 2
+        x = x.reshape(-1, 1)
+        q=x[:dim, :]
+        q_dot=x[dim:, :]
+        
+
+
+        
+        core = cpu_count()-1
+        #core = 2
+        with Pool(core) as p:
+            ### プロセス毎にサブツリーを再構成して計算 ###
+            result = p.starmap(
+                func = temp,
+                iterable = ((node, q, q_dot) for node in self.nodes)
+            )
+        
+        
+        f = np.zeros_like(result[0][0])
+        M = np.zeros_like(result[0][1])
+        for r in result:
+            f += r[0]
+            M += r[1]
+        
+        #print(self.f)
+        q_ddot = np.linalg.pinv(M) @ f
+        
+
+        #print("ddq = ", q_ddot.T)
+        x_dot = np.concatenate([x[dim:, :], q_ddot])
+        return np.ravel(x_dot)
+    
+    
+    def dx(self, t, x, g, o_s, robot_name, rmp_param):
+        """ODE"""
+        #print("\nt = ", t)
+        dim = x.shape[0] // 2
+        x = x.reshape(-1, 1)
+        q_ddot = tree_constructor.solve(
+            q=x[:dim, :], q_dot=x[dim:, :], g=g, o_s=o_s,
+            node_ids=self.node_ids,
+            robot_name=robot_name,
+            rmp_param=rmp_param
+        )
+        #print("ddq = ", q_ddot.T)
+        x_dot = np.concatenate([x[dim:, :], q_ddot])
+        
+        return np.ravel(x_dot)
 
 
 
 
-def dx(t, x, g, o_s, robot_name, rmp_param):
-    """ODE"""
-    #print("\nt = ", t)
-    dim = x.shape[0] // 2
-    x = x.reshape(-1, 1)
-    q_ddot = tree_constructor.solve(
-        q=x[:dim, :], q_dot=x[dim:, :], g=g, o_s=o_s,
-        robot_name=robot_name,
-        rmp_param=rmp_param
-    )
-    #print("ddq = ", q_ddot.T)
-    x_dot = np.concatenate([x[dim:, :], q_ddot])
-    return np.ravel(x_dot)
-
-
-
-def main(param_path):
-    
-    date_now = datetime.datetime.now()
-    name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
-    base = "../rmp-py_result/" + name + "/"
-    os.makedirs(base, exist_ok=True)
-    
-    
-    with open(param_path) as f:
-        param = json.load(f)
-    
-    shutil.copy2(param_path, base)  # 設定ファイルのコピー作成
-    
-    
-    env = param["env_param"]
-    
-    ### 障害物 ###
-    obstacle = []
-    for obs_param in env["obstacle"]:
-        if obs_param["type"] == "cylinder":
-            obstacle += environment.set_cylinder(**obs_param["param"])
-        elif obs_param["type"] == "sphere":
-            obstacle += environment.set_sphere(**obs_param["param"])
-        elif obs_param["type"] == "box":
-            obstacle += environment.set_box(**obs_param["param"])
-        elif obs_param["type"] == "cubbie":
-            obstacle += environment.set_cubbie(**obs_param["param"])
-        elif obs_param["type"] == "point":
-            obstacle += environment.set_point(**obs_param["param"])
+    def main(self, param_path):
+        
+        date_now = datetime.datetime.now()
+        name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
+        base = "../rmp-py_result/" + name + "/"
+        os.makedirs(base, exist_ok=True)
+        
+        
+        with open(param_path) as f:
+            param = json.load(f)
+        
+        shutil.copy2(param_path, base)  # 設定ファイルのコピー作成
+        
+        
+        env = param["env_param"]
+        
+        ### 障害物 ###
+        obstacle = []
+        for obs_param in env["obstacle"]:
+            if obs_param["type"] == "cylinder":
+                obstacle += environment.set_cylinder(**obs_param["param"])
+            elif obs_param["type"] == "sphere":
+                obstacle += environment.set_sphere(**obs_param["param"])
+            elif obs_param["type"] == "box":
+                obstacle += environment.set_box(**obs_param["param"])
+            elif obs_param["type"] == "cubbie":
+                obstacle += environment.set_cubbie(**obs_param["param"])
+            elif obs_param["type"] == "point":
+                obstacle += environment.set_point(**obs_param["param"])
+            else:
+                assert False
+        
+        ### goal ###
+        goal = environment.set_point(**env["goal"]["param"])[0]
+        
+        
+        if param["robot_name"] == "baxter":
+            robot_model = baxter
+        elif param["robot_name"] == "franka_emika":
+            robot_model = franka_emika
+        elif param["robot_name"] == "sice":
+            robot_model = sice
         else:
             assert False
-    
-    ### goal ###
-    goal = environment.set_point(**env["goal"]["param"])[0]
-    
-    
-    if param["robot_name"] == "baxter":
-        robot_model = baxter
-    elif param["robot_name"] == "franka_emika":
-        robot_model = franka_emika
-    elif param["robot_name"] == "sice":
-        robot_model = sice
-    else:
-        assert False
-    
-    t0 = time.time()
-    sol = integrate.solve_ivp(
-        fun = dx,
-        t_span = (0, param["time_span"]),
-        y0 = np.ravel(np.concatenate([
-            robot_model.CPoint.q_neutral,
-            np.zeros_like(robot_model.CPoint.q_neutral)
-        ])),
-        t_eval=np.arange(0, param["time_span"], param["time_interval"]),
-        args=(goal, obstacle, param["robot_name"], param["rmp_param"])
-        #atol=1e-10
-    )
-    print("sim time = ", time.time() - t0)
-    print(sol.message)
-    
-    
-    ## CSV保存
-    # まずはヘッダーを準備
-    header = "t"
-    for i in range(robot_model.CPoint.c_dim):
-        header += ",x" + str(i)
-    for i in range(robot_model.CPoint.c_dim):
-        header += ",dx" + str(i)
-    
+        
+        
+        self.node_ids = [(-1, 0)]
+        for i, Rs in enumerate(robot_model.CPoint.R_BARS_ALL):
+            self.node_ids += [(i, j) for j in range(len(Rs))]
+        
+        t0 = time.time()
+        sol = integrate.solve_ivp(
+            fun = self.dx,
+            t_span = (0, param["time_span"]),
+            y0 = np.ravel(np.concatenate([
+                robot_model.CPoint.q_neutral,
+                np.zeros_like(robot_model.CPoint.q_neutral)
+            ])),
+            t_eval=np.arange(0, param["time_span"], param["time_interval"]),
+            args=(goal, obstacle, param["robot_name"], param["rmp_param"])
+            #atol=1e-10
+        )
 
-    # 時刻歴tと解xを一つのndarrayにする
-    data = np.concatenate(
-        [sol.t.reshape(1, len(sol.t)).T, sol.y.T],  # sol.tは1次元配列なので2次元化する
-        axis=1
-    )
+        
+        # self.nodes = tree_constructor.make_tree(goal, obstacle, param["robot_name"], param["rmp_param"])
+        # sol = integrate.solve_ivp(
+        #     fun = self.dx2,
+        #     t_span = (0, param["time_span"]),
+        #     y0 = np.ravel(np.concatenate([
+        #         robot_model.CPoint.q_neutral,
+        #         np.zeros_like(robot_model.CPoint.q_neutral)
+        #     ])),
+        #     t_eval=np.arange(0, param["time_span"], param["time_interval"]),
+        #     #atol=1e-10
+        # )
+        
+        print("sim time = ", time.time() - t0)
+        print(sol.message)
+        
+        ## CSV保存
+        # まずはヘッダーを準備
+        header = "t"
+        for i in range(robot_model.CPoint.c_dim):
+            header += ",x" + str(i)
+        for i in range(robot_model.CPoint.c_dim):
+            header += ",dx" + str(i)
+        
 
-    # csvで保存
-    np.savetxt(
-        base + 'configration.csv',
-        data,
-        header = header,  # ヘッダーは無くても良い
-        comments = '',
-        delimiter = ","  # 区切り文字を指定
-    )
-    
-    
+        # 時刻歴tと解xを一つのndarrayにする
+        data = np.concatenate(
+            [sol.t.reshape(1, len(sol.t)).T, sol.y.T],  # sol.tは1次元配列なので2次元化する
+            axis=1
+        )
 
-    ### 以下グラフ化 ###
+        # csvで保存
+        np.savetxt(
+            base + 'configration.csv',
+            data,
+            header = header,  # ヘッダーは無くても良い
+            comments = '',
+            delimiter = ","  # 区切り文字を指定
+        )
+        
+        
 
-    c_dim = robot_model.CPoint.c_dim
-    t_dim = robot_model.CPoint.t_dim
+        ### 以下グラフ化 ###
 
-    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
-    for i in range(c_dim):
-        axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
-        axes[1].plot(sol.t, sol.y[i+c_dim], label="dq" + str(i))
-    for i in range(2):
-        axes[i].legend()
-        axes[i].grid()
-        axes[i].set_xlabel("time [s]")
-    fig.savefig(base+"configration.png")
+        c_dim = robot_model.CPoint.c_dim
+        t_dim = robot_model.CPoint.t_dim
 
-
-    #### 以下アニメ化 ###
-
-    cpoint_phis = []
-    for i, rs in enumerate(robot_model.CPoint.R_BARS_ALL):
-        for j, _ in enumerate(rs):
-            map_ = robot_model.CPoint(i, j)
-            cpoint_phis.append(map_.phi)
-
-    map_ = robot_model.CPoint(c_dim, 0)
-    cpoint_phis.append(map_.phi)
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
+        for i in range(c_dim):
+            axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
+            axes[1].plot(sol.t, sol.y[i+c_dim], label="dq" + str(i))
+        for i in range(2):
+            axes[i].legend()
+            axes[i].grid()
+            axes[i].set_xlabel("time [s]")
+        fig.savefig(base+"configration.png")
 
 
+        #### 以下アニメ化 ###
 
-    q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
-        q_s = [sol.y[i] for i in range(c_dim)],
-        cpoint_phi_s=cpoint_phis,
-        joint_phi_s=robot_model.CPoint.JOINT_PHI,
-        is3D=True if t_dim==3 else False,
-        #ee_phi=robot_model.o_ee
-    )
+        cpoint_phis = []
+        for i, rs in enumerate(robot_model.CPoint.R_BARS_ALL):
+            for j, _ in enumerate(rs):
+                map_ = robot_model.CPoint(i, j)
+                cpoint_phis.append(map_.phi)
 
-    if t_dim == 3:
-        is3D = True
-        goal_data = np.array([[goal[0,0], goal[1,0], goal[2,0]]*len(sol.t)]).reshape(len(sol.t), 3)
-    elif t_dim == 2:
-        is3D = False
-        goal_data = np.array([[goal[0,0], goal[1,0],] * len(sol.t)]).reshape(len(sol.t), 2)
-    else:
-        assert False
+        map_ = robot_model.CPoint(c_dim, 0)
+        cpoint_phis.append(map_.phi)
 
-    ani = visualization.make_animation(
-        t_data = sol.t,
-        joint_data=joint_data,
-        cpoint_data=cpoint_data,
-        is3D=is3D,
-        goal_data=goal_data,
-        obs_data=np.concatenate(obstacle, axis=1).T,
-        save_path=base+"animation.gif",
-        isSave=True,
-        #epoch_max=120
-    )
-    
-    plt.show()
+
+
+        q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+            q_s = [sol.y[i] for i in range(c_dim)],
+            cpoint_phi_s=cpoint_phis,
+            joint_phi_s=robot_model.CPoint.JOINT_PHI,
+            is3D=True if t_dim==3 else False,
+            #ee_phi=robot_model.o_ee
+        )
+
+        if t_dim == 3:
+            is3D = True
+            goal_data = np.array([[goal[0,0], goal[1,0], goal[2,0]]*len(sol.t)]).reshape(len(sol.t), 3)
+        elif t_dim == 2:
+            is3D = False
+            goal_data = np.array([[goal[0,0], goal[1,0],] * len(sol.t)]).reshape(len(sol.t), 2)
+        else:
+            assert False
+
+        ani = visualization.make_animation(
+            t_data = sol.t,
+            joint_data=joint_data,
+            cpoint_data=cpoint_data,
+            is3D=is3D,
+            goal_data=goal_data,
+            obs_data=np.concatenate(obstacle, axis=1).T,
+            save_path=base+"animation.gif",
+            isSave=True,
+            #epoch_max=120
+        )
+        
+        plt.show()
 
 
 

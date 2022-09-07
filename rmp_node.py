@@ -1,6 +1,6 @@
 """基本のノード
 """
-from __future__ import annotations  #一番初めに載せないとエラー
+from __future__ import annotations  #一番初めに載せないとエラー?
 
 
 import numpy as np
@@ -18,7 +18,7 @@ class Node:
         name: str, dim: int, parent: Union[Node, None],
         mappings: Union[Identity, None],
         parent_dim: Union[int, None]=None,
-    ) -> None:
+    ):
         self.name = name
         self.dim= dim
         self.parent = parent
@@ -27,18 +27,18 @@ class Node:
         self.isMulti = False
         
         self.x = np.zeros((self.dim, 1))
-        self.x_dot = np.zeros_like(self.x)
-        self.f = np.zeros_like(self.x)
+        self.x_dot = np.zeros((self.dim, 1))
+        self.f = np.zeros((self.dim, 1))
         self.M = np.zeros((self.dim, self.dim))
         if parent is not None and parent_dim is None:
             self.J = np.zeros((self.dim, parent.dim))
-            self.J_dot = np.zeros_like(self.J)
+            self.J_dot = np.zeros((self.dim, parent.dim))
         elif parent is None and parent_dim is not None:
             self.J = np.zeros((self.dim, parent_dim))
-            self.J_dot = np.zeros_like(self.J)
+            self.J_dot = np.zeros((self.dim, parent_dim))
     
     
-    def add_child(self, child: Node) -> None:
+    def add_child(self, child: Node):
         child.isMulti = self.isMulti
         self.children.append(child)
     
@@ -62,8 +62,8 @@ class Node:
     
     def pullback(self):
         #print(self.name, ", pullback now")
-        self.f = np.zeros_like(self.f)
-        self.M = np.zeros_like(self.M)
+        self.f = np.zeros((self.dim, 1))
+        self.M = np.zeros((self.dim, self.dim))
         for child in self.children:
             child.pullback()
         
@@ -116,6 +116,10 @@ class Node:
         print("M = \n", self.M)
         print("")
 
+
+    def set_state(self, x, x_dot):
+        self.x = x
+        self.x_dot = x_dot
 
 
 def multi_solve(child: Node, q, q_dot):

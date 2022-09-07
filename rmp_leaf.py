@@ -163,7 +163,6 @@ class ObstacleAvoidance(LeafBase):
             return 0
     
     def __u2_dot(self, s_dot):
-        #print(s_dot)
         if s_dot < 0:
             return -exp(s_dot**2 / (2*self.sigma**2)) * (-s_dot/self.sigma**3)
         else:

@@ -2,10 +2,10 @@
 
 import sys
 sys.path.append('.')
-import simulator
+from simulator import Simulator
 
 
-
+s = Simulator()
 
 #simulator.main("./config/franka.json")
 
@@ -27,4 +27,4 @@ import simulator
 
 # cppのやつ
 #simulator.main("../rmp-cpp/config/sice.json")
-simulator.main("../rmp-cpp/config/franka_sphere.json")
+s.main("../rmp-cpp/config/franka_sphere.json")
