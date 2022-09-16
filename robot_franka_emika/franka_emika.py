@@ -89,28 +89,28 @@ class CPoint(mappings.Identity):
     R0 = 108e-3
 
     r_bars_in_0 = (
-        np.array([[R0/2, R0/2, -d1/3, 1]]).T,
-        np.array([[R0/2, -R0/2, -d1/3, 1]]).T,
-        np.array([[-R0/2, R0/2, -d1/3, 1]]).T,
-        np.array([[-R0/2, -R0/2, -d1/3, 1]]).T,
-        np.array([[0, -R0, 0, 1]]).T,
-        np.array([[R0/2, 0, 0, 1]]).T,
-        np.array([[-R0/2, 0, 0, 1]]).T,
+        (R0/2, R0/2, -d1/3, 1),
+        (R0/2, -R0/2, -d1/3, 1),
+        (-R0/2, R0/2, -d1/3, 1),
+        (-R0/2, -R0/2, -d1/3, 1),
+        (0, -R0, 0, 1),
+        (R0/2, 0, 0, 1),
+        (-R0/2, 0, 0, 1),
     )  # ジョイント1によって回転する制御点
 
     r_bars_in_1 = (
-        np.array([[0, 0, R0, 1]]).T,
-        np.array([[R0/2, -d3/4, R0/2, 1]]).T,
-        np.array([[R0/2, -d3/4, -R0/2, 1]]).T,
-        np.array([[-R0/2, -d3/4, R0/2, 1]]).T,
-        np.array([[-R0/2, -d3/4, -R0/2, 1]]).T
+        (0, 0, R0, 1),
+        (R0/2, -d3/4, R0/2, 1),
+        (R0/2, -d3/4, -R0/2, 1),
+        (-R0/2, -d3/4, R0/2, 1),
+        (-R0/2, -d3/4, -R0/2, 1)
     )
 
     r_bars_in_2 = (
-        np.array([[R/2, R/2, -d1/3, 1]]).T,
-        np.array([[R/2, -R/2, -d1/3, 1]]).T,
-        np.array([[-R/2, R/2, -d1/3, 1]]).T,
-        np.array([[-R/2, -R/2, -d1/3, 1]]).T,
+        (R/2, R/2, -d1/3, 1),
+        (R/2, -R/2, -d1/3, 1),
+        (-R/2, R/2, -d1/3, 1),
+        (-R/2, -R/2, -d1/3, 1),
         # np.array([[R/2, R/2, -d1*2/3, 1]]).T,
         # np.array([[R/2, -R/2, -d1*2/3, 1]]).T,
         # np.array([[-R/2, R/2, -d1*2/3, 1]]).T,
@@ -118,46 +118,45 @@ class CPoint(mappings.Identity):
     )
 
     r_bars_in_3 = (
-        np.array([[0, 0, -R/2, 1]]).T,
-        np.array([[0, 0, R/2, 1]]).T,
+        (0, 0, -R/2, 1),
+        (0, 0, R/2, 1),
     )
 
     r_bars_in_4 = (
-        np.array([[R/2, R/2, -d5*2/3, 1]]).T,
-        np.array([[R/2, -R/2, -d5*2/3, 1]]).T,
-        np.array([[-R/2, R/2, -d5*2/3, 1]]).T,
-        np.array([[-R/2, -R/2, -d5*2/3, 1]]).T,
-        np.array([[R/2.5, R/2.5, -d5/4, 1]]).T,
-        np.array([[R/2.5, -R/2.5, -d5/4, 1]]).T,
-        np.array([[-R/2.5, R/2.5, -d5/4, 1]]).T,
-        np.array([[-R/2.5, -R/2.5, -d5/4, 1]]).T,
+        (R/2, R/2, -d5*2/3, 1),
+        (R/2, -R/2, -d5*2/3, 1),
+        (-R/2, R/2, -d5*2/3, 1),
+        (-R/2, -R/2, -d5*2/3, 1),
+        (R/2.5, R/2.5, -d5/4, 1),
+        (R/2.5, -R/2.5, -d5/4, 1),
+        (-R/2.5, R/2.5, -d5/4, 1),
+        (-R/2.5, -R/2.5, -d5/4, 1),
     )
 
     r_bars_in_5 = (
-        np.array([[0, 0, R/2, 1]]).T,
-        np.array([[0, 0, -R/2, 1]]).T,
+        (0, 0, R/2, 1),
+        (0, 0, -R/2, 1),
     )
-
     r_bars_in_6 = (
-        np.array([[0, 0, -R, 1]]).T,
-        np.array([[R/2, R/2, R, 1]]).T,
-        np.array([[R/2, -R/2, R, 1]]).T,
-        np.array([[-R/2, R/2, R, 1]]).T,
-        np.array([[-R/2, -R/2, R, 1]]).T,
-        np.array([[R/2, R/2, 1.5*R, 1]]).T,
-        np.array([[R/2, -R/2, 1.5*R, 1]]).T,
-        np.array([[-R/2, R/2, 1.5*R, 1]]).T,
-        np.array([[-R/2, -R/2, 1.5*R, 1]]).T,
+        (0, 0, -R, 1),
+        (R/2, R/2, R, 1),
+        (R/2, -R/2, R, 1),
+        (-R/2, R/2, R, 1),
+        (-R/2, -R/2, R, 1),
+        (R/2, R/2, 1.5*R, 1),
+        (R/2, -R/2, 1.5*R, 1),
+        (-R/2, R/2, 1.5*R, 1),
+        (-R/2, -R/2, 1.5*R, 1),
     )
 
     r_bars_in_GL = (
-        np.array([[0, 0, d5/2, 1]]).T,  # エンドエフェクタの代表位置
-        np.array([[0, R0, d5/2-0.03, 1]]).T,
-        np.array([[0, -R0, d5/2-0.03, 1]]).T,
-        np.array([[0.02, 0, d5/2-0.03, 1]]).T,
-        np.array([[-0.02, 0, d5/2-0.03, 1]]).T,
-        np.array([[R/2, 0, d5/2-0.07, 1]]).T,
-        np.array([[-R/2, 0, d5/2-0.07, 1]]).T
+        (0, 0, d5/2, 1),  # エンドエフェクタの代表位置
+        (0, R0, d5/2-0.03, 1),
+        (0, -R0, d5/2-0.03, 1),
+        (0.02, 0, d5/2-0.03, 1),
+        (-0.02, 0, d5/2-0.03, 1),
+        (R/2, 0, d5/2-0.07, 1),
+        (-R/2, 0, d5/2-0.07, 1)
     )
 
     # 追加
@@ -182,6 +181,7 @@ class CPoint(mappings.Identity):
     ee_id = (7, 0)
 
     def __init__(self, flame_num, position_num):
+        
         self.htm = self.HTM[flame_num]
         self.jo = self.JO[flame_num]
         self.jrx = self.JRX[flame_num]
@@ -191,7 +191,7 @@ class CPoint(mappings.Identity):
         self.jrx_dot = self.JRX_DOT[flame_num]
         self.jry_dot = self.JRY_DOT[flame_num]
         self.jrz_dot = self.JRZ_DOT[flame_num]
-        self.r_bar = self.R_BARS_ALL[flame_num][position_num]
+        self.r_bar = np.array([self.R_BARS_ALL[flame_num][position_num]]).T
     
     def phi(self, q):
         return (self.htm(q) @ self.r_bar)[:3, :]
