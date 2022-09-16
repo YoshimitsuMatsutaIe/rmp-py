@@ -26,10 +26,12 @@ class Node:
         self.children: list[Node] = []
         self.isMulti = False
         
+
         self.x = np.zeros((self.dim, 1))
         self.x_dot = np.zeros((self.dim, 1))
         self.f = np.zeros((self.dim, 1))
         self.M = np.zeros((self.dim, self.dim))
+        
         if parent is not None and parent_dim is None:
             self.J = np.zeros((self.dim, parent.dim))
             self.J_dot = np.zeros((self.dim, parent.dim))

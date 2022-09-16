@@ -29,6 +29,7 @@ import visualization
 
 
 import robot_franka_emika.franka_emika as franka_emika
+import robot_franka_emika_numba.franka_emika as franka_emika_numba
 import robot_baxter.baxter as baxter
 import robot_sice.sice as sice
 
@@ -113,7 +114,7 @@ class Simulator:
         for i, Rs in enumerate(robot_model.CPoint.R_BARS_ALL):
             self.node_ids += [(i, j) for j in range(len(Rs))]
         
-        t0 = time.time()
+        t0 = time.perf_counter()
         sol = integrate.solve_ivp(
             fun = self.dx,
             t_span = (0, param["time_span"]),
@@ -124,9 +125,7 @@ class Simulator:
             t_eval=np.arange(0, param["time_span"], param["time_interval"]),
             #atol=1e-10
         )
-
-        
-        print("sim time = ", time.time() - t0)
+        print("sim time = ", time.perf_counter() - t0)
         print(sol.message)
         
         ## CSV保存
