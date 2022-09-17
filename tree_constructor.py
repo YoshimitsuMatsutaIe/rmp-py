@@ -8,6 +8,7 @@ import numpy as np
 # ロボットモデルの導入
 import robot_baxter.baxter as baxter
 import robot_franka_emika.franka_emika as franka_emika
+#import robot_franka_emika_numba.franka_emika as franka_emika
 import robot_sice.sice as sice
 
 import mappings
@@ -50,7 +51,7 @@ rmp_param_ex = {
 
 def multi_solve2(
     node_id: tuple[int, int],
-    q, q_dot,g, o_s, rmp_param, robot_name: str
+    q, q_dot, g, o_s, rmp_param, robot_name: str
 ):
     """並列用 : 毎回ノード作成
     """
@@ -70,10 +71,10 @@ def multi_solve2(
             name="jl",
             parent=None,
             calc_mappings=mappings.Identity(),
-            q_max = robot_model.CPoint.q_max,
-            q_min = robot_model.CPoint.q_min,
-            q_neutral = robot_model.CPoint.q_neutral,
-            parent_dim=robot_model.CPoint.q_neutral.shape[0],
+            q_max = robot_model.q_max(),
+            q_min = robot_model.q_min(),
+            q_neutral = robot_model.q_neutral(),
+            parent_dim=robot_model.CPoint.c_dim,
             **rmp_param["joint_limit_avoidance"]
         )
     else:
@@ -164,10 +165,10 @@ def make_node(
             name="jl",
             parent=None,
             calc_mappings=mappings.Identity(),
-            q_max = robot_model.CPoint.q_max,
-            q_min = robot_model.CPoint.q_min,
-            q_neutral = robot_model.CPoint.q_neutral,
-            parent_dim=robot_model.CPoint.q_neutral.shape[0],
+            q_max = robot_model.q_max(),
+            q_min = robot_model.q_min(),
+            q_neutral = robot_model.q_neutral(),
+            parent_dim=robot_model.CPoint.c_dim,
             **rmp_param["joint_limit_avoidance"]
         )
     else:
@@ -216,7 +217,7 @@ def make_tree(g, o_s, robot_name, rmp_param, ):
         assert False
     
     node_ids = [(-1, 0)]
-    for i, Rs in enumerate(robot_model.CPoint.R_BARS_ALL):
+    for i, Rs in enumerate(robot_model.CPoint.RS_ALL):
         node_ids += [(i, j) for j in range(len(Rs))]
     
     

@@ -1,20 +1,19 @@
-"""baxter"""
-
 import numpy as np
 import mappings
+from numba import jit
 
 import sys
 sys.path.append('.')
 
-from robot_baxter.htm import *
-from robot_baxter.Jos import *
-from robot_baxter.JRxs import *
-from robot_baxter.JRys import *
-from robot_baxter.JRzs import *
-from robot_baxter.Jo_dots import *
-from robot_baxter.JRx_dots import *
-from robot_baxter.JRy_dots import *
-from robot_baxter.JRz_dots import *
+from robot_franka_emika.htm import *
+from robot_franka_emika.Jos import *
+from robot_franka_emika.JRxs import *
+from robot_franka_emika.JRys import *
+from robot_franka_emika.JRzs import *
+from robot_franka_emika.Jo_dots import *
+from robot_franka_emika.JRx_dots import *
+from robot_franka_emika.JRy_dots import *
+from robot_franka_emika.JRz_dots import *
 
 
 def htm_0(q):
@@ -66,92 +65,107 @@ def htm_ee(q):
     ])
 
 
+
+
 def q_neutral():
-    return np.array([[0, -31, 0, 43, 0, 72, 0]]) * np.pi/180  # ニュートラルの姿勢
+    return np.array([[0, 0, 0, 0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
 
 def q_min():
-    return np.array([[-141, -123, -173, -3, -175, -90, -175]]) * np.pi/180
+    return np.array([[-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973]]).T
 
 def q_max():
-    return np.array([[51, 60, 173, 150, 175, 120, 175]]) * np.pi/180
+    return np.array([[2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973]]).T
+
 
 
 class CPoint(mappings.Identity):
+    # 制御点のローカル座標
+
     c_dim = 7
     t_dim = 3
-    L = 278e-3
-    h = 64e-3
-    H = 1104e-3
-    L0 = 270.35e-3
-    L1 = 69e-3
-    L2 = 364.35e-3
-    L3 = 69e-3
-    L4 = 374.29e-3
-    L5 = 10e-3
-    L6 = 368.3e-3
+
+    d1 = 0.333
+    d3 = 0.316
+    d5 = 0.384
+    df = 0.107
+    a4 = 0.0825
+    a5 = -0.0825
+    a7 = 0.088
 
 
-
-    # 制御点のローカル座標
-    R = 0.05
+    R = a7
+    
+    R0 = 108e-3
 
     rs_in_0 = (
-        (0, L1/2, -L0/2),
-        (0, -L1/2, -L0/2),
-        (L1/2, 0, -L0/2),
-        (-L1/2, 0, -L0/2),
-    )  # 1座標系からみた制御点位置
+        (R0/2, R0/2, -d1/3, 1),
+        (R0/2, -R0/2, -d1/3, 1),
+        (-R0/2, R0/2, -d1/3, 1),
+        (-R0/2, -R0/2, -d1/3, 1),
+        (0, -R0, 0, 1),
+        (R0/2, 0, 0, 1),
+        (-R0/2, 0, 0, 1),
+    )  # ジョイント1によって回転する制御点
 
     rs_in_1 = (
-        (0, 0, L3/2),
-        (0, 0, -L3/2),
+        (0, 0, R0, 1),
+        (R0/2, -d3/4, R0/2, 1),
+        (R0/2, -d3/4, -R0/2, 1),
+        (-R0/2, -d3/4, R0/2, 1),
+        (-R0/2, -d3/4, -R0/2, 1)
     )
 
     rs_in_2 = (
-        (0, L3/2, -L2*2/3),
-        (0, -L3/2, -L2*2/3),
-        (L3/2, 0, -L2*2/3),
-        (-L3/2, 0, -L2*2/3),
-        (0, L3/2, -L2*1/3),
-        (0, -L3/2, -L2*1/3),
-        (L3/2, 0, -L2*1/3),
-        (-L3/2, 0, -L2*1/3),
+        (R/2, R/2, -d1/3, 1),
+        (R/2, -R/2, -d1/3, 1),
+        (-R/2, R/2, -d1/3, 1),
+        (-R/2, -R/2, -d1/3, 1),
+        # np.array([[R/2, R/2, -d1*2/3, 1]]).T,
+        # np.array([[R/2, -R/2, -d1*2/3, 1]]).T,
+        # np.array([[-R/2, R/2, -d1*2/3, 1]]).T,
+        # np.array([[-R/2, -R/2, -d1*2/3, 1]]).T,
     )
 
     rs_in_3 = (
-        (0, 0, L3/2),
-        (0, 0, -L3/2),
+        (0, 0, -R/2, 1),
+        (0, 0, R/2, 1),
     )
 
     rs_in_4 = (
-        (0, R/2, -L4/3),
-        (0, -R/2, -L4/3),
-        (R/2, 0, -L4/3),
-        (-R/2, 0, -L4/3),
-        (0, R/2, -L4/3*2),
-        (0, -R/2, -L4/3*2),
-        (R/2, 0, -L4/3*2),
-        (-R/2, 0, -L4/3*2),
+        (R/2, R/2, -d5*2/3, 1),
+        (R/2, -R/2, -d5*2/3, 1),
+        (-R/2, R/2, -d5*2/3, 1),
+        (-R/2, -R/2, -d5*2/3, 1),
+        (R/2.5, R/2.5, -d5/4, 1),
+        (R/2.5, -R/2.5, -d5/4, 1),
+        (-R/2.5, R/2.5, -d5/4, 1),
+        (-R/2.5, -R/2.5, -d5/4, 1),
     )
 
     rs_in_5 = (
-        (0, 0, L5/2),
-        (0, 0, -L5/2),
+        (0, 0, R/2, 1),
+        (0, 0, -R/2, 1),
     )
-
     rs_in_6 = (
-        (0, R/2, L6/3),
-        (0, -R/2, L6/3),
-        (R/2, 0, L6/3),
-        (-R/2, 0, L6/3),
-        (0, R/2, L6/3*2),
-        (0, -R/2, L6/3*2),
-        (R/2, 0, L6/3*2),
-        (-R/2, 0, L6/3*2),
+        (0, 0, -R, 1),
+        (R/2, R/2, R, 1),
+        (R/2, -R/2, R, 1),
+        (-R/2, R/2, R, 1),
+        (-R/2, -R/2, R, 1),
+        (R/2, R/2, 1.5*R, 1),
+        (R/2, -R/2, 1.5*R, 1),
+        (-R/2, R/2, 1.5*R, 1),
+        (-R/2, -R/2, 1.5*R, 1),
     )
 
     rs_in_GL = (
-        (0, 0, 0),
+        (0, 0, d5/2, 1),  # エンドエフェクタの代表位置
+        (0, R0, d5/2-0.03, 1),
+        (0, -R0, d5/2-0.03, 1),
+        (0.02, 0, d5/2-0.03, 1),
+        (-0.02, 0, d5/2-0.03, 1),
+        (R/2, 0, d5/2-0.07, 1),
+        (-R/2, 0, d5/2-0.07, 1)
     )
 
     # 追加
@@ -159,7 +173,7 @@ class CPoint(mappings.Identity):
         rs_in_0, rs_in_1, rs_in_2, rs_in_3, rs_in_4, rs_in_5, rs_in_6, rs_in_GL,
     )
 
-
+    r_bar_zero = np.array([[0, 0, 0, 1]]).T
 
     HTM = (htm_0, htm_1, htm_2, htm_3, htm_4, htm_5, htm_6, htm_ee)
     JO = (jo_0, jo_1, jo_2, jo_3, jo_4, jo_5, jo_6, jo_ee)
@@ -173,9 +187,9 @@ class CPoint(mappings.Identity):
     
     
     ee_id = (7, 0)
-    
-    
+
     def __init__(self, flame_num, position_num):
+        
         self.htm = self.HTM[flame_num]
         self.jo = self.JO[flame_num]
         self.jrx = self.JRX[flame_num]
@@ -185,7 +199,8 @@ class CPoint(mappings.Identity):
         self.jrx_dot = self.JRX_DOT[flame_num]
         self.jry_dot = self.JRY_DOT[flame_num]
         self.jrz_dot = self.JRZ_DOT[flame_num]
-        self.r = self.RS_ALL[flame_num][position_num]
+        self.r_bar = np.array([self.RS_ALL[flame_num][position_num]]).T
+    
     
     def phi(self, q):
         return (self.htm(q) @ self.r_bar)[:3, :]
@@ -197,9 +212,9 @@ class CPoint(mappings.Identity):
         return (self.jrx_dot(q, dq)*self.r_bar[0,0] + self.jry_dot(q, dq)*self.r_bar[1,0] + self.jrz_dot(q, dq)*self.r_bar[2,0] + self.jo_dot(q, dq))
 
 
-
 def JOINT_PHI():
     return (lambda x: np.zeros((3,1)), o_0, o_1, o_2, o_3, o_4, o_5, o_6, o_ee)
+
 
 
 if __name__ == "__main__":

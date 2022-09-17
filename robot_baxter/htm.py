@@ -4,6 +4,9 @@ from math import cos as c
 from math import sin as s
 from math import tan as ta
 from math import sqrt as sq
+from numba import njit
+
+
 def o_W0(q: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([[-0.278], [-0.064], [1.104]])
 def o_BR(q: NDArray[np.float64]) -> NDArray[np.float64]:

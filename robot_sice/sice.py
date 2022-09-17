@@ -45,44 +45,51 @@ def htm_ee(q):
 
 
 
+def q_neutral():
+    return np.array([[0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
+
+def q_min():
+    return np.array([[-90, -90, -90, -90]]).T * np.pi/180
+
+def q_max():
+    return np.array([[90, 90, 90, 90]]).T * np.pi/180
+
 class CPoint(mappings.Identity):
-    q_neutral = np.array([[0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
-    q_min = np.array([[-90, -90, -90, -90]]).T * np.pi/180
-    q_max = np.array([[90, 90, 90, 90]]).T * np.pi/180
+
 
     # 制御点のローカル座標
 
     c_dim = 4
     t_dim = 2
 
-    r_bars_in_0 = (
+    rs_in_0 = (
         np.array([[0, 0, 1]]).T,
     )  # ジョイント1によって回転する制御点
 
-    r_bars_in_1 = (
+    rs_in_1 = (
         np.array([[0, 0, 1]]).T,
     )
 
-    r_bars_in_2 = (
+    rs_in_2 = (
         np.array([[0, 0, 1]]).T,
     )
 
-    r_bars_in_3 = (
+    rs_in_3 = (
         np.array([[0, 0, 1]]).T,
     )
 
-    r_bars_in_GL = (
+    rs_in_GL = (
         np.array([[0, 0, 1]]).T,
     )
 
     # 追加
-    R_BARS_ALL = (
-        r_bars_in_0, r_bars_in_1, r_bars_in_2, r_bars_in_3, r_bars_in_GL,
+    RS_ALL = (
+        rs_in_0, rs_in_1, rs_in_2, rs_in_3, rs_in_GL,
     )
 
     r_bar_zero = np.array([[0, 0, 0, 1]]).T
 
-    JOINT_PHI = (lambda x: np.zeros((2,1)), HTM.o_0, HTM.o_1, HTM.o_2, HTM.o_3, HTM.o_ee)
+
     HTM = (htm_0, htm_1, htm_2, htm_3, htm_ee)
     JO = (JO.jo_0, JO.jo_1, JO.jo_2, JO.jo_3, JO.jo_ee)
     JRX = (JRX.jrx_0, JRX.jrx_1, JRX.jrx_2, JRX.jrx_3, JRX.jrx_ee)
@@ -102,7 +109,7 @@ class CPoint(mappings.Identity):
         self.jo_dot = self.JO_DOT[flame_num]
         self.jrx_dot = self.JRX_DOT[flame_num]
         self.jry_dot = self.JRY_DOT[flame_num]
-        self.r_bar = self.R_BARS_ALL[flame_num][position_num]
+        self.r_bar = self.RS_ALL[flame_num][position_num]
     
     def phi(self, q):
         return (self.htm(q) @ self.r_bar)[:2, :]
@@ -114,7 +121,8 @@ class CPoint(mappings.Identity):
         return (self.jrx_dot(q, dq)*self.r_bar[0,0] + self.jry_dot(q, dq)*self.r_bar[1,0] + self.jo_dot(q, dq))
 
 
-
+def JOINT_PHI():
+    return (lambda x: np.zeros((2,1)), HTM.o_0, HTM.o_1, HTM.o_2, HTM.o_3, HTM.o_ee)
 
 if __name__ == "__main__":
     pass

@@ -29,7 +29,7 @@ import visualization
 
 
 import robot_franka_emika.franka_emika as franka_emika
-import robot_franka_emika_numba.franka_emika as franka_emika_numba
+#import robot_franka_emika_numba.franka_emika as franka_emika
 import robot_baxter.baxter as baxter
 import robot_sice.sice as sice
 
@@ -111,7 +111,7 @@ class Simulator:
         
         
         self.node_ids = [(-1, 0)]
-        for i, Rs in enumerate(robot_model.CPoint.R_BARS_ALL):
+        for i, Rs in enumerate(robot_model.CPoint.RS_ALL):
             self.node_ids += [(i, j) for j in range(len(Rs))]
         
         t0 = time.perf_counter()
@@ -119,13 +119,14 @@ class Simulator:
             fun = self.dx,
             t_span = (0, param["time_span"]),
             y0 = np.ravel(np.concatenate([
-                robot_model.CPoint.q_neutral,
-                np.zeros_like(robot_model.CPoint.q_neutral)
+                robot_model.q_neutral(),
+                np.zeros_like(robot_model.q_neutral())
             ])),
             t_eval=np.arange(0, param["time_span"], param["time_interval"]),
             #atol=1e-10
         )
-        print("sim time = ", time.perf_counter() - t0)
+        sim_time =  time.perf_counter() - t0
+        print("sim time = ", sim_time)
         print(sol.message)
         
         ## CSV保存
@@ -173,7 +174,7 @@ class Simulator:
         #### 以下アニメ化 ###
 
         cpoint_phis = []
-        for i, rs in enumerate(robot_model.CPoint.R_BARS_ALL):
+        for i, rs in enumerate(robot_model.CPoint.RS_ALL):
             for j, _ in enumerate(rs):
                 map_ = robot_model.CPoint(i, j)
                 cpoint_phis.append(map_.phi)
@@ -186,7 +187,7 @@ class Simulator:
         q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
             q_s = [sol.y[i] for i in range(c_dim)],
             cpoint_phi_s=cpoint_phis,
-            joint_phi_s=robot_model.CPoint.JOINT_PHI,
+            joint_phi_s=robot_model.JOINT_PHI(),
             is3D=True if t_dim==3 else False,
             #ee_phi=robot_model.o_ee
         )

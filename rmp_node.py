@@ -27,17 +27,17 @@ class Node:
         self.isMulti = False
         
 
-        self.x = np.zeros((self.dim, 1))
-        self.x_dot = np.zeros((self.dim, 1))
-        self.f = np.zeros((self.dim, 1))
-        self.M = np.zeros((self.dim, self.dim))
+        self.x = np.empty((self.dim, 1))
+        self.x_dot = np.empty((self.dim, 1))
+        self.f = np.empty((self.dim, 1))
+        self.M = np.empty((self.dim, self.dim))
         
         if parent is not None and parent_dim is None:
-            self.J = np.zeros((self.dim, parent.dim))
-            self.J_dot = np.zeros((self.dim, parent.dim))
+            self.J = np.empty((self.dim, parent.dim))
+            self.J_dot = np.empty((self.dim, parent.dim))
         elif parent is None and parent_dim is not None:
-            self.J = np.zeros((self.dim, parent_dim))
-            self.J_dot = np.zeros((self.dim, parent_dim))
+            self.J = np.empty((self.dim, parent_dim))
+            self.J_dot = np.empty((self.dim, parent_dim))
     
     
     def add_child(self, child: Node):
@@ -64,8 +64,8 @@ class Node:
     
     def pullback(self):
         #print(self.name, ", pullback now")
-        self.f = np.zeros((self.dim, 1))
-        self.M = np.zeros((self.dim, self.dim))
+        self.f.fill(0)
+        self.M.fill(0)
         for child in self.children:
             child.pullback()
         
@@ -164,8 +164,8 @@ class Root(Node):
     
     def pullback(self):
         # 初期化
-        self.f = np.zeros_like(self.f)
-        self.M = np.zeros_like(self.M)
+        self.f.fill(0)
+        self.M.fill(0)
         
         # pullback開始
         for child in self.children:
