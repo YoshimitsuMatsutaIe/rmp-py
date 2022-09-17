@@ -31,7 +31,6 @@ class Node:
         self.x_dot = np.empty((self.dim, 1))
         self.f = np.empty((self.dim, 1))
         self.M = np.empty((self.dim, self.dim))
-        
         if parent is not None and parent_dim is None:
             self.J = np.empty((self.dim, parent.dim))
             self.J_dot = np.empty((self.dim, parent.dim))
@@ -146,9 +145,8 @@ class Root(Node):
             dim = dim,
             mappings = None,
         )
-        self.x = np.zeros((dim, 1))
-        self.x_dot = np.zeros_like(self.x)
-        self.x_ddot = np.zeros_like(self.x)
+
+        self.x_ddot = np.empty((dim, 1))
         self.isMulti = isMulti
     
     

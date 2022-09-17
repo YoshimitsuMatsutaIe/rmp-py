@@ -17,55 +17,6 @@ from robot_baxter.JRy_dots import *
 from robot_baxter.JRz_dots import *
 
 
-def htm_0(q):
-    return np.block([
-        [rx_0(q), ry_0(q), rz_0(q), o_0(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-def htm_1(q):
-    return np.block([
-        [rx_1(q), ry_1(q), rz_1(q), o_1(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-def htm_2(q):
-    return np.block([
-        [rx_2(q), ry_2(q), rz_2(q), o_2(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-def htm_3(q):
-    return np.block([
-        [rx_3(q), ry_3(q), rz_3(q), o_3(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-def htm_4(q):
-    return np.block([
-        [rx_4(q), ry_4(q), rz_4(q), o_4(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-def htm_5(q):
-    return np.block([
-        [rx_5(q), ry_5(q), rz_5(q), o_5(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-def htm_6(q):
-    return np.block([
-        [rx_6(q), ry_6(q), rz_6(q), o_6(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-def htm_ee(q):
-    return np.block([
-        [rx_ee(q), ry_ee(q), rz_ee(q), o_ee(q)],
-        [np.array([[0, 0, 0, 1]])]
-    ])
-
-
 def q_neutral():
     return np.array([[0, -31, 0, 43, 0, 72, 0]]) * np.pi/180  # ニュートラルの姿勢
 
@@ -89,8 +40,6 @@ class CPoint(mappings.Identity):
     L4 = 374.29e-3
     L5 = 10e-3
     L6 = 368.3e-3
-
-
 
     # 制御点のローカル座標
     R = 0.05
@@ -160,46 +109,48 @@ class CPoint(mappings.Identity):
     )
 
 
-
-    HTM = (htm_0, htm_1, htm_2, htm_3, htm_4, htm_5, htm_6, htm_ee)
-    JO = (jo_0, jo_1, jo_2, jo_3, jo_4, jo_5, jo_6, jo_ee)
-    JRX = (jrx_0, jrx_1, jrx_2, jrx_3, jrx_4, jrx_5, jrx_6, jrx_ee)
-    JRY = (jry_0, jry_1, jry_2, jry_3, jry_4, jry_5, jry_6, jry_ee)
-    JRZ = (jrz_0, jrz_1, jrz_2, jrz_3, jrz_4, jrz_5, jrz_6, jrz_ee)
-    JO_DOT = (jo_0_dot, jo_1_dot, jo_2_dot, jo_3_dot, jo_4_dot, jo_5_dot, jo_6_dot, jo_ee_dot)
-    JRX_DOT = (jrx_0_dot, jrx_1_dot, jrx_2_dot, jrx_3_dot, jrx_4_dot, jrx_5_dot, jrx_6_dot, jrx_ee_dot)
-    JRY_DOT = (jry_0_dot, jry_1_dot, jry_2_dot, jry_3_dot, jry_4_dot, jry_5_dot, jry_6_dot, jry_ee_dot)
-    JRZ_DOT = (jrz_0_dot, jrz_1_dot, jrz_2_dot, jrz_3_dot, jrz_4_dot, jrz_5_dot, jrz_6_dot, jrz_ee_dot)
-    
-    
     ee_id = (7, 0)
     
     
-    def __init__(self, flame_num, position_num):
-        self.htm = self.HTM[flame_num]
-        self.jo = self.JO[flame_num]
-        self.jrx = self.JRX[flame_num]
-        self.jry = self.JRY[flame_num]
-        self.jrz = self.JRZ[flame_num]
-        self.jo_dot = self.JO_DOT[flame_num]
-        self.jrx_dot = self.JRX_DOT[flame_num]
-        self.jry_dot = self.JRY_DOT[flame_num]
-        self.jrz_dot = self.JRZ_DOT[flame_num]
-        self.r = self.RS_ALL[flame_num][position_num]
+    def __init__(self, frame_num, position_num):
+        
+        self.o = lambda q: o(q, frame_num)
+        self.rx = lambda q: rx(q, frame_num)
+        self.ry = lambda q: ry(q, frame_num)
+        self.rz = lambda q: rz(q, frame_num)
+        self.jo = lambda q: jo(q, frame_num)
+        self.jrx = lambda q: jrx(q, frame_num)
+        self.jry = lambda q: jry(q, frame_num)
+        self.jrz = lambda q: jrz(q, frame_num)
+        self.jo_dot = lambda q, dq: jo_dot(q, dq, frame_num)
+        self.jrx_dot = lambda q, dq: jrx_dot(q, dq, frame_num)
+        self.jry_dot = lambda q, dq: jry_dot(q, dq, frame_num)
+        self.jrz_dot = lambda q, dq: jrz_dot(q, dq, frame_num)
+        self.r = self.RS_ALL[frame_num][position_num]
     
     def phi(self, q):
-        return (self.htm(q) @ self.r_bar)[:3, :]
+        return self.rx(q)*self.r[0] + self.ry(q)*self.r[1] + self.rz(q)*self.r[2] + self.o(q)
     
     def J(self, q):
-        return (self.jrx(q)*self.r_bar[0,0] + self.jry(q)*self.r_bar[1,0] + self.jrz(q)*self.r_bar[2,0] + self.jo(q))
+        return self.jrx(q)*self.r[0] + self.jry(q)*self.r[1] + self.jrz(q)*self.r[2] + self.jo(q)
 
     def J_dot(self, q, dq):
-        return (self.jrx_dot(q, dq)*self.r_bar[0,0] + self.jry_dot(q, dq)*self.r_bar[1,0] + self.jrz_dot(q, dq)*self.r_bar[2,0] + self.jo_dot(q, dq))
+        return self.jrx_dot(q, dq)*self.r[0] + self.jry_dot(q, dq)*self.r[1] + self.jrz_dot(q, dq)*self.r[2] + self.jo_dot(q, dq)
 
 
 
 def JOINT_PHI():
-    return (lambda x: np.zeros((3,1)), o_0, o_1, o_2, o_3, o_4, o_5, o_6, o_ee)
+    return (
+        lambda x: np.zeros((3,1)),
+        lambda q: o(q, 0),
+        lambda q: o(q, 1),
+        lambda q: o(q, 2),
+        lambda q: o(q, 3),
+        lambda q: o(q, 4),
+        lambda q: o(q, 5),
+        lambda q: o(q, 6),
+        lambda q: o(q, 7),
+    )
 
 
 if __name__ == "__main__":

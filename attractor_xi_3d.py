@@ -1,6 +1,9 @@
 import numpy as np
 from math import exp as ex
 from math import sqrt as sq
+from numba import njit
+
+@njit('f8[:,:](f8[:,:], f8[:,:], f8, f8, f8, f8, f8, f8)', cache=True)
 def f(x, x_dot, alpha, w_l, sigma_alpha, w_u, sigma_gamma, epsilon):
     x0 = x[0, 0]
     x1 = x[1, 0]

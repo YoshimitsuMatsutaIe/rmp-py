@@ -1,7 +1,9 @@
+
 import numpy as np
 from numpy import linalg as LA
 from math import exp
 from typing import Union
+from numba import njit
 
 import mappings
 import rmp_node
@@ -83,10 +85,7 @@ class GoalAttractor(LeafBase):
         super().__init__(name, dim, parent, calc_mappings,)
     
     
-    def calc_rmp_func(self,):
-        #print("error = ", self.x.T)
-        self.M = self.__inertia_matrix()
-        self.f = self.__force()
+
     
     
     def __grad_phi(self,):
@@ -117,11 +116,37 @@ class GoalAttractor(LeafBase):
         )
         return self.M @ (-self.gain*self.__grad_phi() - self.damp*self.x_dot) - xi
 
+    # def calc_rmp_func(self,):
+    #     #print("error = ", self.x.T)
+    #     self.M = self.__inertia_matrix()
+    #     self.f = self.__force()
+
+    def calc_rmp_func(self):
+
+        x_norm = LA.norm(self.x)
+        grad_phi = (1-exp(-2*self.alpha*x_norm)) / (1+exp(-2*self.alpha*x_norm)) * self.x / x_norm
+        alpha_x = exp(-x_norm**2 / (2 * self.sigma_alpha**2))
+        gamma_x = exp(-x_norm**2 / (2 * self.sigma_gamma**2))
+        wx = gamma_x*self.wu + (1 - gamma_x)*self.wl
+        
+        self.M = wx*((1-alpha_x) * grad_phi @ grad_phi.T + (alpha_x+self.epsilon) * np.eye(self.dim))
+
+        self.f = self.M @ (-self.gain*grad_phi - self.damp*self.x_dot) \
+            - self.xi_func(
+                x = self.x,
+                x_dot = self.x_dot,
+                sigma_alpha = self.sigma_alpha,
+                sigma_gamma = self.sigma_gamma,
+                w_u = self.wu,
+                w_l = self.wl,
+                alpha = self.alpha,
+                epsilon = self.epsilon
+            )
 
 
 class ObstacleAvoidance(LeafBase):
     def __init__(
-        self, name, parent, calc_mappings,
+        self, name, parent: rmp_node.Node, calc_mappings,
         scale_rep: float,
         scale_damp: float,
         gain: float,
@@ -134,34 +159,84 @@ class ObstacleAvoidance(LeafBase):
         self.sigma = sigma
         self.rw = rw
     
-        super().__init__(name, 1, parent, calc_mappings,)
+        #super().__init__(name, 1, parent, calc_mappings,)
+        self.name = name
+        self.dim= 1
+        self.parent = parent
+        self.mappings = calc_mappings
+        self.children = []
+        self.isMulti = True
+        
+
+        self.x = 0
+        self.x_dot = 0
+        self.f = 0
+        self.M = 0
+        self.J = np.empty((1, parent.dim))
+        self.J_dot = np.empty((1, parent.dim))
     
     
     def calc_rmp_func(self,):
-        s = self.x
-        s_dot = self.x_dot[0,0]
-        
-        if self.rw - s > 0:
-            w2 = (self.rw - s)**2 / s
-            w2_dot = (-2*(self.rw-s)*s + (self.rw-s)) / s**2
+        if self.rw - self.x > 0:
+            w2 = (self.rw - self.x)**2 / self.x
+            w2_dot = (-2*(self.rw-self.x)*self.x + (self.rw-self.x)) / self.x**2
         else:
-            self.M[0,0] = 0
-            self.f[0,0] = 0
+            self.M = 0
+            self.f = 0
             return
         
-        if s_dot < 0:
-            u2 = 1 - exp(-s_dot**2 / (2*self.sigma**2))
-            u2_dot = -exp(s_dot**2 / (2*self.sigma**2)) * (-s_dot/self.sigma**3)
+        if self.x_dot < 0:
+            u2 = 1 - exp(-self.x_dot**2 / (2*self.sigma**2))
+            u2_dot = -exp(self.x_dot**2 / (2*self.sigma**2)) * (-self.x_dot/self.sigma**3)
         else:
             u2 = 0
             u2_dot = 0
         
-        delta = u2 + 1/2 * s_dot * u2_dot
-        xi = 1/2 * u2 * w2_dot * s_dot**2
+        delta = u2 + 1/2 * self.x_dot * u2_dot
+        xi = 1/2 * u2 * w2_dot * self.x_dot**2
         grad_phi = self.gain * w2 * w2_dot
         
-        self.M[0,0] = w2 * delta
-        self.f[0,0] = -grad_phi - xi
+        self.M = w2 * delta
+        self.f = -grad_phi - xi
+
+        #self.M, self.f = obs_avoidance_rmp_func(self.x, self.x_dot, self.gain, self.sigma, self.rw)
+
+
+
+    def pullback(self):
+        self.calc_rmp_func()
+        assert self.parent is not None, "pulled at " + self.name + ", error"
+        self.parent.f += self.J.T * (self.f - (self.M * self.J_dot @ self.parent.x_dot)[0,0])
+        self.parent.M += self.M * self.J.T @ self.J
+
+
+@njit('UniTuple(f8, 2)(f8, f8, f8, f8, f8)', cache=True)
+def obs_avoidance_rmp_func(
+        x, x_dot,
+        gain: float,
+        sigma: float,
+        rw: float
+    ):
+    if rw - x > 0:
+        w2 = (rw - x)**2 / x
+        w2_dot = (-2*(rw-x)*x + (rw-x)) / x**2
+    else:
+        return (0, 0)
+    
+    if x_dot < 0:
+        u2 = 1 - exp(-x_dot**2 / (2*sigma**2))
+        u2_dot = -exp(x_dot**2 / (2*sigma**2)) * (-x_dot/sigma**3)
+    else:
+        u2 = 0
+        u2_dot = 0
+    
+    delta = u2 + 1/2 * x_dot * u2_dot
+    xi = 1/2 * u2 * w2_dot * x_dot**2
+    grad_phi = gain * w2 * w2_dot
+    
+    return (w2 * delta, -grad_phi - xi)
+
+
 
 
 
@@ -200,7 +275,7 @@ class JointLimitAvoidance(LeafBase):
     
     def calc_rmp_func(self,):
         xi = np.empty((self.dim, 1))
-        
+        self.M.fill(0)
         for i in range(self.dim):
             alpha_upper = 1 - exp(-max(self.x_dot[i, 0], 0)**2 / (2*self.sigma**2))
             alpha_lower = 1 - exp(-min(self.x_dot[i, 0], 0)**2 / (2*self.sigma**2))

@@ -135,7 +135,7 @@ class CPoint(mappings.Identity):
         self.jo_dot = lambda q, dq: jo_dot(q, dq, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
         self.jrx_dot = lambda q, dq: jrx_dot(q, dq, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
         self.jry_dot = lambda q, dq: jry_dot(q, dq, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
-        self.jrz_dot = lambda q, dq: jo_dot(q, dq, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
+        self.jrz_dot = lambda q, dq: jrz_dot(q, dq, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
         self.r = self.RS_ALL[frame_num][position_num]
     
     
