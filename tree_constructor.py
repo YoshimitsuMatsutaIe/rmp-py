@@ -117,6 +117,77 @@ def multi_solve2(
 
 
 
+def multi_solve3(
+    node_id: tuple[int, int],
+    q: list[float], q_dot: list[float],
+    g: list[float],
+    o_s: list[list[float]],
+    rmp_param, robot_name: str
+):
+    """並列用 : 毎回ノード作成
+    """
+    
+    if robot_name == "baxter":
+        robot_model = baxter
+    elif robot_name == "franka_emika":
+        robot_model = franka_emika
+    elif robot_name == "sice":
+        robot_model = sice
+    else:
+        assert False
+    
+    #print(node_id, end="  ")
+    if node_id == (-1, 0):
+        node = JointLimitAvoidance(
+            name="jl",
+            parent=None,
+            calc_mappings=mappings.Identity(),
+            q_max = robot_model.q_max(),
+            q_min = robot_model.q_min(),
+            q_neutral = robot_model.q_neutral(),
+            parent_dim=robot_model.CPoint.c_dim,
+            **rmp_param["joint_limit_avoidance"]
+        )
+    else:
+        temp_map = robot_model.CPoint(*node_id)
+        node = Node(
+            name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
+            dim = robot_model.CPoint.t_dim,
+            parent = None,
+            mappings = temp_map
+        )
+        if node_id == robot_model.CPoint.ee_id:
+            ### 目標 ###
+            g_dot = np.zeros((len(g), 1))
+            attracter = GoalAttractor(
+                name="ee-attractor",
+                parent=node,
+                dim=len(g),
+                calc_mappings=mappings.Translation(np.array([g]).T, g_dot),
+                **rmp_param["goal_attractor"]
+            )
+            node.add_child(attracter)
+
+        ### 障害物 ###
+        for i, o in enumerate(o_s):
+            obs_node = ObstacleAvoidance(
+                name="obs_" + str(i) + ", at " + node.name,
+                parent = node,
+                calc_mappings = mappings.Distance(np.array([o]).T, np.zeros((len(o), 1))),
+                **rmp_param["obstacle_avoidance"]
+            )
+            node.add_child(obs_node)
+
+    node.isMulti = True
+    f, M = node.solve(
+        np.array([q]).T, np.array([q_dot]).T)
+    #print(node.name)
+    #print("  f = ", f.T)
+    #print("  M = ", np.linalg.eigvals(M))
+    return f.tolist(), M.tolist()
+
+
+
 def solve(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
     
     
@@ -141,6 +212,37 @@ def solve(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
     q_ddot = np.linalg.pinv(M) @ f
     
     return q_ddot
+
+
+
+def solve3(
+    q: list[float], q_dot: list[float],
+    g: list[float], o_s: list[list[float]],
+    robot_name, node_ids, rmp_param=rmp_param_ex
+):
+    """ndarrayではなくlistで通信"""
+    
+    core = cpu_count()
+    #core = 2
+    with Pool(core) as p:
+        ### プロセス毎にサブツリーを再構成して計算 ###
+        result = p.starmap(
+            func = multi_solve3,
+            iterable = ((node_id, q, q_dot, g, o_s, rmp_param, robot_name) for node_id in node_ids)
+        )
+    
+    
+    f = np.zeros((len(q), 1))
+    M = np.zeros((len(q), len(q)))
+    for r in result:
+        f += np.array(r[0])
+        M += np.array(r[1])
+    
+    #print(self.f)
+    q_ddot = np.linalg.pinv(M) @ f
+    
+    return q_ddot
+
 
 
 def make_node(

@@ -58,14 +58,36 @@ class Simulator:
         
         return np.ravel(x_dot)
 
+    
+    def dx3(self, t, x):
+        """ODE list"""
+        dim = len(x) // 2
+        q_ddot = tree_constructor.solve3(
+            q=x[:dim].tolist(), q_dot=x[dim:].tolist(), g=self.goal_list, o_s=self.obstacle_list,
+            node_ids=self.node_ids,
+            robot_name=self.robot_name,
+            rmp_param=self.rmp_param
+        )
+        #print("ddq = ", q_ddot.T)
+        #print(type(x))
+        x_dot = x[dim:].tolist()
+        x_dot.extend(np.ravel(q_ddot).tolist())
+        
+        return x_dot
 
+
+    def __make_ndarry_to_list(self,):
+        self.goal_list = np.ravel(self.goal).tolist()
+        self.obstacle_list = [
+            np.ravel(o).tolist() for o in self.obstacle
+        ]
 
 
     def main(self, param_path):
         
         date_now = datetime.datetime.now()
         name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
-        base = "../rmp-py_result/" + name + "/"
+        base = "../rmp_result/rmp-py_result/" + name + "/"
         os.makedirs(base, exist_ok=True)
         
         
@@ -114,6 +136,7 @@ class Simulator:
         for i, Rs in enumerate(robot_model.CPoint.RS_ALL):
             self.node_ids += [(i, j) for j in range(len(Rs))]
         
+
         t0 = time.perf_counter()
         sol = integrate.solve_ivp(
             fun = self.dx,
@@ -125,10 +148,31 @@ class Simulator:
             t_eval=np.arange(0, param["time_span"], param["time_interval"]),
             #atol=1e-10
         )
-        sim_time =  time.perf_counter() - t0
+        sim_time = time.perf_counter() - t0
         print("sim time = ", sim_time)
         print(sol.message)
         
+
+        # t0 = time.perf_counter()
+        # x0 = np.ravel(robot_model.q_neutral()).tolist() + [0 for _ in range(robot_model.CPoint.c_dim)]
+        # print(type(x0))
+
+        # self.__make_ndarry_to_list()
+
+        # sol = integrate.solve_ivp(
+        #     fun = self.dx3,
+        #     t_span = (0, param["time_span"]),
+        #     y0 = x0,
+        #     eval=np.arange(0, param["time_span"], param["time_interval"]),
+        #     #atol=1e-10
+        # )
+        # sim_time =  time.perf_counter() - t0
+        # print("sim time = ", sim_time)
+        # print(sol.message)
+        
+
+
+
         ## CSV保存
         # まずはヘッダーを準備
         header = "t"

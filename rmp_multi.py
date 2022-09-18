@@ -1,38 +1,59 @@
 import numpy as np
+from numpy import pi
 import numpy.linalg as LA
 from math import exp
-from numba import njit
-
+from numba import njit, f8, u1
+from numba import prange
 
 import attractor_xi_2d
 import attractor_xi_3d
 
+import robot_baxter.baxter as baxter
+import robot_franka_emika.franka_emika as franka_emika
+import robot_sice.sice as sice
 
-@njit('UniTuple(f8, 2)(f8, f8, f8, f8, f8)', cache=True)
+
+@njit('UniTuple(f8[:,:], 2)(f8[:,:], f8[:,:], f8[:,:], f8, f8, f8)', cache=True)
 def obs_avoidance_rmp_func(
-        x, x_dot,
+        x, x_dot, o,
         gain: float,
         sigma: float,
         rw: float
     ):
-    if rw - x > 0:
-        w2 = (rw - x)**2 / x
-        w2_dot = (-2*(rw-x)*x + (rw-x)) / x**2
+
+    s = LA.norm(x - o)
+    J = -(x - o) / s
+    s_dot = (J @ (x - o))[0,0]
+    J_dot = -((x_dot).T - (x-o).T*(1/LA.norm(x-o)*(x-o).T @ (x_dot))) / LA.norm(x-o)**2
+
+    if rw - s > 0:
+        w2 = (rw - s)**2 / s
+        w2_dot = (-2*(rw-s)*s + (rw-s)) / s**2
     else:
-        return (0, 0)
+        return (
+            np.zeros((x.shape[0], x.shape[0])),
+            np.zeros((x.shape[0], 1)),
+        )
     
-    if x_dot < 0:
-        u2 = 1 - exp(-x_dot**2 / (2*sigma**2))
-        u2_dot = -exp(x_dot**2 / (2*sigma**2)) * (-x_dot/sigma**3)
+    if s_dot < 0:
+        u2 = 1 - exp(-s_dot**2 / (2*sigma**2))
+        u2_dot = -exp(s_dot**2 / (2*sigma**2)) * (-s_dot/sigma**3)
     else:
         u2 = 0
         u2_dot = 0
     
-    delta = u2 + 1/2 * x_dot * u2_dot
-    xi = 1/2 * u2 * w2_dot * x_dot**2
+    delta = u2 + 1/2 * s_dot * u2_dot
+    xi = 1/2 * u2 * w2_dot * s_dot**2
     grad_phi = gain * w2 * w2_dot
     
-    return (w2 * delta, -grad_phi - xi)
+
+    m = w2 * delta
+    f = -grad_phi - xi
+
+    return (
+        m * J.T @ J,
+        J.T * (f - (m * J_dot @ x_dot)[0,0])
+    )
 
 
 
@@ -82,7 +103,7 @@ def goal_attractor_rmp_func(
 
 
 
-@njit('UniTuple(f8[:,:], 2)(f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8, f8, f8, f8)', cache=True)
+@njit('UniTuple(f8[:,:], 2)(f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8, f8, f8, f8)', cache=True, parallel=True)
 def jl_avoidance_rmp_fnc(
     q, q_dot,
     q_max, q_min, q_neutral,
@@ -94,7 +115,7 @@ def jl_avoidance_rmp_fnc(
     dim = q.shape[0]
     xi = np.empty((dim, 1))
     M = np.zeros((dim, dim))
-    for i in range(dim):
+    for i in prange(dim):
         alpha_upper = 1 - exp(-max(q_dot[i, 0], 0)**2 / (2*sigma**2))
         alpha_lower = 1 - exp(-min(q_dot[i, 0], 0)**2 / (2*sigma**2))
         s = (q[i,0] - q_min[i,0]) / (q_max[i,0] - q_min[i,0])
@@ -116,3 +137,79 @@ def jl_avoidance_rmp_fnc(
 
 
 
+def get_node_ids(robot_name: str):
+    if robot_name == "baxter":
+        robot_model = baxter
+    elif robot_name == "franka_emika":
+        robot_model = franka_emika
+    elif robot_name == "sice":
+        robot_model = sice
+    else:
+        assert False
+    
+    ids = []
+    for i in range(len(robot_model.CPoint.RS_ALL)):
+        for j in range(len(robot_model.CPoint.RS_ALL[i])):
+            ids.append((i, j))
+    
+    return ids
+
+
+@njit(
+    'f8[:,:](f8[:,:], f8[:,:], f8[:,:], ListType(f8[:,:]), DictType(u1, DictType(u1, f8)), u1)',
+    cache=True, parallel=True
+)
+def solve(q, q_dot, g, o_s, rmp_param, robot_name: str):
+    if robot_name == "baxter":
+        robot_model = baxter
+    elif robot_name == "franka_emika":
+        robot_model = franka_emika
+    elif robot_name == "sice":
+        robot_model = sice
+    else:
+        assert False
+    
+    temp_rmp = jl_avoidance_rmp_fnc(
+        q, q_dot, 
+        robot_model.q_max(), robot_model.q_min(), robot_model.q_neutral,
+        **rmp_param["joint_limit_avoidance"]
+    )
+    root_f = temp_rmp[1]
+    root_M = temp_rmp[0]
+
+    ids = get_node_ids(robot_name)
+
+    for i in prange(len(ids)):
+        mapping = robot_model.CPoint(*ids[i])
+        x = mapping.phi(q)
+        J = mapping.J(q)
+        x_dot = J @ q_dot
+        J_dot = mapping.J_dot(q, q_dot)
+
+        f = np.zeros((robot_model.CPoint.t_dim, 1))
+        M = np.zeros((robot_model.CPoint.t_dim, robot_model.CPoint.t_dim))
+        for j in prange(len(o_s)):
+            temp_rmp = obs_avoidance_rmp_func(
+                x, x_dot, o_s[j], *rmp_param["obstacle_avoidance"]
+            )
+            f += temp_rmp[1]
+            M += temp_rmp[0]
+
+            if ids[i] == robot_model.CPoint.ee_id:
+                temp_rmp = goal_attractor_rmp_func(
+                    x-g, x_dot, *rmp_param["goal_attractor"]
+                )
+                f += temp_rmp[1]
+                M += temp_rmp[0]
+        
+        root_f += J.T @ (f - M @ J_dot @ q_dot)
+        root_M += J.T @ M @ J
+
+
+    return LA.pinv(root_M) @ root_f
+
+
+
+
+if __name__ == "__main__":
+    pass
