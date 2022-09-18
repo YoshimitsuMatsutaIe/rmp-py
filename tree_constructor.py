@@ -109,9 +109,7 @@ def multi_solve2(
 
     node.isMulti = True
     f, M = node.solve(q, q_dot)
-    #print(node.name)
-    #print("  f = ", f.T)
-    #print("  M = ", np.linalg.eigvals(M))
+
     return f, M
 
 
@@ -125,6 +123,9 @@ def multi_solve3(
     rmp_param, robot_name: str
 ):
     """並列用 : 毎回ノード作成
+    
+    データをndarray -> listに変更  
+    なぜか遅い  
     """
     
     if robot_name == "baxter":
@@ -181,9 +182,7 @@ def multi_solve3(
     node.isMulti = True
     f, M = node.solve(
         np.array([q]).T, np.array([q_dot]).T)
-    #print(node.name)
-    #print("  f = ", f.T)
-    #print("  M = ", np.linalg.eigvals(M))
+
     return f.tolist(), M.tolist()
 
 

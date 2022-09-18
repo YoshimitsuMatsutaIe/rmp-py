@@ -165,9 +165,6 @@ class ObstacleAvoidance(LeafBase):
         self.f = -grad_phi - xi
 
 
-
-
-
     def pullback(self):
         self.calc_rmp_func()
         assert self.parent is not None, "pulled at " + self.name + ", error"
