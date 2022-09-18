@@ -159,7 +159,9 @@ def get_node_ids(robot_name: str):
     'f8[:,:](f8[:,:], f8[:,:], f8[:,:], ListType(f8[:,:]), DictType(u1, DictType(u1, f8)), u1)',
     cache=True, parallel=True
 )
-def solve(q, q_dot, g, o_s, rmp_param, robot_name: str):
+def dX(t, X, c_dim, g, o_s, rmp_param, robot_name: str):
+    """solve_ivpにわたすやつ"""
+    
     if robot_name == "baxter":
         robot_model = baxter
     elif robot_name == "franka_emika":
@@ -169,13 +171,19 @@ def solve(q, q_dot, g, o_s, rmp_param, robot_name: str):
     else:
         assert False
     
-    temp_rmp = jl_avoidance_rmp_fnc(
-        q, q_dot, 
-        robot_model.q_max(), robot_model.q_min(), robot_model.q_neutral,
-        **rmp_param["joint_limit_avoidance"]
-    )
-    root_f = temp_rmp[1]
-    root_M = temp_rmp[0]
+    q = X[:c_dim].reshape(-1, 1)
+    q_dot = X[c_dim:].reshape(-1, 1)
+    
+    root_f = np.zeros((c_dim, 1))
+    root_M = np.zeros((c_dim, c_dim))
+    
+    # temp_rmp = jl_avoidance_rmp_fnc(
+    #     q, q_dot, 
+    #     robot_model.q_max(), robot_model.q_min(), robot_model.q_neutral,
+    #     **rmp_param["joint_limit_avoidance"]
+    # )
+    # root_f = temp_rmp[1]
+    # root_M = temp_rmp[0]
 
     ids = get_node_ids(robot_name)
 
