@@ -29,7 +29,6 @@ import visualization
 
 
 import robot_franka_emika.franka_emika as franka_emika
-#import robot_franka_emika_numba.franka_emika as franka_emika
 import robot_baxter.baxter as baxter
 import robot_sice.sice as sice
 
@@ -76,6 +75,22 @@ class Simulator:
         return x_dot
 
 
+    def dx4(self, t, x):
+        """ODE"""
+        dim = x.shape[0] // 2
+        x = x.reshape(-1, 1)
+        q_ddot = tree_constructor.solve4(
+            q=x[:dim, :], q_dot=x[dim:, :], g=self.goal, o_s=self.obstacle,
+            node_ids=self.node_ids,
+            robot_name=self.robot_name,
+            rmp_param=self.rmp_param
+        )
+        
+        x_dot = np.concatenate([x[dim:, :], q_ddot])
+        return np.ravel(x_dot)
+
+
+
     def __make_ndarry_to_list(self,):
         self.goal_list = np.ravel(self.goal).tolist()
         self.obstacle_list = [
@@ -83,7 +98,7 @@ class Simulator:
         ]
 
 
-    def main(self, param_path):
+    def main(self, param_path: str):
         
         date_now = datetime.datetime.now()
         name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
@@ -137,9 +152,29 @@ class Simulator:
             self.node_ids += [(i, j) for j in range(len(Rs))]
         
 
+
+
+        # t0 = time.perf_counter()
+        # sol = integrate.solve_ivp(
+        #     fun = self.dx,
+        #     t_span = (0, param["time_span"]),
+        #     y0 = np.ravel(np.concatenate([
+        #         robot_model.q_neutral(),
+        #         np.zeros_like(robot_model.q_neutral())
+        #     ])),
+        #     t_eval=np.arange(0, param["time_span"], param["time_interval"]),
+        #     #atol=1e-10
+        # )
+        # sim_time = time.perf_counter() - t0
+        # print("sim time = ", sim_time)
+        # print(sol.message)
+        
+
+        obs_ = self.obstacle
+        self.obstacle = np.concatenate(self.obstacle, axis=1)
         t0 = time.perf_counter()
         sol = integrate.solve_ivp(
-            fun = self.dx,
+            fun = self.dx4,
             t_span = (0, param["time_span"]),
             y0 = np.ravel(np.concatenate([
                 robot_model.q_neutral(),
@@ -151,7 +186,8 @@ class Simulator:
         sim_time = time.perf_counter() - t0
         print("sim time = ", sim_time)
         print(sol.message)
-        
+        self.obstacle = obs_
+
 
         # t0 = time.perf_counter()
         # x0 = np.ravel(robot_model.q_neutral()).tolist() + [0 for _ in range(robot_model.CPoint.c_dim)]

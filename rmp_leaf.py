@@ -1,6 +1,8 @@
 
 import numpy as np
 from numpy import linalg as LA
+import numpy.typing as npt
+
 from math import exp
 from typing import Union
 from numba import njit
@@ -173,6 +175,81 @@ class ObstacleAvoidance(LeafBase):
 
 
 
+
+class ObstacleAvoidanceMulti(LeafBase):
+    def __init__(
+        self, name, parent: rmp_node.Node, calc_mappings,
+        dim: int,
+        o_s: npt.NDArray,
+        scale_rep: float,
+        scale_damp: float,
+        gain: float,
+        sigma: float,
+        rw: float
+    ):
+        self.scale_rep = scale_rep
+        self.scale_damp = scale_damp
+        self.gain = gain
+        self.sigma = sigma
+        self.rw = rw
+        self.o_s = o_s
+    
+        super().__init__(name, dim, parent, calc_mappings,)
+
+        self.isMulti = True
+    
+    
+    def __get_near_obs_id(self):
+        dis = self.rw - LA.norm(self.x - self.o_s, axis=0)
+        return np.where(dis > 0)[0]
+    
+    
+    def __calc_rmp_func(self, s: float, s_dot: float):
+
+        w2 = (self.rw - s)**2 / s
+        w2_dot = (-2*(self.rw-s)*s + (self.rw-s)) / s**2
+
+        if s_dot < 0:
+            u2 = 1 - exp(-s_dot**2 / (2*self.sigma**2))
+            u2_dot = -exp(s_dot**2 / (2*self.sigma**2)) * (-s_dot/self.sigma**3)
+        else:
+            u2 = 0
+            u2_dot = 0
+        
+        delta = u2 + 1/2 * s_dot * u2_dot
+        xi = 1/2 * u2 * w2_dot * s_dot**2
+        grad_phi = self.gain * w2 * w2_dot
+        
+        m = w2 * delta
+        f = -grad_phi - xi
+        
+        return m, f
+    
+    
+    def calc_rmp_func(self,):
+        
+        obs_ids = self.__get_near_obs_id()
+        
+        self.f.fill(0)
+        self.M.fill(0)
+        
+        if len(obs_ids) == 0:
+            return
+        else:
+            for id in obs_ids:
+                z = self.x - self.o_s[:, id:id+1]
+                s = LA.norm(z)
+                J = -z.T / s
+                s_dot = (J @ self.x_dot)[0,0]
+                J_dot = -(self.x_dot.T - z.T*(1/LA.norm(z)*z.T @ self.x_dot)) / s**2
+                
+                m, f = self.__calc_rmp_func(s, s_dot)
+                
+                self.M += m * J.T @ J
+                self.f += J.T * (f - (m * J_dot @ self.x_dot)[0,0])
+
+
+
 class JointLimitAvoidance(LeafBase):
     def __init__(
         self, name, parent: Union[rmp_node.Node, None], calc_mappings,
@@ -226,6 +303,11 @@ class JointLimitAvoidance(LeafBase):
             self.M[i,i] = self.lam * a
         
         self. f = self.M @ (self.gamma_p*(self.q_neutral - self.x) - self.gamma_d*self.x_dot) - xi
+
+
+
+
+
 
 
 # class GoalAttractor_1(rmp_tree.LeafBase):

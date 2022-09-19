@@ -8,11 +8,12 @@ import numpy as np
 # ロボットモデルの導入
 import robot_baxter.baxter as baxter
 import robot_franka_emika.franka_emika as franka_emika
-#import robot_franka_emika_numba.franka_emika as franka_emika
 import robot_sice.sice as sice
 
 import mappings
-from rmp_leaf import GoalAttractor, JointLimitAvoidance, ObstacleAvoidance
+from rmp_leaf import GoalAttractor
+from rmp_leaf import JointLimitAvoidance
+from rmp_leaf import ObstacleAvoidance, ObstacleAvoidanceMulti
 from rmp_node import Node
 
 
@@ -187,9 +188,77 @@ def multi_solve3(
 
 
 
+
+
+
+def multi_solve4(
+    node_id: tuple[int, int],
+    q, q_dot, g, o_s, rmp_param, robot_name: str
+):
+    """並列用 : 毎回ノード作成
+    """
+    
+    if robot_name == "baxter":
+        robot_model = baxter
+    elif robot_name == "franka_emika":
+        robot_model = franka_emika
+    elif robot_name == "sice":
+        robot_model = sice
+    else:
+        assert False
+    
+    #print(node_id, end="  ")
+    if node_id == (-1, 0):
+        node = JointLimitAvoidance(
+            name="jl",
+            parent=None,
+            calc_mappings=mappings.Identity(),
+            q_max = robot_model.q_max(),
+            q_min = robot_model.q_min(),
+            q_neutral = robot_model.q_neutral(),
+            parent_dim=robot_model.CPoint.c_dim,
+            **rmp_param["joint_limit_avoidance"]
+        )
+    else:
+        temp_map = robot_model.CPoint(*node_id)
+        node = Node(
+            name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
+            dim = robot_model.CPoint.t_dim,
+            parent = None,
+            mappings = temp_map
+        )
+        if node_id == robot_model.CPoint.ee_id:
+            ### 目標 ###
+            g_dot = np.zeros(g.shape)
+            attracter = GoalAttractor(
+                name="ee-attractor",
+                parent=node,
+                dim=g.shape[0],
+                calc_mappings=mappings.Translation(g, g_dot),
+                **rmp_param["goal_attractor"]
+            )
+            node.add_child(attracter)
+
+        ### 障害物 ###
+        obs_node = ObstacleAvoidanceMulti(
+            name="obs_multi" + node.name,
+            parent = node,
+            calc_mappings = mappings.Identity(),
+            dim = robot_model.CPoint.t_dim,
+            o_s = o_s,
+            **rmp_param["obstacle_avoidance"]
+        )
+        node.add_child(obs_node)
+
+    node.isMulti = True
+    f, M = node.solve(q, q_dot)
+
+    return f, M
+
+
+
+
 def solve(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
-    
-    
     #core=1
     core = cpu_count()
     #core = 2
@@ -200,17 +269,13 @@ def solve(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
             iterable = ((node_id, q, q_dot, g, o_s, rmp_param, robot_name) for node_id in node_ids)
         )
     
-    
     f = np.zeros(q.shape)
     M = np.zeros((q.shape[0], q.shape[0]))
     for r in result:
         f += r[0]
         M += r[1]
     
-    #print(self.f)
-    q_ddot = np.linalg.pinv(M) @ f
-    
-    return q_ddot
+    return np.linalg.pinv(M) @ f
 
 
 
@@ -241,6 +306,27 @@ def solve3(
     q_ddot = np.linalg.pinv(M) @ f
     
     return q_ddot
+
+
+def solve4(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
+    #core=1
+    core = cpu_count()
+    #core = 2
+    with Pool(core) as p:
+        ### プロセス毎にサブツリーを再構成して計算 ###
+        result = p.starmap(
+            func = multi_solve4,
+            iterable = ((node_id, q, q_dot, g, o_s, rmp_param, robot_name) for node_id in node_ids)
+        )
+    
+    f = np.zeros(q.shape)
+    M = np.zeros((q.shape[0], q.shape[0]))
+    for r in result:
+        f += r[0]
+        M += r[1]
+    
+    return np.linalg.pinv(M) @ f
+
 
 
 
@@ -329,3 +415,8 @@ def make_tree(g, o_s, robot_name, rmp_param, ):
     return nodes
 
 
+
+
+
+if __name__ == "__main__":
+    pass
