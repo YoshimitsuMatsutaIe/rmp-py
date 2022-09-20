@@ -37,6 +37,8 @@ class Node:
         elif parent is None and parent_dim is not None:
             self.J = np.empty((self.dim, parent_dim))
             self.J_dot = np.empty((self.dim, parent_dim))
+        else:
+            assert False
     
     
     def add_child(self, child: Node):
