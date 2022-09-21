@@ -9,14 +9,14 @@ s = Simulator()
 
 #simulator.main("./config/franka.json")
 
-s.main("./config/franka_sphere.json")
+#s.main("./config/franka_sphere.json")
 
 #simulator.main("./config/baxter.json")
 
 
 #simulator.main("./config/franka_box.json")
 
-#s.main("./config/franka_cubbie.json")
+s.main("./config/franka_cubbie.json", method="single")
 
 
 #simulator.main("./config/test_sice.json")

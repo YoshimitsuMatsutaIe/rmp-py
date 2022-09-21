@@ -1,7 +1,7 @@
 {
     "//" : "キャビン",
     "robot_name" : "franka_emika",
-    "time_span" : 10,
+    "time_span" : 30,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
@@ -41,7 +41,7 @@
             {
                 "type" : "cubbie",
                 "param" : {
-                    "n" : 10,
+                    "n" : 500,
                     "lx" : 0.4,
                     "ly" : 0.3,
                     "lz" : 0.3,
@@ -56,7 +56,7 @@
             {
                 "type" : "cubbie",
                 "param" : {
-                    "n" : 5,
+                    "n" : 500,
                     "lx" : 0.4,
                     "ly" : 0.3,
                     "lz" : 0.3,

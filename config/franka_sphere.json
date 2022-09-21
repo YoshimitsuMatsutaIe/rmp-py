@@ -1,7 +1,7 @@
 {
     "//" : "ボールの背後に目標",
     "robot_name" : "franka_emika",
-    "time_span" : 30.0,
+    "time_span" : 10.0,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {

@@ -1,47 +1,191 @@
 import numpy as np
+import numpy as np
+from math import cos as c
+from math import sin as s
 import mappings
+from numba import njit
 
-import sys
-sys.path.append('.')
+@njit("(f8[:, :](f8[:, :], i8, f8, f8, f8, f8))", cache=True)
+def o(q, i, l1, l2, l3, l4):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    if i == 0:
+        return np.array([[0.], [0.]])
+    elif i == 1:
+        return np.array([[l1*c(q0)], [l1*s(q0)]])
+    elif i == 2:
+        return np.array([[l1*c(q0) - l2*s(q0)*s(q1) + l2*c(q0)*c(q1)], [l1*s(q0) + l2*s(q0)*c(q1) + l2*s(q1)*c(q0)]])
+    elif i == 3:
+        return np.array([[l1*c(q0) - l2*s(q0)*s(q1) + l2*c(q0)*c(q1) - l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2)], [l1*s(q0) + l2*s(q0)*c(q1) + l2*s(q1)*c(q0) - l3*s(q0)*s(q1)*s(q2) + l3*s(q0)*c(q1)*c(q2) + l3*s(q1)*c(q0)*c(q2) + l3*s(q2)*c(q0)*c(q1)]])
+    elif i == 4:
+        return np.array([[l1*c(q0) - l2*s(q0)*s(q1) + l2*c(q0)*c(q1) - l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2) + l4*s(q0)*s(q1)*s(q2)*s(q3) - l4*s(q0)*s(q1)*c(q2)*c(q3) - l4*s(q0)*s(q2)*c(q1)*c(q3) - l4*s(q0)*s(q3)*c(q1)*c(q2) - l4*s(q1)*s(q2)*c(q0)*c(q3) - l4*s(q1)*s(q3)*c(q0)*c(q2) - l4*s(q2)*s(q3)*c(q0)*c(q1) + l4*c(q0)*c(q1)*c(q2)*c(q3)], [l1*s(q0) + l2*s(q0)*c(q1) + l2*s(q1)*c(q0) - l3*s(q0)*s(q1)*s(q2) + l3*s(q0)*c(q1)*c(q2) + l3*s(q1)*c(q0)*c(q2) + l3*s(q2)*c(q0)*c(q1) - l4*s(q0)*s(q1)*s(q2)*c(q3) - l4*s(q0)*s(q1)*s(q3)*c(q2) - l4*s(q0)*s(q2)*s(q3)*c(q1) + l4*s(q0)*c(q1)*c(q2)*c(q3) - l4*s(q1)*s(q2)*s(q3)*c(q0) + l4*s(q1)*c(q0)*c(q2)*c(q3) + l4*s(q2)*c(q0)*c(q1)*c(q3) + l4*s(q3)*c(q0)*c(q1)*c(q2)]])
+    else:
+        assert False
 
-from robot_sice.htm import HTM
-from robot_sice.Jos import JO
-from robot_sice.JRxs import JRX
-from robot_sice.JRys import JRY
-from robot_sice.Jo_dots import JO_DOT
-from robot_sice.JRx_dots import JRX_DOT
-from robot_sice.JRy_dots import JRY_DOT
+
+@njit("(f8[:, :](f8[:, :], i8))", cache=True)
+def rx(q, i):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    if i == 0:
+        return np.array([[c(q0)], [s(q0)]])
+    elif i == 1:
+        return np.array([[-s(q0)*s(q1) + c(q0)*c(q1)], [s(q0)*c(q1) + s(q1)*c(q0)]])
+    elif i == 2:
+        return np.array([[-s(q0)*s(q1)*c(q2) - s(q0)*s(q2)*c(q1) - s(q1)*s(q2)*c(q0) + c(q0)*c(q1)*c(q2)], [-s(q0)*s(q1)*s(q2) + s(q0)*c(q1)*c(q2) + s(q1)*c(q0)*c(q2) + s(q2)*c(q0)*c(q1)]])
+    elif i == 3:
+        return np.array([[s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3)], [-s(q0)*s(q1)*s(q2)*c(q3) - s(q0)*s(q1)*s(q3)*c(q2) - s(q0)*s(q2)*s(q3)*c(q1) + s(q0)*c(q1)*c(q2)*c(q3) - s(q1)*s(q2)*s(q3)*c(q0) + s(q1)*c(q0)*c(q2)*c(q3) + s(q2)*c(q0)*c(q1)*c(q3) + s(q3)*c(q0)*c(q1)*c(q2)]])
+    elif i == 4:
+        return np.array([[s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3)], [-s(q0)*s(q1)*s(q2)*c(q3) - s(q0)*s(q1)*s(q3)*c(q2) - s(q0)*s(q2)*s(q3)*c(q1) + s(q0)*c(q1)*c(q2)*c(q3) - s(q1)*s(q2)*s(q3)*c(q0) + s(q1)*c(q0)*c(q2)*c(q3) + s(q2)*c(q0)*c(q1)*c(q3) + s(q3)*c(q0)*c(q1)*c(q2)]])
+    else:
+        assert False
 
 
-def htm_0(q):
-    return np.block([
-        [HTM.rx_0(q), HTM.ry_0(q), HTM.o_0(q)],
-        [np.array([[0, 0, 1]])]
-    ])
+@njit("(f8[:, :](f8[:, :], i8))", cache=True)
+def ry(q, i):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    if i == 0:
+        return np.array([[-s(q0)], [c(q0)]])
+    elif i == 1:
+        return np.array([[-s(q0)*c(q1) - s(q1)*c(q0)], [-s(q0)*s(q1) + c(q0)*c(q1)]])
+    elif i == 2:
+        return np.array([[s(q0)*s(q1)*s(q2) - s(q0)*c(q1)*c(q2) - s(q1)*c(q0)*c(q2) - s(q2)*c(q0)*c(q1)], [-s(q0)*s(q1)*c(q2) - s(q0)*s(q2)*c(q1) - s(q1)*s(q2)*c(q0) + c(q0)*c(q1)*c(q2)]])
+    elif i == 3:
+        return np.array([[s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2)], [s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3)]])
+    elif i == 4:
+        return np.array([[s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2)], [s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3)]])
+    else:
+        assert False
 
-def htm_1(q):
-    return np.block([
-        [HTM.rx_1(q), HTM.ry_1(q), HTM.o_1(q)],
-        [np.array([[0, 0, 1]])]
-    ])
+@njit("(f8[:, :](f8[:, :], f8[:,:], i8, f8, f8, f8, f8))", cache=True)
+def jo_dot(q, q_dot, i, l1, l2, l3, l4):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    dq0 = q_dot[0,0]
+    dq1 = q_dot[1,0]
+    dq2 = q_dot[2,0]
+    dq3 = q_dot[3,0]
+    if i == 0:
+        return np.array([[0., 0., 0., 0.], [0., 0., 0., 0.]])
+    elif i == 1:
+        return np.array([[-l1*c(q0)*dq0, 0., 0., 0.], [-l1*s(q0)*dq0, 0., 0., 0.]])
+    elif i == 2:
+        return np.array([[-l1*c(q0)*dq0 - l2*c(q0 + q1)*dq0 - l2*c(q0 + q1)*dq1, -l2*(dq0 + dq1)*c(q0 + q1), 0., 0.], [-l1*s(q0)*dq0 - l2*s(q0 + q1)*dq0 - l2*s(q0 + q1)*dq1, -l2*(dq0 + dq1)*s(q0 + q1), 0., 0.]])
+    elif i == 3:
+        return np.array([[-l1*c(q0)*dq0 - l2*c(q0 + q1)*dq0 - l2*c(q0 + q1)*dq1 - l3*c(q0 + q1 + q2)*dq0 - l3*c(q0 + q1 + q2)*dq1 - l3*c(q0 + q1 + q2)*dq2, -l2*c(q0 + q1)*dq0 - l2*c(q0 + q1)*dq1 - l3*c(q0 + q1 + q2)*dq0 - l3*c(q0 + q1 + q2)*dq1 - l3*c(q0 + q1 + q2)*dq2, -l3*(dq0 + dq1 + dq2)*c(q0 + q1 + q2), 0], [-l1*s(q0)*dq0 - l2*s(q0 + q1)*dq0 - l2*s(q0 + q1)*dq1 - l3*s(q0 + q1 + q2)*dq0 - l3*s(q0 + q1 + q2)*dq1 - l3*s(q0 + q1 + q2)*dq2, -l2*s(q0 + q1)*dq0 - l2*s(q0 + q1)*dq1 - l3*s(q0 + q1 + q2)*dq0 - l3*s(q0 + q1 + q2)*dq1 - l3*s(q0 + q1 + q2)*dq2, -l3*(dq0 + dq1 + dq2)*s(q0 + q1 + q2), 0.]])
+    elif i == 4:
+        return np.array([[-l1*c(q0)*dq0 - l2*c(q0 + q1)*dq0 - l2*c(q0 + q1)*dq1 - l3*c(q0 + q1 + q2)*dq0 - l3*c(q0 + q1 + q2)*dq1 - l3*c(q0 + q1 + q2)*dq2 + l4*s(q0 + q1)*s(q3)*c(q2)*dq0 + l4*s(q0 + q1)*s(q3)*c(q2)*dq1 + l4*s(q0 + q1)*s(q3)*c(q2)*dq2 + l4*s(q0 + q1)*s(q3)*c(q2)*dq3 + l4*s(q1 + q2)*s(q0)*c(q3)*dq0 + l4*s(q1 + q2)*s(q0)*c(q3)*dq1 + l4*s(q1 + q2)*s(q0)*c(q3)*dq2 + l4*s(q1 + q2)*s(q0)*c(q3)*dq3 + l4*s(q1 + q3)*s(q2)*c(q0)*dq0 + l4*s(q1 + q3)*s(q2)*c(q0)*dq1 + l4*s(q1 + q3)*s(q2)*c(q0)*dq2 + l4*s(q1 + q3)*s(q2)*c(q0)*dq3 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq0 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq1 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq2 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq3 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq0 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq1 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq2 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq3, -l2*c(q0 + q1)*dq0 - l2*c(q0 + q1)*dq1 - l3*c(q0 + q1 + q2)*dq0 - l3*c(q0 + q1 + q2)*dq1 - l3*c(q0 + q1 + q2)*dq2 + l4*s(q0 + q1)*s(q3)*c(q2)*dq0 + l4*s(q0 + q1)*s(q3)*c(q2)*dq1 + l4*s(q0 + q1)*s(q3)*c(q2)*dq2 + l4*s(q0 + q1)*s(q3)*c(q2)*dq3 + l4*s(q1 + q2)*s(q0)*c(q3)*dq0 + l4*s(q1 + q2)*s(q0)*c(q3)*dq1 + l4*s(q1 + q2)*s(q0)*c(q3)*dq2 + l4*s(q1 + q2)*s(q0)*c(q3)*dq3 + l4*s(q1 + q3)*s(q2)*c(q0)*dq0 + l4*s(q1 + q3)*s(q2)*c(q0)*dq1 + l4*s(q1 + q3)*s(q2)*c(q0)*dq2 + l4*s(q1 + q3)*s(q2)*c(q0)*dq3 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq0 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq1 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq2 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq3 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq0 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq1 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq2 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq3, -l3*c(q0 + q1 + q2)*dq0 - l3*c(q0 + q1 + q2)*dq1 - l3*c(q0 + q1 + q2)*dq2 + l4*s(q0 + q1)*s(q3)*c(q2)*dq0 + l4*s(q0 + q1)*s(q3)*c(q2)*dq1 + l4*s(q0 + q1)*s(q3)*c(q2)*dq2 + l4*s(q0 + q1)*s(q3)*c(q2)*dq3 + l4*s(q1 + q2)*s(q0)*c(q3)*dq0 + l4*s(q1 + q2)*s(q0)*c(q3)*dq1 + l4*s(q1 + q2)*s(q0)*c(q3)*dq2 + l4*s(q1 + q2)*s(q0)*c(q3)*dq3 + l4*s(q1 + q3)*s(q2)*c(q0)*dq0 + l4*s(q1 + q3)*s(q2)*c(q0)*dq1 + l4*s(q1 + q3)*s(q2)*c(q0)*dq2 + l4*s(q1 + q3)*s(q2)*c(q0)*dq3 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq0 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq1 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq2 - l4*s(q0)*s(q1)*s(q2)*s(q3)*dq3 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq0 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq1 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq2 - l4*c(q0)*c(q1)*c(q2)*c(q3)*dq3, l4*(s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3)], [-l1*s(q0)*dq0 - l2*s(q0 + q1)*dq0 - l2*s(q0 + q1)*dq1 - l3*s(q0 + q1 + q2)*dq0 - l3*s(q0 + q1 + q2)*dq1 - l3*s(q0 + q1 + q2)*dq2 - l4*s(q0 + q1 + q2 + q3)*dq0 - l4*s(q0 + q1 + q2 + q3)*dq1 - l4*s(q0 + q1 + q2 + q3)*dq2 - l4*s(q0 + q1 + q2 + q3)*dq3, -l2*s(q0 + q1)*dq0 - l2*s(q0 + q1)*dq1 - l3*s(q0 + q1 + q2)*dq0 - l3*s(q0 + q1 + q2)*dq1 - l3*s(q0 + q1 + q2)*dq2 - l4*s(q0 + q1 + q2 + q3)*dq0 - l4*s(q0 + q1 + q2 + q3)*dq1 - l4*s(q0 + q1 + q2 + q3)*dq2 - l4*s(q0 + q1 + q2 + q3)*dq3, -l3*s(q0 + q1 + q2)*dq0 - l3*s(q0 + q1 + q2)*dq1 - l3*s(q0 + q1 + q2)*dq2 - l4*s(q0 + q1 + q2 + q3)*dq0 - l4*s(q0 + q1 + q2 + q3)*dq1 - l4*s(q0 + q1 + q2 + q3)*dq2 - l4*s(q0 + q1 + q2 + q3)*dq3, -l4*(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3)]])
+    else:
+        assert False
 
-def htm_2(q):
-    return np.block([
-        [HTM.rx_2(q), HTM.ry_2(q), HTM.o_2(q)],
-        [np.array([[0, 0, 1]])]
-    ])
+@njit("(f8[:, :](f8[:, :], i8, f8, f8, f8, f8))", cache=True)
+def jo(q, i, l1, l2, l3, l4):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    if i == 0:
+        return np.array([[0., 0., 0., 0.], [0., 0., 0., 0.]])
+    elif i == 1:
+        return np.array([[-l1*s(q0), 0., 0., 0.], [l1*c(q0), 0., 0., 0.]])
+    elif i == 2:
+        return np.array([[-l1*s(q0) - l2*s(q0)*c(q1) - l2*s(q1)*c(q0), -l2*s(q0)*c(q1) - l2*s(q1)*c(q0), 0., 0.], [l1*c(q0) - l2*s(q0)*s(q1) + l2*c(q0)*c(q1), -l2*s(q0)*s(q1) + l2*c(q0)*c(q1), 0., 0.]])
+    elif i == 3:
+        return np.array([[-l1*s(q0) - l2*s(q0)*c(q1) - l2*s(q1)*c(q0) + l3*s(q0)*s(q1)*s(q2) - l3*s(q0)*c(q1)*c(q2) - l3*s(q1)*c(q0)*c(q2) - l3*s(q2)*c(q0)*c(q1), -l2*s(q0)*c(q1) - l2*s(q1)*c(q0) + l3*s(q0)*s(q1)*s(q2) - l3*s(q0)*c(q1)*c(q2) - l3*s(q1)*c(q0)*c(q2) - l3*s(q2)*c(q0)*c(q1), l3*s(q0)*s(q1)*s(q2) - l3*s(q0)*c(q1)*c(q2) - l3*s(q1)*c(q0)*c(q2) - l3*s(q2)*c(q0)*c(q1), 0], [l1*c(q0) - l2*s(q0)*s(q1) + l2*c(q0)*c(q1) - l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2), -l2*s(q0)*s(q1) + l2*c(q0)*c(q1) - l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2), -l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2), 0.]])
+    elif i == 4:
+        return np.array([[-l1*s(q0) - l2*s(q0)*c(q1) - l2*s(q1)*c(q0) + l3*s(q0)*s(q1)*s(q2) - l3*s(q0)*c(q1)*c(q2) - l3*s(q1)*c(q0)*c(q2) - l3*s(q2)*c(q0)*c(q1) + l4*s(q0)*s(q1)*s(q2)*c(q3) + l4*s(q0)*s(q1)*s(q3)*c(q2) + l4*s(q0)*s(q2)*s(q3)*c(q1) - l4*s(q0)*c(q1)*c(q2)*c(q3) + l4*s(q1)*s(q2)*s(q3)*c(q0) - l4*s(q1)*c(q0)*c(q2)*c(q3) - l4*s(q2)*c(q0)*c(q1)*c(q3) - l4*s(q3)*c(q0)*c(q1)*c(q2), -l2*s(q0)*c(q1) - l2*s(q1)*c(q0) + l3*s(q0)*s(q1)*s(q2) - l3*s(q0)*c(q1)*c(q2) - l3*s(q1)*c(q0)*c(q2) - l3*s(q2)*c(q0)*c(q1) + l4*s(q0)*s(q1)*s(q2)*c(q3) + l4*s(q0)*s(q1)*s(q3)*c(q2) + l4*s(q0)*s(q2)*s(q3)*c(q1) - l4*s(q0)*c(q1)*c(q2)*c(q3) + l4*s(q1)*s(q2)*s(q3)*c(q0) - l4*s(q1)*c(q0)*c(q2)*c(q3) - l4*s(q2)*c(q0)*c(q1)*c(q3) - l4*s(q3)*c(q0)*c(q1)*c(q2), l3*s(q0)*s(q1)*s(q2) - l3*s(q0)*c(q1)*c(q2) - l3*s(q1)*c(q0)*c(q2) - l3*s(q2)*c(q0)*c(q1) + l4*s(q0)*s(q1)*s(q2)*c(q3) + l4*s(q0)*s(q1)*s(q3)*c(q2) + l4*s(q0)*s(q2)*s(q3)*c(q1) - l4*s(q0)*c(q1)*c(q2)*c(q3) + l4*s(q1)*s(q2)*s(q3)*c(q0) - l4*s(q1)*c(q0)*c(q2)*c(q3) - l4*s(q2)*c(q0)*c(q1)*c(q3) - l4*s(q3)*c(q0)*c(q1)*c(q2), l4*s(q0)*s(q1)*s(q2)*c(q3) + l4*s(q0)*s(q1)*s(q3)*c(q2) + l4*s(q0)*s(q2)*s(q3)*c(q1) - l4*s(q0)*c(q1)*c(q2)*c(q3) + l4*s(q1)*s(q2)*s(q3)*c(q0) - l4*s(q1)*c(q0)*c(q2)*c(q3) - l4*s(q2)*c(q0)*c(q1)*c(q3) - l4*s(q3)*c(q0)*c(q1)*c(q2)], [l1*c(q0) - l2*s(q0)*s(q1) + l2*c(q0)*c(q1) - l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2) + l4*s(q0)*s(q1)*s(q2)*s(q3) - l4*s(q0)*s(q1)*c(q2)*c(q3) - l4*s(q0)*s(q2)*c(q1)*c(q3) - l4*s(q0)*s(q3)*c(q1)*c(q2) - l4*s(q1)*s(q2)*c(q0)*c(q3) - l4*s(q1)*s(q3)*c(q0)*c(q2) - l4*s(q2)*s(q3)*c(q0)*c(q1) + l4*c(q0)*c(q1)*c(q2)*c(q3), -l2*s(q0)*s(q1) + l2*c(q0)*c(q1) - l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2) + l4*s(q0)*s(q1)*s(q2)*s(q3) - l4*s(q0)*s(q1)*c(q2)*c(q3) - l4*s(q0)*s(q2)*c(q1)*c(q3) - l4*s(q0)*s(q3)*c(q1)*c(q2) - l4*s(q1)*s(q2)*c(q0)*c(q3) - l4*s(q1)*s(q3)*c(q0)*c(q2) - l4*s(q2)*s(q3)*c(q0)*c(q1) + l4*c(q0)*c(q1)*c(q2)*c(q3), -l3*s(q0)*s(q1)*c(q2) - l3*s(q0)*s(q2)*c(q1) - l3*s(q1)*s(q2)*c(q0) + l3*c(q0)*c(q1)*c(q2) + l4*s(q0)*s(q1)*s(q2)*s(q3) - l4*s(q0)*s(q1)*c(q2)*c(q3) - l4*s(q0)*s(q2)*c(q1)*c(q3) - l4*s(q0)*s(q3)*c(q1)*c(q2) - l4*s(q1)*s(q2)*c(q0)*c(q3) - l4*s(q1)*s(q3)*c(q0)*c(q2) - l4*s(q2)*s(q3)*c(q0)*c(q1) + l4*c(q0)*c(q1)*c(q2)*c(q3), l4*s(q0)*s(q1)*s(q2)*s(q3) - l4*s(q0)*s(q1)*c(q2)*c(q3) - l4*s(q0)*s(q2)*c(q1)*c(q3) - l4*s(q0)*s(q3)*c(q1)*c(q2) - l4*s(q1)*s(q2)*c(q0)*c(q3) - l4*s(q1)*s(q3)*c(q0)*c(q2) - l4*s(q2)*s(q3)*c(q0)*c(q1) + l4*c(q0)*c(q1)*c(q2)*c(q3)]])
+    else:
+        assert False
 
-def htm_3(q):
-    return np.block([
-        [HTM.rx_3(q), HTM.ry_3(q), HTM.o_3(q)],
-        [np.array([[0, 0, 1]])]
-    ])
+@njit("(f8[:, :](f8[:, :], i8))", cache=True)
+def jrx(q, i):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    if i == 0:
+        return np.array([[-s(q0), 0., 0., 0.], [c(q0), 0., 0., 0.]])
+    elif i == 1:
+        return np.array([[-s(q0)*c(q1) - s(q1)*c(q0), -s(q0)*c(q1) - s(q1)*c(q0), 0., 0.], [-s(q0)*s(q1) + c(q0)*c(q1), -s(q0)*s(q1) + c(q0)*c(q1), 0., 0.]])
+    elif i == 2:
+        return np.array([[s(q0)*s(q1)*s(q2) - s(q0)*c(q1)*c(q2) - s(q1)*c(q0)*c(q2) - s(q2)*c(q0)*c(q1), s(q0)*s(q1)*s(q2) - s(q0)*c(q1)*c(q2) - s(q1)*c(q0)*c(q2) - s(q2)*c(q0)*c(q1), s(q0)*s(q1)*s(q2) - s(q0)*c(q1)*c(q2) - s(q1)*c(q0)*c(q2) - s(q2)*c(q0)*c(q1), 0.], [-s(q0)*s(q1)*c(q2) - s(q0)*s(q2)*c(q1) - s(q1)*s(q2)*c(q0) + c(q0)*c(q1)*c(q2), -s(q0)*s(q1)*c(q2) - s(q0)*s(q2)*c(q1) - s(q1)*s(q2)*c(q0) + c(q0)*c(q1)*c(q2), -s(q0)*s(q1)*c(q2) - s(q0)*s(q2)*c(q1) - s(q1)*s(q2)*c(q0) + c(q0)*c(q1)*c(q2), 0.]])
+    elif i == 3:
+        return np.array([[s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2)], [s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3), s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3), s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3), s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3)]])
+    elif i == 4:
+        return np.array([[s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2)], [s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3), s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3), s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3), s(q0)*s(q1)*s(q2)*s(q3) - s(q0)*s(q1)*c(q2)*c(q3) - s(q0)*s(q2)*c(q1)*c(q3) - s(q0)*s(q3)*c(q1)*c(q2) - s(q1)*s(q2)*c(q0)*c(q3) - s(q1)*s(q3)*c(q0)*c(q2) - s(q2)*s(q3)*c(q0)*c(q1) + c(q0)*c(q1)*c(q2)*c(q3)]])
+    else:
+        assert False
 
-def htm_ee(q):
-    return np.block([
-        [HTM.rx_ee(q), HTM.ry_ee(q), HTM.o_ee(q)],
-        [np.array([[0, 0, 1]])]
-    ])
+@njit("(f8[:, :](f8[:, :], f8[:, :], i8))", cache=True)
+def jrx_dot(q, q_dot, i):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    dq0 = q_dot[0,0]
+    dq1 = q_dot[1,0]
+    dq2 = q_dot[2,0]
+    dq3 = q_dot[3,0]
+    if i == 0:
+        return np.array([[-c(q0)*dq0, 0., 0., 0.], [-s(q0)*dq0, 0., 0., 0.]])
+    elif i == 1:
+        return np.array([[-(dq0 + dq1)*c(q0 + q1), -(dq0 + dq1)*c(q0 + q1), 0., 0.], [-(dq0 + dq1)*s(q0 + q1), -(dq0 + dq1)*s(q0 + q1), 0., 0.]])
+    elif i == 2:
+        return np.array([[-(dq0 + dq1 + dq2)*c(q0 + q1 + q2), -(dq0 + dq1 + dq2)*c(q0 + q1 + q2), -(dq0 + dq1 + dq2)*c(q0 + q1 + q2), 0], [-(dq0 + dq1 + dq2)*s(q0 + q1 + q2), -(dq0 + dq1 + dq2)*s(q0 + q1 + q2), -(dq0 + dq1 + dq2)*s(q0 + q1 + q2), 0]])
+    elif i == 3:
+        return np.array([[s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3, s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3, s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3, s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3], [-(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3), -(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3), -(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3), -(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3)]])
+    elif i == 4:
+        return np.array([[s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3, s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3, s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3, s(q0 + q1)*s(q3)*c(q2)*dq0 + s(q0 + q1)*s(q3)*c(q2)*dq1 + s(q0 + q1)*s(q3)*c(q2)*dq2 + s(q0 + q1)*s(q3)*c(q2)*dq3 + s(q1 + q2)*s(q0)*c(q3)*dq0 + s(q1 + q2)*s(q0)*c(q3)*dq1 + s(q1 + q2)*s(q0)*c(q3)*dq2 + s(q1 + q2)*s(q0)*c(q3)*dq3 + s(q1 + q3)*s(q2)*c(q0)*dq0 + s(q1 + q3)*s(q2)*c(q0)*dq1 + s(q1 + q3)*s(q2)*c(q0)*dq2 + s(q1 + q3)*s(q2)*c(q0)*dq3 - s(q0)*s(q1)*s(q2)*s(q3)*dq0 - s(q0)*s(q1)*s(q2)*s(q3)*dq1 - s(q0)*s(q1)*s(q2)*s(q3)*dq2 - s(q0)*s(q1)*s(q2)*s(q3)*dq3 - c(q0)*c(q1)*c(q2)*c(q3)*dq0 - c(q0)*c(q1)*c(q2)*c(q3)*dq1 - c(q0)*c(q1)*c(q2)*c(q3)*dq2 - c(q0)*c(q1)*c(q2)*c(q3)*dq3], [-(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3), -(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3), -(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3), -(dq0 + dq1 + dq2 + dq3)*s(q0 + q1 + q2 + q3)]])
+    else:
+        assert False
+
+@njit("(f8[:, :](f8[:, :], i8))", cache=True)
+def jry(q, i):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    if i == 0:
+        return np.array([[-c(q0), 0., 0., 0.], [-s(q0), 0., 0., 0.]])
+    elif i == 1:
+        return np.array([[s(q0)*s(q1) - c(q0)*c(q1), s(q0)*s(q1) - c(q0)*c(q1), 0., 0.], [-s(q0)*c(q1) - s(q1)*c(q0), -s(q0)*c(q1) - s(q1)*c(q0), 0., 0.]])
+    elif i == 2:
+        return np.array([[s(q0)*s(q1)*c(q2) + s(q0)*s(q2)*c(q1) + s(q1)*s(q2)*c(q0) - c(q0)*c(q1)*c(q2), s(q0)*s(q1)*c(q2) + s(q0)*s(q2)*c(q1) + s(q1)*s(q2)*c(q0) - c(q0)*c(q1)*c(q2), s(q0)*s(q1)*c(q2) + s(q0)*s(q2)*c(q1) + s(q1)*s(q2)*c(q0) - c(q0)*c(q1)*c(q2), 0.], [s(q0)*s(q1)*s(q2) - s(q0)*c(q1)*c(q2) - s(q1)*c(q0)*c(q2) - s(q2)*c(q0)*c(q1), s(q0)*s(q1)*s(q2) - s(q0)*c(q1)*c(q2) - s(q1)*c(q0)*c(q2) - s(q2)*c(q0)*c(q1), s(q0)*s(q1)*s(q2) - s(q0)*c(q1)*c(q2) - s(q1)*c(q0)*c(q2) - s(q2)*c(q0)*c(q1), 0.]])
+    elif i == 3:
+        return np.array([[-s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3), -s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3), -s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3), -s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3)], [s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2)]])
+    elif i == 4:
+        return np.array([[-s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3), -s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3), -s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3), -s(q0)*s(q1)*s(q2)*s(q3) + s(q0)*s(q1)*c(q2)*c(q3) + s(q0)*s(q2)*c(q1)*c(q3) + s(q0)*s(q3)*c(q1)*c(q2) + s(q1)*s(q2)*c(q0)*c(q3) + s(q1)*s(q3)*c(q0)*c(q2) + s(q2)*s(q3)*c(q0)*c(q1) - c(q0)*c(q1)*c(q2)*c(q3)], [s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2), s(q0)*s(q1)*s(q2)*c(q3) + s(q0)*s(q1)*s(q3)*c(q2) + s(q0)*s(q2)*s(q3)*c(q1) - s(q0)*c(q1)*c(q2)*c(q3) + s(q1)*s(q2)*s(q3)*c(q0) - s(q1)*c(q0)*c(q2)*c(q3) - s(q2)*c(q0)*c(q1)*c(q3) - s(q3)*c(q0)*c(q1)*c(q2)]])
+    else:
+        assert False
+
+@njit("(f8[:, :](f8[:, :], i8))", cache=True)
+def jry_dot(q, i):
+    q0 = q[0,0]
+    q1 = q[1,0]
+    q2 = q[2,0]
+    q3 = q[3,0]
+    if i == 0:
+        return np.array([[-c(q0), 0., 0., 0.], [-s(q0), 0., 0., 0.]])
+    elif i == 1:
+        return np.array([[-c(q0 + q1), -c(q0 + q1), 0., 0.], [-s(q0 + q1), -s(q0 + q1), 0., 0.]])
+    elif i == 2:
+        return np.array([[-c(q0 + q1 + q2), -c(q0 + q1 + q2), -c(q0 + q1 + q2), 0.], [-s(q0 + q1 + q2), -s(q0 + q1 + q2), -s(q0 + q1 + q2), 0.]])
+    elif i == 3:
+        return np.array([[-c(q0 + q1 + q2 + q3), -c(q0 + q1 + q2 + q3), -c(q0 + q1 + q2 + q3), -c(q0 + q1 + q2 + q3)], [-s(q0 + q1 + q2 + q3), -s(q0 + q1 + q2 + q3), -s(q0 + q1 + q2 + q3), -s(q0 + q1 + q2 + q3)]])
+    elif i == 4:
+        return np.array([[-c(q0 + q1 + q2 + q3), -c(q0 + q1 + q2 + q3), -c(q0 + q1 + q2 + q3), -c(q0 + q1 + q2 + q3)], [-s(q0 + q1 + q2 + q3), -s(q0 + q1 + q2 + q3), -s(q0 + q1 + q2 + q3), -s(q0 + q1 + q2 + q3)]])
+    else:
+        assert False
+
 
 
 
@@ -54,32 +198,29 @@ def q_min():
 def q_max():
     return np.array([[90, 90, 90, 90]]).T * np.pi/180
 
+
 class CPoint(mappings.Identity):
-
-
-    # 制御点のローカル座標
-
     c_dim = 4
     t_dim = 2
 
     rs_in_0 = (
-        np.array([[0, 0, 1]]).T,
+        (0, 0),
     )  # ジョイント1によって回転する制御点
 
     rs_in_1 = (
-        np.array([[0, 0, 1]]).T,
+        (0, 0),
     )
 
     rs_in_2 = (
-        np.array([[0, 0, 1]]).T,
+        (0, 0),
     )
 
     rs_in_3 = (
-        np.array([[0, 0, 1]]).T,
+        (0, 0),
     )
 
     rs_in_GL = (
-        np.array([[0, 0, 1]]).T,
+        (0, 0),
     )
 
     # 追加
@@ -87,42 +228,44 @@ class CPoint(mappings.Identity):
         rs_in_0, rs_in_1, rs_in_2, rs_in_3, rs_in_GL,
     )
 
-    r_bar_zero = np.array([[0, 0, 0, 1]]).T
 
-
-    HTM = (htm_0, htm_1, htm_2, htm_3, htm_ee)
-    JO = (JO.jo_0, JO.jo_1, JO.jo_2, JO.jo_3, JO.jo_ee)
-    JRX = (JRX.jrx_0, JRX.jrx_1, JRX.jrx_2, JRX.jrx_3, JRX.jrx_ee)
-    JRY = (JRY.jry_0, JRY.jry_1, JRY.jry_2, JRY.jry_3, JRY.jry_ee)
-    JO_DOT = (JO_DOT.jo_0_dot, JO_DOT.jo_1_dot, JO_DOT.jo_2_dot, JO_DOT.jo_3_dot, JO_DOT.jo_ee_dot)
-    JRX_DOT = (JRX_DOT.jrx_0_dot, JRX_DOT.jrx_1_dot, JRX_DOT.jrx_2_dot, JRX_DOT.jrx_3_dot, JRX_DOT.jrx_ee_dot)
-    JRY_DOT = (JRY_DOT.jry_0_dot, JRY_DOT.jry_1_dot, JRY_DOT.jry_2_dot, JRY_DOT.jry_3_dot, JRY_DOT.jry_ee_dot)
-    
-    
     ee_id = (4, 0)
 
-    def __init__(self, flame_num, position_num):
-        self.htm = self.HTM[flame_num]
-        self.jo = self.JO[flame_num]
-        self.jrx = self.JRX[flame_num]
-        self.jry = self.JRY[flame_num]
-        self.jo_dot = self.JO_DOT[flame_num]
-        self.jrx_dot = self.JRX_DOT[flame_num]
-        self.jry_dot = self.JRY_DOT[flame_num]
-        self.r_bar = self.RS_ALL[flame_num][position_num]
+    def __init__(self, frame_num, position_num, l1=1.0, l2=1.0, l3=1.0, l4=1.0):
+        self.l1 = l1
+        self.l2 = l2
+        self.l3 = l3
+        self.l4 = l4
+        self.o = lambda q: o(q, frame_num, self.l1, self.l2, self.l3, self.l4)
+        self.rx = lambda q: rx(q, frame_num)
+        self.ry = lambda q: ry(q, frame_num)
+        self.jo = lambda q: jo(q, frame_num, self.l1, self.l2, self.l3, self.l4)
+        self.jrx = lambda q: jrx(q, frame_num)
+        self.jry = lambda q: jry(q, frame_num)
+        self.jo_dot = lambda q, q_dot: jo_dot(q, q_dot, frame_num, self.l1, self.l2, self.l3, self.l4)
+        self.jrx_dot = lambda q, q_dot: jrx_dot(q, q_dot, frame_num)
+        self.jry_dot = lambda q: jry_dot(q, frame_num)
+        self.r = self.RS_ALL[frame_num][position_num]
     
     def phi(self, q):
-        return (self.htm(q) @ self.r_bar)[:2, :]
+        return self.rx(q) * self.r[0] + self.ry(q) * self.r[1] + self.o(q)
     
     def J(self, q):
-        return (self.jrx(q)*self.r_bar[0,0] + self.jry(q)*self.r_bar[1,0] + self.jo(q))
+        return (self.jrx(q)*self.r[0] + self.jry(q)*self.r[1] + self.jo(q))
 
     def J_dot(self, q, dq):
-        return (self.jrx_dot(q, dq)*self.r_bar[0,0] + self.jry_dot(q, dq)*self.r_bar[1,0] + self.jo_dot(q, dq))
+        return self.jrx_dot(q, dq)*self.r[0] + self.jry_dot(q)*self.r[1] + self.jo_dot(q, dq)
 
 
-def JOINT_PHI():
-    return (lambda x: np.zeros((2,1)), HTM.o_0, HTM.o_1, HTM.o_2, HTM.o_3, HTM.o_ee)
+def JOINT_PHI(l1=1.0, l2=1.0, l3=1.0, l4=1.0):
+    return (
+        lambda _: np.zeros((2,1)),
+        lambda q: o(q, 0, l1, l2, l3, l4),
+        lambda q: o(q, 1, l1, l2, l3, l4),
+        lambda q: o(q, 2, l1, l2, l3, l4),
+        lambda q: o(q, 3, l1, l2, l3, l4),
+        lambda q: o(q, 4, l1, l2, l3, l4),
+    )
 
 if __name__ == "__main__":
     pass

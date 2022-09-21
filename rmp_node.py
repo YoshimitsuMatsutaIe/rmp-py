@@ -15,13 +15,13 @@ class Node:
     
     def __init__(
         self,
-        name: str, dim: int, parent: Union[Node, None],
+        name: str, dim: int, 
         mappings: Union[Identity, None],
         parent_dim: Union[int, None]=None,
     ):
         self.name = name
         self.dim= dim
-        self.parent = parent
+        self.parent = None
         self.mappings = mappings
         self.children: list[Node] = []
         self.isMulti = False
@@ -31,18 +31,17 @@ class Node:
         self.x_dot = np.empty((self.dim, 1))
         self.f = np.empty((self.dim, 1))
         self.M = np.empty((self.dim, self.dim))
-        if parent is not None and parent_dim is None:
-            self.J = np.empty((self.dim, parent.dim))
-            self.J_dot = np.empty((self.dim, parent.dim))
-        elif parent is None and parent_dim is not None:
+
+        if parent_dim is None:
+            assert False
+        else:
             self.J = np.empty((self.dim, parent_dim))
             self.J_dot = np.empty((self.dim, parent_dim))
-        else:
-            assert False
-    
+
     
     def add_child(self, child: Node):
         child.isMulti = self.isMulti
+        child.parent = self
         self.children.append(child)
     
     
@@ -64,7 +63,6 @@ class Node:
     
     
     def pullback(self):
-        #print(self.name, ", pullback now")
         self.f.fill(0)
         self.M.fill(0)
         for child in self.children:
@@ -143,9 +141,9 @@ class Root(Node):
     def __init__(self, dim: int, isMulti:bool=False):
         super().__init__(
             name = "root",
-            parent = None,
             dim = dim,
             mappings = None,
+            parent_dim=dim
         )
 
         self.x_ddot = np.empty((dim, 1))
@@ -171,8 +169,6 @@ class Root(Node):
         for child in self.children:
             child.pullback()
     
-        #print(self.name, "done")
-    
     
     def resolve(self,) -> None:
         self.x_ddot = LA.pinv(self.M) @ self.f
@@ -181,13 +177,12 @@ class Root(Node):
     def solve(self, q=None, q_dot=None, dt=None, g=None, o_s=None):
         """resolvwの反対"""
         self.set_state(q, q_dot)
-        if self.isMulti == False:
-            self.pushforward()
-            self.pullback()
-            self.resolve()
-            return self.x_ddot
-        else:
-            pass
+        #assert self.isMulti == True
+        self.pushforward()
+        self.pullback()
+        self.resolve()
+        return self.x_ddot
+
 
 
 

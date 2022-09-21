@@ -149,6 +149,7 @@ class CPoint(mappings.Identity):
         return (self.jrx_dot(q, dq)*self.r[0] + self.jry_dot(q, dq)*self.r[1] + self.jrz_dot(q, dq)*self.r[2] + self.jo_dot(q, dq))
 
 
+
 def JOINT_PHI():
     return (
         lambda q: np.zeros((3,1)),
