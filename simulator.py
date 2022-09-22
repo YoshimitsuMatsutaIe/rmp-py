@@ -2,8 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-#import time
 from scipy import integrate
 #from typing import Union
 import datetime
@@ -12,25 +10,15 @@ import os
 #from pathlib import Path
 import shutil
 import json
-import sys
+from typing import Union
 
-# from rmp_node import Node
-# sys.path.append('.')
-import environment
-
-
+from environment import *
 import rmp_node
 # import rmp_leaf
 import tree_constructor
 # import mappings
 import visualization
-
-
-import robot_franka_emika.franka_emika as franka_emika
-import robot_baxter.baxter as baxter
-import robot_sice.sice as sice
-
-
+from robot_utils import get_robot_model
 
 
 class Simulator:
@@ -42,18 +30,19 @@ class Simulator:
     def set_obstacle(self, obs_params: list[dict]):
         obstacle = []
         for obs_param in obs_params:
-            obs_type = obs_param["type"]
+            type_ = obs_param["type"]
+            param_ = obs_param["param"]
             
-            if obs_type == "cylinder":
-                obstacle += environment.set_cylinder(**obs_param["param"])
-            elif obs_type == "sphere":
-                obstacle += environment.set_sphere(**obs_param["param"])
-            elif obs_type == "box":
-                obstacle += environment.set_box(**obs_param["param"])
-            elif obs_type == "cubbie":
-                obstacle += environment.set_cubbie(**obs_param["param"])
-            elif obs_type == "point":
-                obstacle += environment.set_point(**obs_param["param"])
+            if type_ == "cylinder":
+                obstacle.extend(set_cylinder(**param_))
+            elif type_ == "sphere":
+                obstacle.extend(set_sphere(**param_))
+            elif type_ == "box":
+                obstacle.extend(set_box(**param_))
+            elif type_ == "cubbie":
+                obstacle.extend(set_cubbie(**param_))
+            elif type_ == "point":
+                obstacle.extend(set_point(**param_))
             else:
                 assert False
         return obstacle
@@ -86,7 +75,10 @@ class Simulator:
         """ODE list"""
         dim = len(x) // 2
         q_ddot = tree_constructor.solve3(
-            q=x[:dim].tolist(), q_dot=x[dim:].tolist(), g=self.goal_list, o_s=self.obstacle_list,
+            q=x[:dim].tolist(),
+            q_dot=x[dim:].tolist(),
+            g=self.goal_list,
+            o_s=self.obstacle_list,
             node_ids=self.node_ids,
             robot_name=self.robot_name,
             rmp_param=self.rmp_param
@@ -120,7 +112,7 @@ class Simulator:
         ]
 
 
-    def main(self, param_path: str, method: str="multi_4"):
+    def main(self, param_path: str, method: str="single"):
         
         date_now = datetime.datetime.now()
         name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
@@ -138,28 +130,19 @@ class Simulator:
         env = param["env_param"]
         
         self.obstacle = self.set_obstacle(env["obstacle"])
-        self.goal = environment.set_point(**env["goal"]["param"])[0]
-        
-        
-        if param["robot_name"] == "baxter":
-            rm = baxter
-        elif param["robot_name"] == "franka_emika":
-            rm = franka_emika
-        elif param["robot_name"] == "sice":
-            rm = sice
-        else:
-            assert False
-        
+        self.goal = set_point(**env["goal"]["param"])[0]
+        rm = get_robot_model(param["robot_name"])
         
         self.node_ids = [(-1, 0)]
         for i, Rs in enumerate(rm.CPoint.RS_ALL):
             self.node_ids += [(i, j) for j in range(len(Rs))]
         
         
-        
+        TIME_SPAN = param["time_span"]
+        TIME_INTERVAL = param["time_interval"]
         # 初期値
-        t_span = (0, param["time_span"])
-        t_eval = np.arange(0, param["time_span"], param["time_interval"])
+        t_span = (0, TIME_SPAN)
+        t_eval = np.arange(0, TIME_SPAN, TIME_INTERVAL)
         x0 = np.ravel(
             np.concatenate([
                 rm.q_neutral(),
@@ -247,15 +230,33 @@ class Simulator:
         
 
         ### 以下グラフ化 ###
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 13))
+        ee_map_ = rm.CPoint(*rm.CPoint.ee_id)
+        
+        fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 15))
         for i in range(c_dim):
             axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
             axes[1].plot(sol.t, sol.y[i+c_dim], label="dq" + str(i))
-        for i in range(2):
+
+        ee_ = []
+        q_ = np.empty((c_dim, 1))
+        for i in range(len(sol.t)):
+            for j in range(c_dim):
+                q_[j] = sol.y[j][i]
+            ee_.append(ee_map_.phi(q_))
+        ee_ = np.concatenate(ee_, axis=1)
+        error = np.linalg.norm(self.goal - ee_, axis=0)
+        
+        axes[2].plot(sol.t, error, label="error")
+        axes[2].set_ylim(0,)
+        
+        for i in range(3):
             axes[i].legend()
             axes[i].grid()
-            axes[i].set_xlabel("time [s]")
+        
+        axes[2].set_xlabel("time [s]")
+        
         fig.savefig(base+"configration.png")
+
 
 
         #### 以下アニメ化 ###
@@ -275,6 +276,7 @@ class Simulator:
             q_s = [sol.y[i] for i in range(c_dim)],
             cpoint_phi_s=cpoint_phis,
             joint_phi_s=rm.JOINT_PHI(),
+            ee_phi=ee_map_.phi,
             is3D=True if t_dim==3 else False,
             #ee_phi=rm.o_ee
         )
@@ -288,10 +290,12 @@ class Simulator:
         else:
             assert False
 
+
         ani = visualization.make_animation(
             t_data = sol.t,
             joint_data=joint_data,
             cpoint_data=cpoint_data,
+            ee_data=ee_data,
             is3D=is3D,
             goal_data=goal_data,
             obs_data=np.concatenate(self.obstacle, axis=1).T,

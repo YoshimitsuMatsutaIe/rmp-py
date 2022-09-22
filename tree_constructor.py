@@ -5,48 +5,15 @@ from multiprocessing import Pool, cpu_count
 
 import numpy as np
 
-# ロボットモデルの導入
-import robot_baxter.baxter as baxter
-import robot_franka_emika.franka_emika as franka_emika
-import robot_sice.sice as sice
-
+# 
 import mappings
 from rmp_leaf import GoalAttractor
 from rmp_leaf import JointLimitAvoidance
 from rmp_leaf import ObstacleAvoidance, ObstacleAvoidanceMulti
 from rmp_node import Node, Root
-
-
+from robot_utils import get_robot_model
 
 np.set_printoptions(precision=2)
-
-
-rmp_param_ex = {
-    'jl' : {
-        'gamma_p' : 0.1,
-        'gamma_d' : 0.05,
-        'lam' : 1,
-        'sigma' : 0.1
-    },
-    'attractor' : {
-        'max_speed' : 8.0,
-        'gain' : 5.0,
-        'f_alpha' : 0.15,
-        'sigma_alpha' : 1.0,
-        'sigma_gamma' : 1.0,
-        'wu' : 10.0,
-        'wl' : 0.1,
-        'alpha' : 0.15,
-        'epsilon' : 0.5,
-    },
-    'obs' : {
-        'scale_rep' : 0.2,
-        'scale_damp' : 1,
-        'gain' : 50,
-        'sigma' : 1,
-        'rw' : 0.2
-    }
-}
 
 
 
@@ -56,15 +23,8 @@ def multi_solve2(
 ):
     """並列用 : 毎回ノード作成
     """
-    
-    if robot_name == "baxter":
-        rm = baxter
-    elif robot_name == "franka_emika":
-        rm = franka_emika
-    elif robot_name == "sice":
-        rm = sice
-    else:
-        assert False
+
+    rm = get_robot_model(robot_name)
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
@@ -126,14 +86,7 @@ def multi_solve3(
     なぜか遅い  
     """
     
-    if robot_name == "baxter":
-        rm = baxter
-    elif robot_name == "franka_emika":
-        rm = franka_emika
-    elif robot_name == "sice":
-        rm = sice
-    else:
-        assert False
+    rm = get_robot_model(robot_name)
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
@@ -193,14 +146,7 @@ def multi_solve4(
     """並列用 : 毎回ノード作成
     """
     
-    if robot_name == "baxter":
-        rm = baxter
-    elif robot_name == "franka_emika":
-        rm = franka_emika
-    elif robot_name == "sice":
-        rm = sice
-    else:
-        assert False
+    rm = get_robot_model(robot_name)
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
@@ -252,7 +198,7 @@ def multi_solve4(
 
 
 
-def solve(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
+def solve(q, q_dot, g, o_s, robot_name, node_ids, rmp_param):
     #core=1
     core = cpu_count()
     #core = 2
@@ -276,7 +222,7 @@ def solve(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
 def solve3(
     q: list[float], q_dot: list[float],
     g: list[float], o_s: list[list[float]],
-    robot_name, node_ids, rmp_param=rmp_param_ex
+    robot_name, node_ids, rmp_param
 ):
     """ndarrayではなくlistで通信"""
     
@@ -302,7 +248,7 @@ def solve3(
     return q_ddot
 
 
-def solve4(q, q_dot, g, o_s, robot_name, node_ids, rmp_param=rmp_param_ex):
+def solve4(q, q_dot, g, o_s, robot_name, node_ids, rmp_param):
     #core=1
     core = cpu_count()
     #core = 2
@@ -331,14 +277,7 @@ def make_node(
     """並列用 : 毎回ノード作成
     """
     
-    if robot_name == "baxter":
-        rm = baxter
-    elif robot_name == "franka_emika":
-        rm = franka_emika
-    elif robot_name == "sice":
-        rm = sice
-    else:
-        assert False
+    rm = get_robot_model(robot_name)
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
@@ -387,14 +326,8 @@ def make_node(
 
 
 def make_tree(g, o_s, robot_name, rmp_param, ):
-    if robot_name == "baxter":
-        rm = baxter
-    elif robot_name == "franka_emika":
-        rm = franka_emika
-    elif robot_name == "sice":
-        rm = sice
-    else:
-        assert False
+
+    rm = get_robot_model(robot_name)
     
     node_ids = [(-1, 0)]
     for i, Rs in enumerate(rm.CPoint.RS_ALL):
@@ -413,15 +346,8 @@ def make_tree_root(
     node_ids: list[tuple[int, int]],
     g, o_s, rmp_param, robot_name: str
 ):
-    if robot_name == "baxter":
-        rm = baxter
-    elif robot_name == "franka_emika":
-        rm = franka_emika
-    elif robot_name == "sice":
-        rm = sice
-    else:
-        assert False
-    
+
+    rm = get_robot_model(robot_name)
     root = Root(rm.CPoint.c_dim)
     
     for node_id in node_ids:

@@ -97,7 +97,7 @@ def make_animation(
     isSave=False,
     save_path: Union[str, None]=None,
 ):
-    start_time = time.time()
+    start_time = time.perf_counter()
     task_dim = 3 if is3D else 2
     
     T_SIZE = len(t_data)
@@ -107,6 +107,10 @@ def make_animation(
     all_data = []
     for i in range(task_dim):
         temp = []
+        if goal_data is not None:
+            temp.append(goal_data[i, 0])
+        if obs_data is not None:
+            temp.extend(obs_data[:, i].tolist())
         for j in range(T_SIZE):
             temp.extend(joint_data[j][i])
         all_data.append(temp)
@@ -147,9 +151,9 @@ def make_animation(
         
         if ee_data is not None:
             if is3D:
-                ax.scatter(ee_data[i, 0], ee_data[i, 1], ee_data[i, 2], lanel="ee")
+                ax.plot(ee_data[:i, 0], ee_data[:i, 1], ee_data[:i, 2], label="ee")
             else:
-                ax.scatter(ee_data[i, 0], ee_data[i, 1], lanel="ee")
+                ax.plot(ee_data[:i, 0], ee_data[:i, 1], label="ee")
         
         if cpoint_data is not None:
             if is3D:
@@ -221,7 +225,7 @@ def make_animation(
     #     pickle.dump(ani, f)
     
     
-    print("time = ", time.time() - start_time)
+    print("time = ", time.perf_counter() - start_time)
     
     #plt.show()
     return ani

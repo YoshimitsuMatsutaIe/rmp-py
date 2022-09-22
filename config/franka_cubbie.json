@@ -1,12 +1,12 @@
 {
     "//" : "キャビン",
     "robot_name" : "franka_emika",
-    "time_span" : 10,
+    "time_span" : 120,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
             "max_speed" : 20.0,
-            "gain" : 10.0,
+            "gain" : 20.0,
             "sigma_alpha" : 0.5,
             "sigma_gamma" : 0.5,
             "wu" : 10.0,
@@ -17,7 +17,7 @@
         "obstacle_avoidance" : {
             "scale_rep" : 0.1,
             "scale_damp" : 1.0,
-            "gain" : 10.0,
+            "gain" : 5.0,
             "sigma" : 1.0,
             "rw" : 0.1
         },

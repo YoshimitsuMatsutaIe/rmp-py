@@ -14,15 +14,15 @@ s = Simulator()
 #simulator.main("./config/baxter.json")
 
 
-#simulator.main("./config/franka_box.json")
+s.main("./config/franka_sphere.json")
 
-s.main("./config/franka_cubbie.json", method="single")
+#s.main("./config/test_sice.json", method="single")
 
-
-#simulator.main("./config/test_sice.json")
 
 
 #simulator.main("./../rmp-cpp/config/sice.json")
+
+#s.main("./config/particle_test.json")
 
 
 

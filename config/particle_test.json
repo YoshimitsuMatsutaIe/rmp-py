@@ -1,25 +1,25 @@
 {
-    "//" : "ボールの背後に目標",
-    "robot_name" : "franka_emika",
-    "time_span" : 60.0,
+    "//" : "",
+    "robot_name" : "particle",
+    "time_span" : 30.0,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
-            "max_speed" : 20.0,
-            "gain" : 20.0,
-            "sigma_alpha" : 0.5,
-            "sigma_gamma" : 0.5,
+            "max_speed" : 8.0,
+            "gain" : 5.0,
+            "sigma_alpha" : 1.0,
+            "sigma_gamma" : 1.0,
             "wu" : 10.0,
             "wl" : 0.1,
-            "alpha" : 0.1,
-            "epsilon" : 0.05
+            "alpha" : 0.15,
+            "epsilon" : 0.5
         },
         "obstacle_avoidance" : {
             "scale_rep" : 0.1,
             "scale_damp" : 1.0,
             "gain" : 5.0,
             "sigma" : 1.0,
-            "rw" : 0.15
+            "rw" : 0.5
         },
         "joint_limit_avoidance" : {
             "gamma_p" : 0.05,
@@ -32,20 +32,27 @@
         "goal" : {
             "type" : "static",
             "param" : {
-                "x" : 0.5,
-                "y" : -0.08,
-                "z" : 0.5
+                "x" : 2.0,
+                "y" : 3.0
             }
         },
         "obstacle" : [
             {
                 "type" : "sphere",
                 "param" : {
-                    "r" : 0.15,
-                    "x" : 0.3,
-                    "y" : 0.0,
-                    "z" : 0.4,
-                    "n" : 100
+                    "n" : 200,
+                    "r" : 0.6,
+                    "x" : 0.5,
+                    "y" : 1.0
+                }
+            },
+            {
+                "type" : "sphere",
+                "param" : {
+                    "n" : 200,
+                    "r" : 0.6,
+                    "x" : 3.0,
+                    "y" : 2.0
                 }
             }
         ]
