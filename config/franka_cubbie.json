@@ -1,7 +1,7 @@
 {
     "//" : "キャビン",
     "robot_name" : "franka_emika",
-    "time_span" : 30,
+    "time_span" : 10,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
@@ -34,7 +34,7 @@
             "param" : {
                 "x" : 0.6,
                 "y" : 0.0,
-                "z" : 0.9
+                "z" : 0.6
             }
         },
         "obstacle" : [
@@ -63,6 +63,66 @@
                     "x" : 0.6,
                     "y" : 0.0,
                     "z" : 0.6,
+                    "alpha" : 0,
+                    "beta" : 0,
+                    "gamma" : -90
+                }
+            },
+            {
+                "type" : "cubbie",
+                "param" : {
+                    "n" : 500,
+                    "lx" : 0.4,
+                    "ly" : 0.3,
+                    "lz" : 0.3,
+                    "x" : 0.6,
+                    "y" : 0.0,
+                    "z" : 0.3,
+                    "alpha" : 0,
+                    "beta" : 0,
+                    "gamma" : -90
+                }
+            },
+            {
+                "type" : "cubbie",
+                "param" : {
+                    "n" : 500,
+                    "lx" : 0.4,
+                    "ly" : 0.3,
+                    "lz" : 0.3,
+                    "x" : 0.6,
+                    "y" : 0.4,
+                    "z" : 0.9,
+                    "alpha" : 0,
+                    "beta" : 0,
+                    "gamma" : -90
+                }
+            },
+            {
+                "type" : "cubbie",
+                "param" : {
+                    "n" : 500,
+                    "lx" : 0.4,
+                    "ly" : 0.3,
+                    "lz" : 0.3,
+                    "x" : 0.6,
+                    "y" : 0.4,
+                    "z" : 0.6,
+                    "alpha" : 0,
+                    "beta" : 0,
+                    "gamma" : -90
+                }
+            },
+            {
+                "type" : "cubbie",
+                "param" : {
+                    "n" : 500,
+                    "lx" : 0.4,
+                    "ly" : 0.3,
+                    "lz" : 0.3,
+                    "x" : 0.6,
+                    "y" : 0.4,
+                    "z" : 0.3,
                     "alpha" : 0,
                     "beta" : 0,
                     "gamma" : -90

@@ -356,7 +356,8 @@ def make_node(
         node = Node(
             name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
             dim = rm.CPoint.t_dim,
-            mappings = temp_map
+            mappings = temp_map,
+            parent_dim = rm.CPoint.c_dim
         )
         if node_id == rm.CPoint.ee_id:
             ### 目標 ###
@@ -440,7 +441,8 @@ def make_tree_root(
             node = Node(
                 name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
                 dim = rm.CPoint.t_dim,
-                mappings = temp_map
+                mappings = temp_map,
+                parent_dim = rm.CPoint.c_dim
             )
             if node_id == rm.CPoint.ee_id:
                 ### 目標 ###

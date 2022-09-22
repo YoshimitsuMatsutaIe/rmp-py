@@ -120,7 +120,7 @@ class Simulator:
         ]
 
 
-    def main(self, param_path: str, method="multi_4"):
+    def main(self, param_path: str, method: str="multi_4"):
         
         date_now = datetime.datetime.now()
         name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
