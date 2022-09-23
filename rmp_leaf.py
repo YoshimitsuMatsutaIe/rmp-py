@@ -39,7 +39,6 @@ class LeafBase(rmp_node.Node):
     def pushforward(self,):
         pass
     
-    
     def pullback(self):
         self.calc_rmp_func()
         assert self.parent is not None, "pulled at " + self.name + ", error"
@@ -107,6 +106,7 @@ class GoalAttractor(LeafBase):
                 alpha = self.alpha,
                 epsilon = self.epsilon
             )
+
 
 
 

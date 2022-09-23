@@ -227,25 +227,30 @@ class Simulator:
             delimiter = ","
         )
         
-        
-
-        ### 以下グラフ化 ###
         ee_map_ = rm.CPoint(*rm.CPoint.ee_id)
+        ee_ = [ee_map_.phi(data[i:i+1, 1:c_dim+1].T) for i in range(len(sol.t))]
+        ee_ = np.concatenate(ee_, axis=1)
+        error = np.linalg.norm(self.goal - ee_, axis=0)
+        error_data = np.stack(
+            [sol.t, error]
+        ).T
+        np.savetxt(
+            base + 'error.csv',
+            error_data,
+            header = "t,error",
+            comments = '',
+            delimiter = ","
+        )
+        
+        
+        
+        ### 以下グラフ化 ###
+        
         
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 15))
         for i in range(c_dim):
             axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
             axes[1].plot(sol.t, sol.y[i+c_dim], label="dq" + str(i))
-
-        ee_ = []
-        q_ = np.empty((c_dim, 1))
-        for i in range(len(sol.t)):
-            for j in range(c_dim):
-                q_[j] = sol.y[j][i]
-            ee_.append(ee_map_.phi(q_))
-        ee_ = np.concatenate(ee_, axis=1)
-        error = np.linalg.norm(self.goal - ee_, axis=0)
-        
         axes[2].plot(sol.t, error, label="error")
         axes[2].set_ylim(0,)
         
@@ -267,10 +272,8 @@ class Simulator:
                 map_ = rm.CPoint(i, j)
                 cpoint_phis.append(map_.phi)
 
-        map_ = rm.CPoint(c_dim, 0)
-        cpoint_phis.append(map_.phi)
-
-
+        # map_ = rm.CPoint(c_dim, 0)
+        # cpoint_phis.append(map_.phi)
 
         q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
             q_s = [sol.y[i] for i in range(c_dim)],
