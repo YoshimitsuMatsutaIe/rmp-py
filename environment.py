@@ -65,6 +65,13 @@ def set_sphere(n: int, r: float, x: float, y: float, z=None):
     return obs
 
 
+def set_2d_bowl(n: int, r, x, y, alpha=0.0):
+    
+
+
+
+
+
 def set_cylinder(n: int, r, L, x, y, z, alpha=0.0, beta=0.0, gamma=0.0,):
     """円筒を設置
     

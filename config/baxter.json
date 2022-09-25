@@ -1,6 +1,6 @@
 {
     "robot_name" : "baxter",
-    "time_span" : 1.0,
+    "time_span" : 60.0,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
@@ -31,24 +31,38 @@
         "goal" : {
             "type" : "static",
             "param" : {
-                "x" : 0.5,
-                "y" : -0.08,
-                "z" : 0.5
+                "x" : 0.0,
+                "y" : -0.8,
+                "z" : 0.8
             }
         },
         "obstacle" : [
             {
                 "type" : "cylinder",
                 "param" : {
-                    "r" : 0.05,
-                    "L" : 1.2,
-                    "x" : 0.3,
-                    "y" : 0.0,
+                    "r" : 0.13,
+                    "L" : 1.5,
+                    "x" : 0.0,
+                    "y" : -0.6,
                     "z" : 0.6,
-                    "n" : 200,
+                    "n" : 500,
                     "alpha" : 0.0,
                     "beta" : 0.0,
                     "gamma" : 90.0
+                }
+            },
+            {
+                "type" : "cylinder",
+                "param" : {
+                    "r" : 0.13,
+                    "L" : 1.5,
+                    "x" : 0.0,
+                    "y" : -0.6,
+                    "z" : 0.8,
+                    "n" : 500,
+                    "alpha" : 0.0,
+                    "beta" : 90.0,
+                    "gamma" : 0.0
                 }
             }
         ]

@@ -18,13 +18,13 @@ from robot_baxter.JRz_dots import *
 
 
 def q_neutral():
-    return np.array([[0, -31, 0, 43, 0, 72, 0]]) * np.pi/180  # ニュートラルの姿勢
+    return np.array([[0, -31, 0, 43, 0, 72, 0]]).T * np.pi/180  # ニュートラルの姿勢
 
 def q_min():
-    return np.array([[-141, -123, -173, -3, -175, -90, -175]]) * np.pi/180
+    return np.array([[-141, -123, -173, -3, -175, -90, -175]]).T * np.pi/180
 
 def q_max():
-    return np.array([[51, 60, 173, 150, 175, 120, 175]]) * np.pi/180
+    return np.array([[51, 60, 173, 150, 175, 120, 175]]).T * np.pi/180
 
 
 class CPoint(mappings.Identity):
@@ -107,13 +107,10 @@ class CPoint(mappings.Identity):
     RS_ALL = (
         rs_in_0, rs_in_1, rs_in_2, rs_in_3, rs_in_4, rs_in_5, rs_in_6, rs_in_GL,
     )
-
-
+    
     ee_id = (7, 0)
     
-    
     def __init__(self, frame_num, position_num):
-        
         self.o = lambda q: o(q, frame_num)
         self.rx = lambda q: rx(q, frame_num)
         self.ry = lambda q: ry(q, frame_num)

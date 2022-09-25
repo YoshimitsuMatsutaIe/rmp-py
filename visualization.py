@@ -79,151 +79,151 @@ def make_data(
 
 
 
-def make_animation_pld(
-    t_data: list[float],
-    joint_data: list[list[list[float]]],
-    q_data=None,
-    ee_data=None,
-    cpoint_data=None,
-    goal_data=None,
-    obs_data=None,
-    is3D: bool=True,
-    epoch_max: int=60,
-    isSave=False,
-    save_path: Union[str, None]=None,
-):
-    start_time = time.perf_counter()
-    task_dim = 3 if is3D else 2
+# def make_animation_pld(
+#     t_data: list[float],
+#     joint_data: list[list[list[float]]],
+#     q_data=None,
+#     ee_data=None,
+#     cpoint_data=None,
+#     goal_data=None,
+#     obs_data=None,
+#     is3D: bool=True,
+#     epoch_max: int=60,
+#     isSave=False,
+#     save_path: Union[str, None]=None,
+# ):
+#     start_time = time.perf_counter()
+#     task_dim = 3 if is3D else 2
     
-    T_SIZE = len(t_data)
+#     T_SIZE = len(t_data)
     
-    ### 描写範囲を決定 ##
+#     ### 描写範囲を決定 ##
 
-    all_data = []
-    for i in range(task_dim):
-        temp = []
-        if goal_data is not None:
-            temp.append(goal_data[i, 0])
-        if obs_data is not None:
-            temp.extend(obs_data[:, i].tolist())
-        for j in range(T_SIZE):
-            temp.extend(joint_data[j][i])
-        all_data.append(temp)
+#     all_data = []
+#     for i in range(task_dim):
+#         temp = []
+#         if goal_data is not None:
+#             temp.append(goal_data[i, 0])
+#         if obs_data is not None:
+#             temp.extend(obs_data[:, i].tolist())
+#         for j in range(T_SIZE):
+#             temp.extend(joint_data[j][i])
+#         all_data.append(temp)
     
-    limits = calc_scale(
-        min_x=min(all_data[0]),
-        max_x=max(all_data[0]),
-        min_y=min(all_data[1]),
-        max_y=max(all_data[1]),
-        min_z=min(all_data[2]) if is3D else None,
-        max_z=max(all_data[2]) if is3D else None,
-    )
+#     limits = calc_scale(
+#         min_x=min(all_data[0]),
+#         max_x=max(all_data[0]),
+#         min_y=min(all_data[1]),
+#         max_y=max(all_data[1]),
+#         min_z=min(all_data[2]) if is3D else None,
+#         max_z=max(all_data[2]) if is3D else None,
+#     )
     
     
-    fig = plt.figure(figsize=(10,10))
-    ax = fig.add_subplot(projection="3d") if is3D else fig.add_subplot()
-    time_template = 'time = %.2f [s]'
+#     fig = plt.figure(figsize=(10,10))
+#     ax = fig.add_subplot(projection="3d") if is3D else fig.add_subplot()
+#     time_template = 'time = %.2f [s]'
     
 
-    def update(i: int):
-        ax.cla()
-        ax.grid(True)
-        ax.set_xlabel('X [m]')
-        ax.set_ylabel('Y [m]')
-        ax.set_xlim(limits[0], limits[1])
-        ax.set_ylim(limits[2], limits[3])
-        if is3D:
-            ax.set_zlabel('Z [m]')
-            assert len(limits) == 6
-            ax.set_zlim(limits[4], limits[5])
+#     def update(i: int):
+#         ax.cla()
+#         ax.grid(True)
+#         ax.set_xlabel('X [m]')
+#         ax.set_ylabel('Y [m]')
+#         ax.set_xlim(limits[0], limits[1])
+#         ax.set_ylim(limits[2], limits[3])
+#         if is3D:
+#             ax.set_zlabel('Z [m]')
+#             assert len(limits) == 6
+#             ax.set_zlim(limits[4], limits[5])
             
-        ax.set_box_aspect((1,1,1)) if is3D else ax.set_aspect('equal')
+#         ax.set_box_aspect((1,1,1)) if is3D else ax.set_aspect('equal')
         
-        if is3D:
-            ax.plot(joint_data[i][0], joint_data[i][1], joint_data[i][2], label="joints", marker="o")
-        else:
-            ax.plot(joint_data[i][0], joint_data[i][1], label="joints", marker="o")
+#         if is3D:
+#             ax.plot(joint_data[i][0], joint_data[i][1], joint_data[i][2], label="joints", marker="o")
+#         else:
+#             ax.plot(joint_data[i][0], joint_data[i][1], label="joints", marker="o")
         
-        if ee_data is not None:
-            if is3D:
-                ax.plot(ee_data[:i, 0], ee_data[:i, 1], ee_data[:i, 2], label="ee")
-            else:
-                ax.plot(ee_data[:i, 0], ee_data[:i, 1], label="ee")
+#         if ee_data is not None:
+#             if is3D:
+#                 ax.plot(ee_data[:i, 0], ee_data[:i, 1], ee_data[:i, 2], label="ee")
+#             else:
+#                 ax.plot(ee_data[:i, 0], ee_data[:i, 1], label="ee")
         
-        if cpoint_data is not None:
-            if is3D:
-                ax.scatter(cpoint_data[i][0], cpoint_data[i][1], cpoint_data[i][2])
-            else:
-                ax.scatter(cpoint_data[i][0], cpoint_data[i][1])
+#         if cpoint_data is not None:
+#             if is3D:
+#                 ax.scatter(cpoint_data[i][0], cpoint_data[i][1], cpoint_data[i][2])
+#             else:
+#                 ax.scatter(cpoint_data[i][0], cpoint_data[i][1])
         
-        if goal_data is not None:
-            if is3D:
-                ax.scatter(
-                    goal_data[i, 0], goal_data[i, 1], goal_data[i, 2],
-                    s = 100, label = 'goal point', marker = '*', color = '#ff7f00', 
-                    alpha = 1, linewidths = 1.5, edgecolors = 'red'
-                )
-            else:
-                ax.scatter(
-                    goal_data[i, 0], goal_data[i, 1],
-                    s = 100, label = 'goal point', marker = '*', color = '#ff7f00', 
-                    alpha = 1, linewidths = 1.5, edgecolors = 'red'
-                )
+#         if goal_data is not None:
+#             if is3D:
+#                 ax.scatter(
+#                     goal_data[i, 0], goal_data[i, 1], goal_data[i, 2],
+#                     s = 100, label = 'goal point', marker = '*', color = '#ff7f00', 
+#                     alpha = 1, linewidths = 1.5, edgecolors = 'red'
+#                 )
+#             else:
+#                 ax.scatter(
+#                     goal_data[i, 0], goal_data[i, 1],
+#                     s = 100, label = 'goal point', marker = '*', color = '#ff7f00', 
+#                     alpha = 1, linewidths = 1.5, edgecolors = 'red'
+#                 )
         
-        if obs_data is not None:
-            if len(obs_data) == len(t_data):
-                os = obs_data[i]
-                os = os.reshape(len(os)//task_dim, task_dim)
-                if is3D:
-                    ax.scatter(
-                        os[:, 0], os[:, 1], os[:, 2],
-                        label = 'obstacle point', marker = '.', color = 'k',
-                    )
-                else:
-                    ax.scatter(
-                        os[:, 0], os[:, 1],
-                        label = 'obstacle point', marker = '.', color = 'k',
-                    )
-            else:
-                if is3D:
-                    ax.scatter(
-                        obs_data[:, 0], obs_data[:, 1], obs_data[:, 2],
-                        label = 'obstacle point', marker = '.', color = 'k',
-                    )
-                else:
-                    ax.scatter(
-                        obs_data[:, 0], obs_data[:, 1],
-                        label = 'obstacle point', marker = '.', color = 'k',
-                    )
+#         if obs_data is not None:
+#             if len(obs_data) == len(t_data):
+#                 os = obs_data[i]
+#                 os = os.reshape(len(os)//task_dim, task_dim)
+#                 if is3D:
+#                     ax.scatter(
+#                         os[:, 0], os[:, 1], os[:, 2],
+#                         label = 'obstacle point', marker = '.', color = 'k',
+#                     )
+#                 else:
+#                     ax.scatter(
+#                         os[:, 0], os[:, 1],
+#                         label = 'obstacle point', marker = '.', color = 'k',
+#                     )
+#             else:
+#                 if is3D:
+#                     ax.scatter(
+#                         obs_data[:, 0], obs_data[:, 1], obs_data[:, 2],
+#                         label = 'obstacle point', marker = '.', color = 'k',
+#                     )
+#                 else:
+#                     ax.scatter(
+#                         obs_data[:, 0], obs_data[:, 1],
+#                         label = 'obstacle point', marker = '.', color = 'k',
+#                     )
         
-        ax.set_title(time_template % t_data[i])
-        ax.legend()
+#         ax.set_title(time_template % t_data[i])
+#         ax.legend()
         
-        return
+#         return
     
-    if T_SIZE < epoch_max:
-        step = 1
-    else:
-        step = T_SIZE // epoch_max
+#     if T_SIZE < epoch_max:
+#         step = 1
+#     else:
+#         step = T_SIZE // epoch_max
     
-    print("step = ", step)
-    ani = anm.FuncAnimation(
-        fig = fig,
-        func = update,
-        frames = range(0, len(t_data), step)
-    )
+#     print("step = ", step)
+#     ani = anm.FuncAnimation(
+#         fig = fig,
+#         func = update,
+#         frames = range(0, len(t_data), step)
+#     )
     
-    if isSave:
-        assert save_path is not None
-        ani.save(save_path, fps=60, writer='pillow')
-    # with open(save_dir_path + 'animation.binaryfile', 'wb') as f:
-    #     pickle.dump(ani, f)
+#     if isSave:
+#         assert save_path is not None
+#         ani.save(save_path, fps=60, writer='pillow')
+#     # with open(save_dir_path + 'animation.binaryfile', 'wb') as f:
+#     #     pickle.dump(ani, f)
     
     
-    print("time = ", time.perf_counter() - start_time)
+#     print("time = ", time.perf_counter() - start_time)
     
-    #plt.show()
-    return ani
+#     #plt.show()
+#     return ani
 
 
 
@@ -237,7 +237,6 @@ def make_animation(
     obs_data=None,
     is3D: bool=True,
     epoch_max: int=60,
-    isSave=False,
     save_path: Union[str, None]=None,
 ):
     if is3D:
@@ -250,7 +249,6 @@ def make_animation(
             goal_data,
             obs_data,
             epoch_max,
-            isSave,
             save_path
         )
     else:
@@ -263,7 +261,6 @@ def make_animation(
             goal_data,
             obs_data,
             epoch_max,
-            isSave,
             save_path
         )
 
@@ -277,7 +274,6 @@ def make_2d_animation(
     goal_data=None,
     obs_data=None,
     epoch_max: int=60,
-    isSave=False,
     save_path: Union[str, None]=None,
 ):
     start_time = time.perf_counter()
@@ -366,8 +362,7 @@ def make_2d_animation(
         blit=True
     )
     
-    if isSave:
-        assert save_path is not None
+    if save_path is not None:
         ani.save(save_path, fps=60, writer='pillow')
 
     print("time = ", time.perf_counter() - start_time)
@@ -386,7 +381,6 @@ def make_3d_animation(
     goal_data=None,
     obs_data=None,
     epoch_max: int=60,
-    isSave=False,
     save_path: Union[str, None]=None,
 ):
     start_time = time.perf_counter()
@@ -398,9 +392,9 @@ def make_3d_animation(
     for i in range(TASK_DIM):
         temp = []
         if goal_data is not None:
-            temp.append(goal_data[i, 0])
+            temp.extend(np.ravel(goal_data[:, i]).tolist())
         if obs_data is not None:
-            temp.extend(obs_data[:, i].tolist())
+            temp.extend(np.ravel(obs_data[:, i]).tolist())
         for j in range(T_SIZE):
             temp.extend(joint_data[j][i])
         all_data.append(temp)
@@ -430,9 +424,12 @@ def make_3d_animation(
             alpha = 1, linewidths = 1.5, edgecolors = 'red'
         )
     
-    joint_p, = ax.plot(joint_data[0][0], joint_data[0][1], joint_data[0][2], label="joints", marker="o")
+    joint_p, = ax.plot(
+        joint_data[0][0], joint_data[0][1], joint_data[0][2],
+        label="joints", marker="o", c="m", alpha=0.5
+    )
     if ee_data is not None:
-        ee_p, = ax.plot(ee_data[:0, 0], ee_data[:0, 1], ee_data[:0, 2], label="ee")
+        ee_p, = ax.plot(ee_data[:0, 0], ee_data[:0, 1], ee_data[:0, 2], label="ee", c='#ff7f00')
     if cpoint_data is not None:
         cp_p = ax.scatter(cpoint_data[0][0], cpoint_data[0][1], cpoint_data[0][2], label="cpoint")
     tx = ax.set_title(time_template % t_data[0])
@@ -479,8 +476,7 @@ def make_3d_animation(
         #blit=True
     )
     
-    if isSave:
-        assert save_path is not None
+    if save_path is not None:
         ani.save(save_path, fps=60, writer='pillow')
 
     print("time = ", time.perf_counter() - start_time)

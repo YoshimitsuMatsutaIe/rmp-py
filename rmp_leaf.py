@@ -74,7 +74,6 @@ class GoalAttractor(LeafBase):
         self.alpha = alpha  # ポテンシャルのスケーリング係数
         self.epsilon = epsilon
         
-        assert dim == 2 or dim == 3, "must dim = 2 or 3"
         if dim == 2:
             self.xi_func = attractor_xi_2d.f
         elif dim == 3:
@@ -283,6 +282,7 @@ class JointLimitAvoidance(LeafBase):
     def calc_rmp_func(self,):
         xi = np.empty((self.dim, 1))
         self.M.fill(0)
+
         for i in range(self.dim):
             alpha_upper = 1 - exp(-max(self.x_dot[i, 0], 0)**2 / (2*self.sigma**2))
             alpha_lower = 1 - exp(-min(self.x_dot[i, 0], 0)**2 / (2*self.sigma**2))

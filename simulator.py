@@ -37,6 +37,8 @@ class Simulator:
                 obstacle.extend(set_cylinder(**param_))
             elif type_ == "sphere":
                 obstacle.extend(set_sphere(**param_))
+            elif type_ == "field":
+                obstacle.extend(set_field(**param_))
             elif type_ == "box":
                 obstacle.extend(set_box(**param_))
             elif type_ == "cubbie":
@@ -112,18 +114,28 @@ class Simulator:
         ]
 
 
-    def main(self, param_path: str, method: str="single"):
+    def main(
+        self,
+        param_path: Union[str, None]=None,
+        param_dict: Union[dict, None]=None,
+        method: str="single"):
         
         date_now = datetime.datetime.now()
         name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
         base = "../rmp_result/rmp-py_result/" + name + "/"
         os.makedirs(base, exist_ok=True)
         
-        
-        with open(param_path) as f:
-            param = json.load(f)
-        
-        shutil.copy2(param_path, base)  # 設定ファイルのコピー作成
+        if param_path is not None:
+            with open(param_path) as f:
+                param = json.load(f)
+            shutil.copy2(param_path, base)  # 設定ファイルのコピー作成
+        elif param_dict is not None:
+            json_name = param_dict.pop("json_name")
+            with open(base + json_name, "w") as f:
+                json.dump(param_dict, f)
+            param = param_dict
+        else:
+            assert False
         
         self.robot_name = param["robot_name"]
         self.rmp_param = param["rmp_param"]
@@ -303,12 +315,82 @@ class Simulator:
             goal_data=goal_data,
             obs_data=np.concatenate(self.obstacle, axis=1).T,
             save_path=base+"animation.gif",
-            isSave=True,
             #epoch_max=120
         )
         
         plt.show()
 
+
+    def environment_visualization(
+        self,
+        param_path: Union[str, None]=None,
+        param_dict: Union[dict, None]=None,
+    ):
+        """チェック用"""
+
+        if param_path is not None:
+            with open(param_path) as f:
+                param = json.load(f)
+        elif param_dict is not None:
+            param = param_dict
+        else:
+            assert False
+        
+        self.robot_name = param["robot_name"]
+        self.rmp_param = param["rmp_param"]
+        env = param["env_param"]
+        
+        self.obstacle = self.set_obstacle(env["obstacle"])
+        self.goal = set_point(**env["goal"]["param"])[0]
+        rm = get_robot_model(param["robot_name"])
+
+        x0 = np.concatenate([
+            rm.q_neutral(),
+            rm.q_neutral()
+        ], axis=1)
+
+        c_dim = rm.CPoint.c_dim
+        t_dim = rm.CPoint.t_dim
+
+        t = [0. for _ in range(2)]
+        y = x0.tolist()
+
+        cpoint_phis = []
+        for i, rs in enumerate(rm.CPoint.RS_ALL):
+            for j, _ in enumerate(rs):
+                map_ = rm.CPoint(i, j)
+                cpoint_phis.append(map_.phi)
+
+        q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+            q_s = [y[i] for i in range(c_dim)],
+            cpoint_phi_s=cpoint_phis,
+            joint_phi_s=rm.JOINT_PHI(),
+            is3D=True if t_dim==3 else False,
+            #ee_phi=rm.o_ee
+        )
+
+        if t_dim == 3:
+            is3D = True
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0], self.goal[2,0]]*len(t)]).reshape(len(t), 3)
+        elif t_dim == 2:
+            is3D = False
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0],] * len(t)]).reshape(len(t), 2)
+        else:
+            assert False
+
+
+        ani = visualization.make_animation(
+            t_data = t,
+            joint_data=joint_data,
+            cpoint_data=cpoint_data,
+            ee_data=ee_data,
+            is3D=is3D,
+            goal_data=goal_data,
+            obs_data=np.concatenate(self.obstacle, axis=1).T,
+            #epoch_max=120
+        )
+        
+        plt.show()
 
 
 if __name__ == "__main__":
