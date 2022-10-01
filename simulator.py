@@ -34,15 +34,15 @@ class Simulator:
             param_ = obs_param["param"]
             
             if type_ == "cylinder":
-                obstacle.extend(set_cylinder(**param_))
+                obstacle.extend(set_cylinder_rand(**param_))
             elif type_ == "sphere":
-                obstacle.extend(set_sphere(**param_))
+                obstacle.extend(set_sphere_rand(**param_))
             elif type_ == "field":
-                obstacle.extend(set_field(**param_))
+                obstacle.extend(set_field_rand(**param_))
             elif type_ == "box":
-                obstacle.extend(set_box(**param_))
+                obstacle.extend(set_box_rand(**param_))
             elif type_ == "cubbie":
-                obstacle.extend(set_cubbie(**param_))
+                obstacle.extend(set_cubbie_rand(**param_))
             elif type_ == "point":
                 obstacle.extend(set_point(**param_))
             else:

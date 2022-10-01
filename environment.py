@@ -1,8 +1,9 @@
+from matplotlib import projections
 import numpy as np
 np.random.seed(0)  # 固定
 
 from math import cos, sin, tan, pi
-import matplotlib.pyplot as plt
+
 
 
 def rotate3d(alpha: float, beta: float, gamma: float):
@@ -33,7 +34,7 @@ def set_point(x, y, z=None):
         return [np.array([[x, y, z]]).T]
 
 
-def set_sphere(n: int, r: float, x: float, y: float, z=None):
+def set_sphere_rand(n: int, r: float, x: float, y: float, z=None):
     """
     
     r : 半径
@@ -65,14 +66,14 @@ def set_sphere(n: int, r: float, x: float, y: float, z=None):
     return obs
 
 
-def set_2d_bowl(n: int, r, x, y, alpha=0.0):
+# def set_2d_bowl(n: int, r, x, y, alpha=0.0):
     
 
 
 
 
 
-def set_cylinder(n: int, r, L, x, y, z, alpha=0.0, beta=0.0, gamma=0.0,):
+def set_cylinder_rand(n: int, r, L, x, y, z, alpha=0.0, beta=0.0, gamma=0.0,):
     """円筒を設置
     
     r : 半径
@@ -97,7 +98,7 @@ def set_cylinder(n: int, r, L, x, y, z, alpha=0.0, beta=0.0, gamma=0.0,):
     return obs
 
 
-def set_field(n: int, lx, ly, x, y, z, alpha=0, beta=0, gamma=0):
+def set_field_rand(n: int, lx, ly, x, y, z, alpha=0, beta=0, gamma=0):
     """面を表現"""
     
     R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
@@ -116,8 +117,24 @@ def set_field(n: int, lx, ly, x, y, z, alpha=0, beta=0, gamma=0):
     return obs
 
 
+def set_field(d: float, lx, ly, x, y, z, alpha=0, beta=0, gamma=0):
+    R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
+    center = np.array([[x, y, z]]).T
+    xx, yy = np.meshgrid(np.arange(0, lx, d), np.arange(0, ly, d))
+    obs_ = np.vstack(
+        [np.ravel(xx), np.ravel(yy), np.zeros(xx.size)]
+    )
+    obs = []
+    for i in range(xx.size):
+        obs.append(R @ obs_[:, i:i+1] + center)
+    
+    return obs
 
-def set_box(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
+
+
+
+
+def set_box_rand(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
     """箱型障害物"""
     
     R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
@@ -134,12 +151,12 @@ def set_box(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
     n3 = int(n * s3 / sum_s / 2)
     
     obs = []
-    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=lz/2)
-    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=-lz/2)
-    obs += set_field(n2, lx=lx, ly=lz, x=0, y=ly/2, z=0, alpha=90)
-    obs += set_field(n2, lx=lx, ly=lz, x=0, y=-ly/2, z=0, alpha=90)
-    obs += set_field(n3, lx=lz, ly=ly, x=lx/2, y=0, z=0, beta=90)
-    obs += set_field(n3, lx=lz, ly=ly, x=-lx/2, y=0, z=0, beta=90)
+    obs += set_field_rand(n1, lx=lx, ly=ly, x=0, y=0, z=lz/2)
+    obs += set_field_rand(n1, lx=lx, ly=ly, x=0, y=0, z=-lz/2)
+    obs += set_field_rand(n2, lx=lx, ly=lz, x=0, y=ly/2, z=0, alpha=90)
+    obs += set_field_rand(n2, lx=lx, ly=lz, x=0, y=-ly/2, z=0, alpha=90)
+    obs += set_field_rand(n3, lx=lz, ly=ly, x=lx/2, y=0, z=0, beta=90)
+    obs += set_field_rand(n3, lx=lz, ly=ly, x=-lx/2, y=0, z=0, beta=90)
     
     for i, o in enumerate(obs):
         obs[i] = R @ o + center
@@ -148,7 +165,7 @@ def set_box(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
 
 
 
-def set_cubbie(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
+def set_cubbie_rand(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
     """キャビネット"""
     
     R = rotate3d(np.deg2rad(alpha),np.deg2rad(beta),np.deg2rad(gamma))
@@ -165,12 +182,12 @@ def set_cubbie(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
     n3 = int(n * s3 / sum_s / 2)
     
     obs = []
-    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=lz/2)
-    obs += set_field(n1, lx=lx, ly=ly, x=0, y=0, z=-lz/2)
-    obs += set_field(n2, lx=lx, ly=lz, x=0, y=ly/2, z=0, alpha=90)
+    obs += set_field_rand(n1, lx=lx, ly=ly, x=0, y=0, z=lz/2)
+    obs += set_field_rand(n1, lx=lx, ly=ly, x=0, y=0, z=-lz/2)
+    obs += set_field_rand(n2, lx=lx, ly=lz, x=0, y=ly/2, z=0, alpha=90)
     #obs += set_field(n2, lx=lx, ly=lz, x=0, y=-ly/2, z=0, alpha=90)
-    obs += set_field(n3, lx=lz, ly=ly, x=lx/2, y=0, z=0, beta=90)
-    obs += set_field(n3, lx=lz, ly=ly, x=-lx/2, y=0, z=0, beta=90)
+    obs += set_field_rand(n3, lx=lz, ly=ly, x=lx/2, y=0, z=0, beta=90)
+    obs += set_field_rand(n3, lx=lz, ly=ly, x=-lx/2, y=0, z=0, beta=90)
     
     for i, o in enumerate(obs):
         obs[i] = R @ o + center
@@ -181,4 +198,15 @@ def set_cubbie(n: int, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
 
 
 if __name__ == '__main__':
-    pass
+    
+    o = set_field(0.1, 1, 2, 1, 2, 3, 45, 30, 60)
+
+    import matplotlib.pyplot as plt
+
+    o = np.concatenate(o, axis=1)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+    ax.scatter(o[0,:], o[1,:], o[2,:])
+
+    fig.savefig("hoge.png")
