@@ -265,7 +265,6 @@ class Simulator:
         )
         
         
-        
         ### 以下グラフ化 ###
         
         
@@ -316,7 +315,7 @@ class Simulator:
             assert False
 
 
-        ani = visualization.make_animation(
+        visualization.make_animation(
             t_data = sol.t,
             joint_data=joint_data,
             cpoint_data=cpoint_data,
@@ -389,7 +388,7 @@ class Simulator:
             assert False
 
 
-        ani = visualization.make_animation(
+        visualization.make_animation(
             t_data = t,
             joint_data=joint_data,
             cpoint_data=cpoint_data,

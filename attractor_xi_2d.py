@@ -1,4 +1,4 @@
-from functools import cache
+
 import numpy as np
 from math import sqrt as sq
 from math import exp as ex

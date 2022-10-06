@@ -106,15 +106,15 @@ s = Simulator()
 
 #s.main("./config/franka_sphere.json")
 
-s.main("./config/test_sice.json", method="single")
-
+#s.main("./config/test_sice.json", method="single")
+#s.main("./config/sice_non_obs.json")
 
 
 #simulator.main("./../rmp-cpp/config/sice.json")
 
 #s.main("./config/particle_test.json")
 
-
+s.main("./config/franka_cubbie.json")
 
 # cppのやつ
 #simulator.main("../rmp-cpp/config/sice.json")

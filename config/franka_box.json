@@ -15,8 +15,6 @@
             "epsilon" : 0.05
         },
         "obstacle_avoidance" : {
-            "scale_rep" : 0.1,
-            "scale_damp" : 1.0,
             "gain" : 5.0,
             "sigma" : 1.0,
             "rw" : 0.15

@@ -112,15 +112,11 @@ class GoalAttractor(LeafBase):
 class ObstacleAvoidance(LeafBase):
     def __init__(
         self, name, calc_mappings,
-        scale_rep: float,
-        scale_damp: float,
         gain: float,
         sigma: float,
         rw: float,
         parent_dim: Union[int, None]=None
     ):
-        self.scale_rep = scale_rep
-        self.scale_damp = scale_damp
         self.gain = gain
         self.sigma = sigma
         self.rw = rw
@@ -180,15 +176,11 @@ class ObstacleAvoidanceMulti(LeafBase):
         self, name, calc_mappings: mappings.Identity,
         dim: int,
         o_s: npt.NDArray,
-        scale_rep: float,
-        scale_damp: float,
         gain: float,
         sigma: float,
         rw: float,
         parent_dim: Union[int, None]=None
     ):
-        self.scale_rep = scale_rep
-        self.scale_damp = scale_damp
         self.gain = gain
         self.sigma = sigma
         self.rw = rw
