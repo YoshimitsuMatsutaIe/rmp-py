@@ -1,7 +1,7 @@
 {
     "//" : "キャビン",
     "robot_name" : "franka_emika",
-    "time_span" : 120,
+    "time_span" : 60,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
