@@ -114,8 +114,15 @@ s = Simulator()
 
 #s.main("./config/particle_test.json")
 
-s.main("./config/franka_cubbie.json")
+#s.main("./config/franka_cubbie.json")
 
 # cppのやつ
 #simulator.main("../rmp-cpp/config/sice.json")
 #s.main("../rmp-cpp/config/franka_sphere.json")
+
+
+
+
+
+#s.environment_visualization("./config/yamanaka_test.json")
+s.main("./config/yamanaka_test.json")

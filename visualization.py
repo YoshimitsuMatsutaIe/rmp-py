@@ -47,6 +47,9 @@ def make_data(
 ):
     """描写したい点列を生成
     """
+    
+    #print(joint_phi_s)
+    
     task_dim = 3 if is3D else 2
     T_SIZE = len(q_s[0])  # ループ回数
     
@@ -55,6 +58,7 @@ def make_data(
     joint_data = []
     for i in range(T_SIZE):
         temp = [phi(q[:, i:i+1]) for phi in joint_phi_s]
+        #print(temp)
         temp = np.concatenate(temp, axis=1)
         joint_data.append(temp.tolist())
 
