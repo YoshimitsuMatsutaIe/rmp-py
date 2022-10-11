@@ -202,6 +202,7 @@ class ObstacleAvoidanceMulti(LeafBase):
         w2_dot = (-2*(self.rw-s)*s + (self.rw-s)) / s**2
 
         if s_dot < 0:
+            assert abs(s_dot) < 1e+3, "s = {0}, s_dot = {1}".format(s, s_dot)
             u2 = 1 - exp(-s_dot**2 / (2*self.sigma**2))
             u2_dot = -exp(s_dot**2 / (2*self.sigma**2)) * (-s_dot/self.sigma**3)
         else:
@@ -231,6 +232,7 @@ class ObstacleAvoidanceMulti(LeafBase):
             for id in obs_ids:
                 z = self.x - self.o_s[:, id:id+1]
                 s = LA.norm(z)
+                print(s)
                 J = -z.T / s
                 s_dot = (J @ self.x_dot)[0,0]
                 J_dot = -(self.x_dot.T - z.T*(1/LA.norm(z)*z.T @ self.x_dot)) / s**2

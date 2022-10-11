@@ -104,7 +104,7 @@ s = Simulator()
 #s.main("./config/franka_wall.json")
 #s.main("./config/baxter.json")
 
-#s.main("./config/franka_sphere.json")
+s.main("./config/franka_sphere.json")
 
 #s.main("./config/test_sice.json", method="single")
 #s.main("./config/sice_non_obs.json")
@@ -125,4 +125,4 @@ s = Simulator()
 
 
 #s.environment_visualization("./config/yamanaka_test.json")
-s.main("./config/yamanaka_test.json")
+#s.main("./config/yamanaka_test.json")

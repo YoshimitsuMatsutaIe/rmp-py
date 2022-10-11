@@ -1,12 +1,12 @@
 {
     "//" : "ボールの背後に目標",
     "robot_name" : "franka_emika",
-    "time_span" : 60.0,
+    "time_span" : 3.0,
     "time_interval" : 0.01,
     "rmp_param" : {
         "goal_attractor" : {
-            "max_speed" : 20.0,
-            "gain" : 20.0,
+            "max_speed" : 5.0,
+            "gain" : 10.0,
             "sigma_alpha" : 0.5,
             "sigma_gamma" : 0.5,
             "wu" : 10.0,
@@ -43,7 +43,7 @@
                     "x" : 0.3,
                     "y" : 0.0,
                     "z" : 0.5,
-                    "d" : 0.03
+                    "d" : 0.02
                 }
             }
         ]
