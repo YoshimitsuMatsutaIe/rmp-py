@@ -17,6 +17,12 @@ class Identity:
     def J_dot(self, x, x_dot):
         return np.zeros((x.shape[0], x.shape[0]))
 
+    def calc_all(self, q, dq):
+        x = self.phi(q)
+        J = self.J(q)
+        x_dot = self.velocity(J, dq)
+        J_dot = self.J_dot(q, dq)
+        return x, x_dot, J, J_dot
 
 class Translation(Identity):
     """平行移動"""
@@ -38,6 +44,12 @@ class Translation(Identity):
     def J_dot(self, x, x_dot):
         return self.__J_dot
 
+    def calc_all(self, q, dq):
+        x = self.phi(q)
+        J = self.J(q)
+        x_dot = self.velocity(J, dq)
+        J_dot = self.J_dot(q, dq)
+        return x, x_dot, J, J_dot
 
 class Distance(Identity):
     """距離写像"""
@@ -57,6 +69,12 @@ class Distance(Identity):
     def J_dot(self, x, x_dot):
         return calc_distance_J_dot(x, x_dot, self.o, self.o_dot)
 
+    def calc_all(self, q, dq):
+        x = self.phi(q)
+        J = self.J(q)
+        x_dot = self.velocity(J, dq)
+        J_dot = self.J_dot(q, dq)
+        return x, x_dot, J, J_dot
 
 @njit('f8[:,:](f8[:,:], f8[:,:], f8[:,:], f8[:,:])', cache=True)
 def calc_distance_J_dot(x, x_dot, o, o_dot):

@@ -55,10 +55,13 @@ class Node:
         """push ノード"""
         for child in self.children:
             assert child.mappings is not None
-            child.x = child.mappings.phi(self.x)
-            child.J = child.mappings.J(self.x)
-            child.x_dot = child.mappings.velocity(child.J, self.x_dot)
-            child.J_dot = child.mappings.J_dot(self.x, self.x_dot)
+            # child.x = child.mappings.phi(self.x)
+            # child.J = child.mappings.J(self.x)
+            # child.x_dot = child.mappings.velocity(child.J, self.x_dot)
+            # child.J_dot = child.mappings.J_dot(self.x, self.x_dot)
+            
+            child.x, child.x_dot, child.J, child.J_dot = child.mappings.calc_all(self.x, self.x_dot)
+            
             child.pushforward()
     
     
@@ -81,10 +84,12 @@ class Node:
         
         # 自分をpush
         assert self.mappings is not None
-        self.x = self.mappings.phi(parent_x)
-        self.J = self.mappings.J(parent_x)
-        self.x_dot = self.mappings.velocity(self.J, parent_x_dot)
-        self.J_dot = self.mappings.J_dot(parent_x, parent_x_dot)
+        # self.x = self.mappings.phi(parent_x)
+        # self.J = self.mappings.J(parent_x)
+        # self.x_dot = self.mappings.velocity(self.J, parent_x_dot)
+        # self.J_dot = self.mappings.J_dot(parent_x, parent_x_dot)
+
+        self.x, self.x_dot, self.J, self.J_dot = self.mappings.calc_all(self.x, self.x_dot)
 
         self.pushforward()
         self.pullback()

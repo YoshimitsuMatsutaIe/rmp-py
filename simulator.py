@@ -148,12 +148,23 @@ class Simulator:
             assert False
         
         self.robot_name = param["robot_name"]
+        if 'robot_param' in param:
+            robot_param = param["robot_param"]
+        
+        # if self.robot_name == "sice_ex":
+        #     pass
+        # else:
+        rm = get_robot_model(param["robot_name"])
+        #q_neutral = rm.q_neutral()
+        c_dim = rm.CPoint.c_dim
+        t_dim = rm.CPoint.t_dim
+        
         self.rmp_param = param["rmp_param"]
         env = param["env_param"]
         
         self.obstacle = self.set_obstacle(env["obstacle"])
         self.goal = set_point(**env["goal"]["param"])[0]
-        rm = get_robot_model(param["robot_name"])
+        
         
         self.node_ids = [(-1, 0)]
         for i, Rs in enumerate(rm.CPoint.RS_ALL):
@@ -223,8 +234,6 @@ class Simulator:
 
 
 
-        c_dim = rm.CPoint.c_dim
-        t_dim = rm.CPoint.t_dim
         ## CSV保存
         # まずはヘッダーを準備
         header = "t"

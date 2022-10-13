@@ -259,6 +259,12 @@ class CPoint(mappings.Identity):
     def J_dot(self, q, dq):
         return self.jrx_dot(q, dq)*self.r[0] + self.jry_dot(q, dq)*self.r[1] + self.jo_dot(q, dq)
 
+    def calc_all(self, q, dq):
+        x = self.phi(q)
+        J = self.J(q)
+        x_dot = self.velocity(J, dq)
+        J_dot = self.J_dot(q, dq)
+        return x, x_dot, J, J_dot
 
 def JOINT_PHI():
     return (
