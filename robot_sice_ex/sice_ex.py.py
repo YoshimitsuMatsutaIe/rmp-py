@@ -5,6 +5,20 @@ from math import sin as s
 import mappings
 from numba import njit
 
+import sys
+sys.path.append('.')
+
+import robot_sice_ex.rx as rx
+import robot_sice_ex.ry as ry
+import robot_sice_ex.o as o
+import robot_sice_ex.JRxs as jrx
+import robot_sice_ex.JRys as jry
+import robot_sice_ex.Jos as jo
+import robot_sice_ex.JRx_dots as jrx_dot
+import robot_sice_ex.JRy_dots as jry_dot
+import robot_sice_ex.Jo_dots as jo_dot
+
+
 class CPoint(mappings.Identity):
 
     t_dim = 2
@@ -37,9 +51,18 @@ class CPoint(mappings.Identity):
 
     ee_id = (4, 0)
 
+
+    def __hoge(q, dq):
+        if c_dim >
+
+    def o(self, q):
+        
+
     def __init__(self, frame_num, position_num, c_dim=4, ls=None):
         if ls is None:
             ls = [1 for _ in range(c_dim)]
+        
+        
         
         self.o = lambda q: o(q, frame_num, *ls)
         self.rx = lambda q: rx(q, frame_num)
