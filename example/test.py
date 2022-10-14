@@ -130,4 +130,5 @@ s = Simulator()
 
 
 #s.environment_visualization("./config/sice_ex_test.json")
-s.main("./config/sice_ex_test.json")
+#s.main("./config/sice_ex_test.json")
+s.main("./config/particle_have_initial.json")

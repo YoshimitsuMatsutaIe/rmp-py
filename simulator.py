@@ -61,6 +61,7 @@ class Simulator:
     
     
     def dx_single(self, t, x, root: rmp_node.Root):
+        print("t = ", t)
         dim = x.shape[0] // 2
         x = x.reshape(-1, 1)
         q_ddot = root.solve(x[:dim, :], x[dim:, :])
@@ -175,12 +176,19 @@ class Simulator:
         
         TIME_SPAN = param["time_span"]
         TIME_INTERVAL = param["time_interval"]
+        if 'initial_value' in param:
+            print(param["initial_value"])
+            assert len(param["initial_value"]) == rm.CPoint.c_dim
+            q0 = np.array([param["initial_value"]]).T
+        else:
+            q0 = rm.q_neutral()
+        
         # 初期値
         t_span = (0, TIME_SPAN)
         t_eval = np.arange(0, TIME_SPAN, TIME_INTERVAL)
         x0 = np.ravel(
             np.concatenate([
-                rm.q_neutral(),
+                q0,
                 np.zeros_like(rm.q_neutral())
             ])
         )

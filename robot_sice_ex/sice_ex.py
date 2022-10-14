@@ -10,7 +10,7 @@ sys.path.append(".")
 
 import mappings
 
-c_dim = 4
+c_dim = 15
 t_dim = 2
 
 @njit("f8[:,:](f8, f8)", cache=True)
@@ -98,9 +98,9 @@ def func(n, q, dq, l):
         Jry[:, c_dim*i:c_dim*(i+1)] = Jry_
         Joo[:, c_dim*i:c_dim*(i+1)] = Joo_
     
-    rx = T_global[0:2, n+0:n+1]
-    ry = T_global[0:2, n+1:n+2]
-    oo = T_global[0:2, n+2:n+3]
+    rx = T_global[0:2, 3*n+0:3*n+1]
+    ry = T_global[0:2, 3*n+1:3*n+2]
+    oo = T_global[0:2, 3*n+2:3*n+3]
     jrx = Jrx[:, c_dim*n:c_dim*(n+1)]
     jry = Jry[:, c_dim*n:c_dim*(n+1)]
     joo = Joo[:, c_dim*n:c_dim*(n+1)]
@@ -206,11 +206,17 @@ class CPoint(mappings.Identity):
         ((0, 0),),
         ((0, 0),),
         ((0, 0),),
-        # ((0, 0),),
-        # ((0, 0),),
-        # ((0, 0),),
-        # ((0, 0),),
-        # ((0, 0),),
+        ((0, 0),),
+        ((0, 0),),
+        ((0, 0),),  #7
+        ((0, 0),),
+        ((0, 0),),
+        ((0, 0),),  # 10
+        ((0, 0),),
+        ((0, 0),),
+        ((0, 0),),
+        ((0, 0),),
+        ((0, 0),),
     )
     ee_id = (c_dim, 0)
 
@@ -262,11 +268,17 @@ def JOINT_PHI():
         lambda q: h.calc_o(2, q),
         lambda q: h.calc_o(3, q),
         lambda q: h.calc_o(4, q),
-        # lambda q: h.calc_o(5, q),
-        # lambda q: h.calc_o(6, q),
-        # lambda q: h.calc_o(7, q),
-        # lambda q: h.calc_o(8, q),
-        # lambda q: h.calc_o(9, q),
+        lambda q: h.calc_o(5, q),
+        lambda q: h.calc_o(6, q),
+        lambda q: h.calc_o(7, q),
+        lambda q: h.calc_o(8, q),
+        lambda q: h.calc_o(9, q),
+        lambda q: h.calc_o(10, q),
+        lambda q: h.calc_o(11, q),
+        lambda q: h.calc_o(12, q),
+        lambda q: h.calc_o(13, q),
+        lambda q: h.calc_o(14, q),
+        lambda q: h.calc_o(15, q),
     )
 
 

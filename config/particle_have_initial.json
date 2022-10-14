@@ -1,11 +1,9 @@
 {
     "//" : "siceのテスト",
-    "robot_name" : "sice",
-    "robot_param" : {
-        "c_dim" : 4
-    },
+    "robot_name" : "particle",
     "time_span" : 30.0,
     "time_interval" : 0.01,
+    "initial_value" : [4.0, 0.0],
     "rmp_param" : {
         "goal_attractor" : {
             "max_speed" : 5.0,
