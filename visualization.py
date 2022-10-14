@@ -58,7 +58,7 @@ def make_data(
     joint_data = []
     for i in range(T_SIZE):
         temp = [phi(q[:, i:i+1]) for phi in joint_phi_s]
-        print(temp)
+        #print(temp)
         temp = np.concatenate(temp, axis=1)
         joint_data.append(temp.tolist())
 

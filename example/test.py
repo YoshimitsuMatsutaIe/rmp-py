@@ -129,5 +129,5 @@ s = Simulator()
 
 
 
-s.environment_visualization("./config/sice_ex_test.json")
-#s.main("./config/sice_ex_test.json")
+#s.environment_visualization("./config/sice_ex_test.json")
+s.main("./config/sice_ex_test.json")

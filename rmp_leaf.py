@@ -232,7 +232,7 @@ class ObstacleAvoidanceMulti(LeafBase):
             for id in obs_ids:
                 z = self.x - self.o_s[:, id:id+1]
                 s = LA.norm(z)
-                print(s)
+                #print(s)
                 J = -z.T / s
                 s_dot = (J @ self.x_dot)[0,0]
                 J_dot = -(self.x_dot.T - z.T*(1/LA.norm(z)*z.T @ self.x_dot)) / s**2

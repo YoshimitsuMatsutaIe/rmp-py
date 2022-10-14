@@ -128,7 +128,9 @@ class Simulator:
         self,
         param_path: Union[str, None]=None,
         param_dict: Union[dict, None]=None,
-        method: str="single"):
+        method: str="single"
+    ):
+        print("running...")
         
         date_now = datetime.datetime.now()
         name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
@@ -261,6 +263,7 @@ class Simulator:
         ee_map_ = rm.CPoint(*rm.CPoint.ee_id)
         ee_ = [ee_map_.phi(data[i:i+1, 1:c_dim+1].T) for i in range(len(sol.t))]
         ee_ = np.concatenate(ee_, axis=1)
+        #print(ee_)
         error = np.linalg.norm(self.goal - ee_, axis=0)
         error_data = np.stack(
             [sol.t, error]
