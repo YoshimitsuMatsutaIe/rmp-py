@@ -191,19 +191,16 @@ def jrz_dot(q, dq, i, l0, l1, l2):
 
 
 
-def q_neutral():
-    return np.array([[0, -90, 0]]).T * np.pi/180  # ニュートラルの姿勢
 
-def q_min():
-    return np.array([[-90, -90-90, -90]]).T * np.pi/180
-
-def q_max():
-    return np.array([[90, -90+90, 90]]).T * np.pi/180
 
 
 class CPoint(mappings.Identity):
     c_dim = 3
     t_dim = 3
+
+    q_neutral = np.array([[0, -90, 0]]).T * np.pi/180  # ニュートラルの姿勢
+    q_min = np.array([[-90, -90-90, -90]]).T * np.pi/180
+    q_max = np.array([[90, -90+90, 90]]).T * np.pi/180
 
     rs_in_0 = (
         (0, 0, 0),
@@ -238,7 +235,7 @@ class CPoint(mappings.Identity):
     l1 = 1.0
     l2 = 1.0
 
-    def __init__(self, frame_num, position_num,):
+    def __init__(self, frame_num, position_num, **kwargs):
         self.o = lambda q: o(q, frame_num, self.l0, self.l1, self.l2)
         self.rx = lambda q: rx(q, frame_num, self.l0, self.l1, self.l2)
         self.ry = lambda q: ry(q, frame_num, self.l0, self.l1, self.l2)
@@ -266,14 +263,14 @@ class CPoint(mappings.Identity):
         J_dot = self.J_dot(q, dq)
         return x, x_dot, J, J_dot
 
-def JOINT_PHI():
-    return (
-        lambda q: o(q, 0, CPoint.l0, CPoint.l1, CPoint.l2),
-        lambda q: o(q, 1, CPoint.l0, CPoint.l1, CPoint.l2),
-        lambda q: o(q, 2, CPoint.l0, CPoint.l1, CPoint.l2),
-        lambda q: o(q, 3, CPoint.l0, CPoint.l1, CPoint.l2),
-        lambda q: o(q, 4, CPoint.l0, CPoint.l1, CPoint.l2),
-    )
+    def calc_joint_position_all(self, q):
+        return [
+            o(q, i, CPoint.l0, CPoint.l1, CPoint.l2) for i in range(self.c_dim+1)
+        ]
+
+
+
+
 
 if __name__ == "__main__":
-    print(JOINT_PHI())
+    pass

@@ -2,7 +2,7 @@
 
 import sys
 sys.path.append('.')
-from simulator import Simulator
+from rmp_simulator import Simulator
 
 
 rmp_param = {
@@ -98,37 +98,37 @@ s = Simulator()
 
 #simulator.main("./config/franka.json")
 
-#s.main("./config/franka_sphere.json")
+#s.run_rmp_sim("./config/franka_sphere.json")
 
 #s.environment_visualization("./config/franka_wall.json")
-#s.main("./config/franka_wall.json")
-#s.main("./config/baxter.json")
+#s.run_rmp_sim("./config/franka_wall.json")
+#s.run_rmp_sim("./config/baxter.json")
 
-#s.main("./config/franka_sphere.json")
+#s.run_rmp_sim("./config/franka_sphere.json")
 
-#s.main("./config/test_sice.json", method="single")
-#s.main("./config/sice_non_obs.json")
+#s.run_rmp_sim("./config/test_sice.json", method="single")
+#s.run_rmp_sim("./config/sice_non_obs.json")
 
 
 #simulator.main("./../rmp-cpp/config/sice.json")
 
-#s.main("./config/particle_test.json")
+#s.run_rmp_sim("./config/particle_test.json")
 
-#s.main("./config/franka_cubbie.json")
+#s.run_rmp_sim("./config/franka_cubbie.json")
 
 # cppのやつ
 #simulator.main("../rmp-cpp/config/sice.json")
-#s.main("../rmp-cpp/config/franka_sphere.json")
+#s.run_rmp_sim("../rmp-cpp/config/franka_sphere.json")
 
 
 
 
 
 #s.environment_visualization("./config/yamanaka_test.json")
-#s.main("./config/yamanaka_test.json")
+#s.run_rmp_sim("./config/yamanaka_test.json")
 
 
 
 #s.environment_visualization("./config/sice_ex_test.json")
-#s.main("./config/sice_ex_test.json")
-s.main("./config/particle_have_initial.json")
+s.run_rmp_sim("./config/sice_ex_test.json")
+#s.run_rm/home/matsuta/src/rmp-py/robot_sice_exp_sim("./config/particle_have_initial.json")

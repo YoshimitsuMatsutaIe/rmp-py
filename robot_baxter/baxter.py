@@ -17,14 +17,7 @@ from robot_baxter.JRy_dots import *
 from robot_baxter.JRz_dots import *
 
 
-def q_neutral():
-    return np.array([[0, -31, 0, 43, 0, 72, 0]]).T * np.pi/180  # ニュートラルの姿勢
 
-def q_min():
-    return np.array([[-141, -123, -173, -3, -175, -90, -175]]).T * np.pi/180
-
-def q_max():
-    return np.array([[51, 60, 173, 150, 175, 120, 175]]).T * np.pi/180
 
 
 class CPoint(mappings.Identity):
@@ -40,6 +33,10 @@ class CPoint(mappings.Identity):
     L4 = 374.29e-3
     L5 = 10e-3
     L6 = 368.3e-3
+
+    q_neutral = np.array([[0, -31, 0, 43, 0, 72, 0]]).T * np.pi/180  # ニュートラルの姿勢
+    q_min = np.array([[-141, -123, -173, -3, -175, -90, -175]]).T * np.pi/180
+    q_max = np.array([[51, 60, 173, 150, 175, 120, 175]]).T * np.pi/180
 
     # 制御点のローカル座標
     R = 0.05
@@ -110,7 +107,7 @@ class CPoint(mappings.Identity):
     
     ee_id = (7, 0)
     
-    def __init__(self, frame_num, position_num):
+    def __init__(self, frame_num, position_num, **kwargs):
         self.o = lambda q: o(q, frame_num)
         self.rx = lambda q: rx(q, frame_num)
         self.ry = lambda q: ry(q, frame_num)
@@ -142,18 +139,12 @@ class CPoint(mappings.Identity):
         return x, x_dot, J, J_dot
 
 
-def JOINT_PHI():
-    return (
-        lambda x: np.zeros((3,1)),
-        lambda q: o(q, 0),
-        lambda q: o(q, 1),
-        lambda q: o(q, 2),
-        lambda q: o(q, 3),
-        lambda q: o(q, 4),
-        lambda q: o(q, 5),
-        lambda q: o(q, 6),
-        lambda q: o(q, 7),
-    )
+    def calc_joint_position_all(self, q):
+        out = [np.zeros((3,1))]
+        for i in range(8):
+            out.append(o(q, i))
+        
+        return out
 
 
 if __name__ == "__main__":

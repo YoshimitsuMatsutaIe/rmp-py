@@ -16,20 +16,13 @@ from robot_franka_emika.JRy_dots import *
 from robot_franka_emika.JRz_dots import *
 
 
-def q_neutral():
-    return np.array([[0, 0, 0, 0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
-
-def q_min():
-    return np.array([[-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973]]).T
-
-def q_max():
-    return np.array([[2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973]]).T
-
-
-
 class CPoint(mappings.Identity):
     c_dim = 7
     t_dim = 3
+
+    q_neutral = np.array([[0, 0, 0, 0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
+    q_min = np.array([[-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973]]).T
+    q_max = np.array([[2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973]]).T
 
     d1 = 0.333
     d3 = 0.316
@@ -123,7 +116,7 @@ class CPoint(mappings.Identity):
 
     ee_id = (7, 0)
 
-    def __init__(self, frame_num, position_num):
+    def __init__(self, frame_num, position_num, **kwargs):
         self.o = lambda q: o(q, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
         self.rx = lambda q: rx(q, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
         self.ry = lambda q: ry(q, frame_num, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7)
@@ -156,18 +149,12 @@ class CPoint(mappings.Identity):
         return x, x_dot, J, J_dot
 
 
-def JOINT_PHI():
-    return (
-        lambda q: np.zeros((3,1)),
-        lambda q: o(q, 0, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-        lambda q: o(q, 1, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-        lambda q: o(q, 2, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-        lambda q: o(q, 3, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-        lambda q: o(q, 4, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-        lambda q: o(q, 5, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-        lambda q: o(q, 6, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-        lambda q: o(q, 7, CPoint.d1, CPoint.d3, CPoint.d5, CPoint.df, CPoint.a4, CPoint.a5, CPoint.a7),
-    )
+    def calc_joint_position_all(self, q):
+        out = [np.zeros((3,1))]
+        for i in range(8):
+            out.append(o(q, i, self.d1, self.d3, self.d5, self.df, self.a4, self.a5, self.a7))
+        return out
+
 
 
 

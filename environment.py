@@ -261,6 +261,38 @@ def set_cubbie(d: float, lx, ly, lz, x, y, z, alpha=0, beta=0, gamma=0):
     return obs
 
 
+def set_obstacle(obs_params: list[dict]):
+    obstacle = []
+    for obs_param in obs_params:
+        type_ = obs_param["type"]
+        param_ = obs_param["param"]
+        
+        if type_ == "cylinder":
+            obstacle.extend(set_cylinder(**param_))
+        elif type_ == "sphere":
+            obstacle.extend(set_sphere(**param_))
+        elif type_ == "field":
+            obstacle.extend(set_field(**param_))
+        elif type_ == "box":
+            obstacle.extend(set_box(**param_))
+        elif type_ == "cubbie":
+            obstacle.extend(set_cubbie(**param_))
+        elif type_ == "point":
+            obstacle.extend(set_point(**param_))
+        elif type_ == "cylinder_rand":
+            obstacle.extend(set_cylinder_rand(**param_))
+        elif type_ == "sphere_rand":
+            obstacle.extend(set_sphere_rand(**param_))
+        elif type_ == "field_rand":
+            obstacle.extend(set_field_rand(**param_))
+        elif type_ == "box_rand":
+            obstacle.extend(set_box_rand(**param_))
+        elif type_ == "cubbie_rand":
+            obstacle.extend(set_cubbie_rand(**param_))
+        else:
+            assert False
+    return obstacle
+
 
 
 if __name__ == '__main__':

@@ -10,8 +10,6 @@ sys.path.append(".")
 
 import mappings
 
-c_dim = 15
-t_dim = 2
 
 @njit("f8[:,:](f8, f8)", cache=True)
 def HTM(theta, l):
@@ -30,8 +28,10 @@ def HTM_dot(theta, l):
     ])
 
 
-@njit("Tuple((f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:]))(i8, f8[:,:], f8[:,:], f8[:])", cache=True)
-def func(n, q, dq, l):
+@njit("Tuple((f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:]))(i8, f8[:,:], f8[:,:], f8[:], i8)", cache=True)
+def func(n, q, dq, l, c_dim):
+    t_dim = 2
+    
     # local同時変換行列
     T_local = np.empty((t_dim+1, (c_dim+1)*3))
     for i in range(c_dim):
@@ -184,49 +184,43 @@ def func(n, q, dq, l):
 #     return rx, ry, oo, Jrx[n], Jry[n], Joo[n]
 
 
-def q_neutral():
-    return np.array([[0 for _ in range(c_dim)]]).T * np.pi/180  # ニュートラルの姿勢
-
-def q_min():
-    return np.array([[-90 for _ in range(c_dim)]]).T * np.pi/180
-
-def q_max():
-    return -q_min()
-
-
 class CPoint(mappings.Identity):
-
-    t_dim = t_dim
-    c_dim = c_dim
-
+    t_dim = 2
+    
     # 追加
-    RS_ALL = (
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),  #7
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),  # 10
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-        ((0, 0),),
-    )
-    ee_id = (c_dim, 0)
+    # RS_ALL = (
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),  #7
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),  # 10
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    #     ((0, 0),),
+    # )
+    
 
-    def __init__(self, frame_num, position_num, total_length=4.0):
+    def __init__(self, frame_num, position_num, **kwargs):
+        self.c_dim = kwargs.pop('c_dim')
+        self.ee_id = (self.c_dim, 0)
+        self.RS_ALL = [((0, 0),) for _ in range(self.c_dim+1)]
         self.frame_num = frame_num
-        
-        self.ls = np.array([total_length/c_dim] * c_dim)
+        total_length = kwargs.pop('total_length')
+        self.ls = np.array([total_length/self.c_dim] * self.c_dim)
         
         self.r = self.RS_ALL[frame_num][position_num]
         
+        self.q_neutral = np.zeros((self.c_dim, 1))  # ニュートラルの姿勢
+        self.q_min = np.array([[-90] * self.c_dim]).T * np.pi/180
+        self.q_max = -self.q_min
 
     # def __init__(self, frame_num, position_num, c_dim=4, ls=None):
     #     self.frame_num = frame_num
@@ -241,10 +235,10 @@ class CPoint(mappings.Identity):
     #     self.ee_id = (c_dim, 0)
     
     def phi(self, q):
-        return self.calc_o(c_dim, q)
+        return self.calc_o(self.c_dim, q)
     
     def calc_all(self, q, dq):
-        rx, ry, oo, jrx, jry, joo = func(self.frame_num, q, dq, self.ls)
+        rx, ry, oo, jrx, jry, joo = func(self.frame_num, q, dq, self.ls, self.c_dim)
         
         x = rx * self.r[0] + ry * self.r[1] + oo
         J = jrx*self.r[0] + jry*self.r[1] + joo
@@ -256,42 +250,37 @@ class CPoint(mappings.Identity):
 
     def calc_o(self, n, q):
         #print(self.ls)
-        _, _, out, _, _, _ = func(n, q, np.zeros(q.shape), self.ls)
+        _, _, out, _, _, _ = func(n, q, np.zeros(q.shape), self.ls, self.c_dim)
         return out
 
 
-def JOINT_PHI():
-    h = CPoint(0, 0)
-    return (
-        lambda q: h.calc_o(0, q),
-        lambda q: h.calc_o(1, q),
-        lambda q: h.calc_o(2, q),
-        lambda q: h.calc_o(3, q),
-        lambda q: h.calc_o(4, q),
-        lambda q: h.calc_o(5, q),
-        lambda q: h.calc_o(6, q),
-        lambda q: h.calc_o(7, q),
-        lambda q: h.calc_o(8, q),
-        lambda q: h.calc_o(9, q),
-        lambda q: h.calc_o(10, q),
-        lambda q: h.calc_o(11, q),
-        lambda q: h.calc_o(12, q),
-        lambda q: h.calc_o(13, q),
-        lambda q: h.calc_o(14, q),
-        lambda q: h.calc_o(15, q),
-    )
+    def calc_joint_position_all(self, q):
+        return [
+            self.calc_o(i, q) for i in range(self.c_dim+1)
+        ]
 
 
 
 if __name__ == "__main__":
-    import robot_sice.sice as sice
-
-    hoge = JOINT_PHI()
+    import numpy as np
+    hoge = CPoint(0, 0, **{"c_dim": 4, "total_length": 4.0})
     
-    q = np.random.rand(4, 1)
-    for i, f in enumerate(hoge):
-        print("\n", f(q))
-        print(sice.o(q, i, 1, 1, 1, 1))
+    # ss = hoge.JOINT_PHI()
+    # for s in ss:
+    #     print(s(np.random.rand(4,1)))
+    
+    
+    
+    
+    
+    # import robot_sice.sice as sice
+
+    # hoge = JOINT_PHI()
+    
+    # q = np.random.rand(4, 1)
+    # for i, f in enumerate(hoge):
+    #     print("\n", f(q))
+    #     print(sice.o(q, i, 1, 1, 1, 1))
     
     
     

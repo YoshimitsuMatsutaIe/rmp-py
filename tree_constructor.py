@@ -19,32 +19,34 @@ np.set_printoptions(precision=2)
 
 def multi_solve2(
     node_id: tuple[int, int],
-    q, q_dot, g, o_s, rmp_param, robot_name: str
+    q, q_dot, g, o_s, rmp_param, robot_name: str, ex_robot_param
 ):
     """並列用 : 毎回ノード作成
     """
 
     rm = get_robot_model(robot_name)
+    rm_ = rm.CPoint(0,0,**ex_robot_param)
+    
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
         node = JointLimitAvoidance(
             name="jl",
             calc_mappings=mappings.Identity(),
-            q_max = rm.q_max(),
-            q_min = rm.q_min(),
-            q_neutral = rm.q_neutral(),
-            parent_dim=rm.CPoint.c_dim,
+            q_max = rm_.q_max,
+            q_min = rm_.q_min,
+            q_neutral = rm_.q_neutral,
+            parent_dim=rm_.c_dim,
             **rmp_param["joint_limit_avoidance"]
         )
     else:
-        temp_map = rm.CPoint(*node_id)
+        temp_map = rm.CPoint(*node_id, **ex_robot_param)
         node = Node(
             name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
-            dim = rm.CPoint.t_dim,
+            dim = rm_.t_dim,
             mappings = temp_map
         )
-        if node_id == rm.CPoint.ee_id:
+        if node_id == rm_.ee_id:
             ### 目標 ###
             g_dot = np.zeros(g.shape)
             attracter = GoalAttractor(
@@ -61,7 +63,7 @@ def multi_solve2(
                 name="obs_" + str(i) + ", at " + node.name,
                 calc_mappings = mappings.Distance(o, np.zeros(o.shape)),
                 **rmp_param["obstacle_avoidance"],
-                parent_dim=rm.CPoint.t_dim
+                parent_dim=rm_.t_dim
             )
             node.add_child(obs_node)
 
@@ -78,7 +80,7 @@ def multi_solve3(
     q: list[float], q_dot: list[float],
     g: list[float],
     o_s: list[list[float]],
-    rmp_param, robot_name: str
+    rmp_param, robot_name: str, ex_robot_param
 ):
     """並列用 : 毎回ノード作成
     
@@ -87,26 +89,27 @@ def multi_solve3(
     """
     
     rm = get_robot_model(robot_name)
+    rm_ = rm.CPoint(0, 0, **ex_robot_param)
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
         node = JointLimitAvoidance(
             name="jl",
             calc_mappings=mappings.Identity(),
-            q_max = rm.q_max(),
-            q_min = rm.q_min(),
-            q_neutral = rm.q_neutral(),
-            parent_dim=rm.CPoint.c_dim,
+            q_max = rm_.q_max,
+            q_min = rm_.q_min,
+            q_neutral = rm_.q_neutral,
+            parent_dim=rm_.c_dim,
             **rmp_param["joint_limit_avoidance"]
         )
     else:
-        temp_map = rm.CPoint(*node_id)
+        temp_map = rm.CPoint(*node_id, **ex_robot_param)
         node = Node(
             name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
-            dim = rm.CPoint.t_dim,
+            dim = rm_.t_dim,
             mappings = temp_map
         )
-        if node_id == rm.CPoint.ee_id:
+        if node_id == rm_.ee_id:
             ### 目標 ###
             g_dot = np.zeros((len(g), 1))
             attracter = GoalAttractor(
@@ -114,7 +117,7 @@ def multi_solve3(
                 dim=len(g),
                 calc_mappings=mappings.Translation(np.array([g]).T, g_dot),
                 **rmp_param["goal_attractor"],
-                parent_dim=rm.CPoint.t_dim
+                parent_dim=rm_.t_dim
             )
             node.add_child(attracter)
 
@@ -124,7 +127,7 @@ def multi_solve3(
                 name="obs_" + str(i) + ", at " + node.name,
                 calc_mappings = mappings.Distance(np.array([o]).T, np.zeros((len(o), 1))),
                 **rmp_param["obstacle_avoidance"],
-                parent_dim=rm.CPoint.t_dim
+                parent_dim=rm_.t_dim
             )
             node.add_child(obs_node)
 
@@ -141,33 +144,34 @@ def multi_solve3(
 
 def multi_solve4(
     node_id: tuple[int, int],
-    q, q_dot, g, o_s, rmp_param, robot_name: str
+    q, q_dot, g, o_s, rmp_param, robot_name: str, ex_robot_param
 ):
     """並列用 : 毎回ノード作成
     """
     
     rm = get_robot_model(robot_name)
+    rm_ = rm.CPoint(0, 0, **ex_robot_param)
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
         node = JointLimitAvoidance(
             name="jl",
             calc_mappings=mappings.Identity(),
-            q_max = rm.q_max(),
-            q_min = rm.q_min(),
-            q_neutral = rm.q_neutral(),
-            parent_dim=rm.CPoint.c_dim,
+            q_max = rm_.q_max,
+            q_min = rm_.q_min,
+            q_neutral = rm_.q_neutral,
+            parent_dim=rm_.c_dim,
             **rmp_param["joint_limit_avoidance"]
         )
     else:
-        temp_map = rm.CPoint(*node_id)
+        temp_map = rm.CPoint(*node_id, **ex_robot_param)
         node = Node(
             name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
-            dim = rm.CPoint.t_dim,
+            dim = rm_.t_dim,
             mappings = temp_map,
-            parent_dim = rm.CPoint.c_dim
+            parent_dim = rm_.c_dim
         )
-        if node_id == rm.CPoint.ee_id:
+        if node_id == rm_.ee_id:
             ### 目標 ###
             g_dot = np.zeros(g.shape)
             attracter = GoalAttractor(
@@ -175,7 +179,7 @@ def multi_solve4(
                 dim=g.shape[0],
                 calc_mappings=mappings.Translation(g, g_dot),
                 **rmp_param["goal_attractor"],
-                parent_dim=rm.CPoint.t_dim
+                parent_dim=rm_.t_dim
             )
             node.add_child(attracter)
 
@@ -183,10 +187,10 @@ def multi_solve4(
         obs_node = ObstacleAvoidanceMulti(
             name="obs_multi" + node.name,
             calc_mappings = mappings.Identity(),
-            dim = rm.CPoint.t_dim,
+            dim = rm_.t_dim,
             o_s = o_s,
             **rmp_param["obstacle_avoidance"],
-            parent_dim=rm.CPoint.t_dim
+            parent_dim=rm_.t_dim
         )
         node.add_child(obs_node)
 
@@ -272,33 +276,34 @@ def solve4(q, q_dot, g, o_s, robot_name, node_ids, rmp_param):
 
 def make_node(
     node_id: tuple[int, int],
-    g, o_s, rmp_param, robot_name: str
+    g, o_s, rmp_param, robot_name: str, ex_robot_param
 ):
     """並列用 : 毎回ノード作成
     """
     
     rm = get_robot_model(robot_name)
+    rm_ = rm.CPoint(0, 0, **ex_robot_param)
     
     #print(node_id, end="  ")
     if node_id == (-1, 0):
         node = JointLimitAvoidance(
             name="jl",
             calc_mappings=mappings.Identity(),
-            q_max = rm.q_max(),
-            q_min = rm.q_min(),
-            q_neutral = rm.q_neutral(),
-            parent_dim=rm.CPoint.c_dim,
+            q_max = rm_.q_max,
+            q_min = rm_.q_min,
+            q_neutral = rm_.q_neutral,
+            parent_dim=rm_.c_dim,
             **rmp_param["joint_limit_avoidance"]
         )
     else:
-        temp_map = rm.CPoint(*node_id)
+        temp_map = rm.CPoint(*node_id, **ex_robot_param)
         node = Node(
             name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
-            dim = rm.CPoint.t_dim,
+            dim = rm_.t_dim,
             mappings = temp_map,
-            parent_dim = rm.CPoint.c_dim
+            parent_dim = rm_.c_dim
         )
-        if node_id == rm.CPoint.ee_id:
+        if node_id == rm_.ee_id:
             ### 目標 ###
             g_dot = np.zeros_like(g)
             attracter = GoalAttractor(
@@ -306,7 +311,7 @@ def make_node(
                 dim=g.shape[0],
                 calc_mappings=mappings.Translation(g, g_dot),
                 **rmp_param["goal_attractor"],
-                parent_dim=rm.CPoint.t_dim
+                parent_dim=rm_.t_dim
             )
             node.add_child(attracter)
 
@@ -316,7 +321,7 @@ def make_node(
                 name="obs_" + str(i) + ", at " + node.name,
                 calc_mappings = mappings.Distance(o, np.zeros_like(o)),
                 **rmp_param["obstacle_avoidance"],
-                parent_dim=rm.CPoint.t_dim
+                parent_dim=rm_.t_dim
             )
             node.add_child(obs_node)
     
@@ -325,18 +330,19 @@ def make_node(
     return node
 
 
-def make_tree(g, o_s, robot_name, rmp_param, ):
+def make_tree(g, o_s, robot_name, rmp_param, ex_robot_param):
 
     rm = get_robot_model(robot_name)
+    rm_ = rm.CPoint(0, 0, **ex_robot_param)
     
     node_ids = [(-1, 0)]
-    for i, Rs in enumerate(rm.CPoint.RS_ALL):
+    for i, Rs in enumerate(rm_.RS_ALL):
         node_ids += [(i, j) for j in range(len(Rs))]
     
     
     nodes = []
     for id in node_ids:
-        nodes.append(make_node(id, g, o_s, rmp_param, robot_name))
+        nodes.append(make_node(id, g, o_s, rmp_param, robot_name, ex_robot_param))
     
     return nodes
 
@@ -344,33 +350,38 @@ def make_tree(g, o_s, robot_name, rmp_param, ):
 
 def make_tree_root(
     node_ids: list[tuple[int, int]],
-    g, o_s, rmp_param, robot_name: str
+    g, o_s, rmp_param,
+    robot_name: str,
+    ex_robot_param,
+    c_dim: int, t_dim: int, ee_id,
+    q_neutral, q_max, q_min
 ):
+    """single"""
 
     rm = get_robot_model(robot_name)
-    root = Root(rm.CPoint.c_dim)
+    root = Root(c_dim)
     
     for node_id in node_ids:
         if node_id == (-1, 0):
             node = JointLimitAvoidance(
                 name="jl",
                 calc_mappings=mappings.Identity(),
-                q_max = rm.q_max(),
-                q_min = rm.q_min(),
-                q_neutral = rm.q_neutral(),
-                parent_dim=rm.CPoint.c_dim,
+                q_max = q_max,
+                q_min = q_min,
+                q_neutral = q_neutral,
+                parent_dim=c_dim,
                 **rmp_param["joint_limit_avoidance"]
             )
             root.add_child(node)
         else:
-            temp_map = rm.CPoint(*node_id)
+            temp_map = rm.CPoint(*node_id, **ex_robot_param)
             node = Node(
                 name = 'x_' + str(node_id[0]) + '_' + str(node_id[1]),
-                dim = rm.CPoint.t_dim,
+                dim = t_dim,
                 mappings = temp_map,
-                parent_dim = rm.CPoint.c_dim
+                parent_dim = c_dim
             )
-            if node_id == rm.CPoint.ee_id:
+            if node_id == ee_id:
                 ### 目標 ###
                 g_dot = np.zeros_like(g)
                 attracter = GoalAttractor(
@@ -378,7 +389,7 @@ def make_tree_root(
                     dim=g.shape[0],
                     calc_mappings=mappings.Translation(g, g_dot),
                     **rmp_param["goal_attractor"],
-                    parent_dim=rm.CPoint.t_dim
+                    parent_dim=t_dim
                 )
                 node.add_child(attracter)
 
@@ -386,10 +397,10 @@ def make_tree_root(
             obs_node = ObstacleAvoidanceMulti(
                 name="obs_multi" + node.name,
                 calc_mappings = mappings.Identity(),
-                dim = rm.CPoint.t_dim,
+                dim = t_dim,
                 o_s = o_s,
                 **rmp_param["obstacle_avoidance"],
-                parent_dim=rm.CPoint.t_dim
+                parent_dim=t_dim
             )
             node.add_child(obs_node)
             root.add_child(node)

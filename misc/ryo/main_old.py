@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import linalg as LA
 import matplotlib.pyplot as plt
 import matplotlib.animation as anm
 import time
@@ -18,40 +17,14 @@ def HTM(theta, a, d, alpha):
         [0.0, 0.0, 0.0, 1.0],
     ])
 
-# def trans(x, y, z):
-#     return np.array([
-#         [1, 0, 0, x],
-#         [0, 1, 0, y],
-#         [0, 0, 1, z],
-#         [0, 0, 0, 1]
-#     ])
-
-# def rotx(angle):
-#     return np.array([
-#         [1, 0, 0, 0],
-#         [0, cos(angle), -sin(angle), 0],
-#         [0, sin(angle), cos(angle), 0],
-#         [0, 0, 0, 1]
-#     ])
-
-# def rotz(angle):
-#     return np.array([
-#         [cos(angle), -sin(angle), 0, 0],
-#         [sin(angle), cos(angle), 0, 0],
-#         [0, 0, 1, 0],
-#         [0, 0, 0, 1]
-#     ])
 
 @njit("List(f8[:,:])(f8[:])", cache=True)
 def f_kinematics(theta):
-    a = [0, 0, 264, 236, 0, 0]
-    alpha = [0, pi/2, 0, 0, pi/2, -pi/2]
-    d = [144, 0, 0, 106, 114, 67]
+    a = (0.0, 0.0, 264.0, 236.0, 0.0, 0.0)
+    alpha = (0.0, pi/2, 0.0, 0.0, pi/2, -pi/2)
+    d = (144.0, 0.0, 0.0, 106.0, 114.0, 67.0)
     
     T_local = [HTM(theta[i], a[i], d[i], alpha[i]) for i in range(6)]
-    # T_local = [
-    #     trans(a[i],0,0) @ rotx(alpha[i]) @ trans(0,0,d[i]) @ rotz(theta[i]) for i in range(6)
-    # ]
     T_global = []
     for i, T in enumerate(T_local):
         if i == 0:
@@ -67,7 +40,6 @@ def F_attractive_enerfy(goal, theta):
     
     _, _, _, _, _, T6 = f_kinematics(theta)
     x, y, z = T6[0:3, 3]
-    
     goal_x, goal_y, goal_z = goal
     
     d = sqrt((x - goal_x)**2 + (y - goal_y)**2 + (z - goal_z)**2)
@@ -78,9 +50,10 @@ def F_attractive_enerfy(goal, theta):
 def F_repulsive_energy(obstacle, R, goal, theta):
     Kre = 1
     d0 = R + 100
-    fre = 0
+    
     goal_x, goal_y, goal_z = goal
     obs_x, obs_y, obs_z = obstacle
+    fre = 0
     for T in f_kinematics(theta):
         x, y, z = T[0:3, 3]
         rat = sqrt((x - goal_x)**2 + (y - goal_y)**2 + (z - goal_z)**2)
@@ -96,7 +69,7 @@ def F_repulsive_energy(obstacle, R, goal, theta):
 def CollisionTest(theta, R, C):
     Ts = f_kinematics(theta)
     for T in Ts:
-        d = LA.norm(T[0:3, 3] - C)
+        d = np.linalg.norm(T[0:3, 3] - C)
         if d < R+100:
             return True
         else:
@@ -104,17 +77,9 @@ def CollisionTest(theta, R, C):
     return False
 
 
-def main():
+def main(start_angle, step_angle, goal, obs_R, obs_C):
     print("running...")
-    goal = [-400, 200, -300]
-    start_angle = np.array([pi/2, pi/2, -pi/2, 0, 0, 0])
-    step_angle = 2
-    
-    theta = start_angle
-    
-    obs_R = 100
-    obs_C = np.array([-100, 336, -50])
-    
+
     F_list = []
     theta_list = []
     path_list = [start_angle]
@@ -123,15 +88,17 @@ def main():
     Frel_list = []
     Frel_min_list = []
     
+    theta = start_angle
+    
     t0 = time.perf_counter()
     while True:
-        qs = np.vstack([
+        theta_set = np.vstack([
             theta-step_angle*pi/180,
             theta,
             theta+step_angle*pi/180
         ])
         
-        for theta1, theta2, theta3, theta4, theta5 in product(*qs.T[:5].tolist()):
+        for theta1, theta2, theta3, theta4, theta5 in product(*(theta_set.T)[:5].tolist()):
             tmp_theta = np.array([theta1, theta2, theta3, theta4, theta5, theta[5]])
             if CollisionTest(tmp_theta, obs_R, obs_C):
                 k = 1
@@ -149,19 +116,31 @@ def main():
         Frel_min_list.append(Frel_list[F_min_id])
         theta = theta_list[F_min_id]
         
-        if LA.norm(path_list[-1] - path_list[-2]) < 1e-3:
+        if np.linalg.norm(path_list[-1] - path_list[-2]) < 1e-3:
             break
     
     print("done!\nruntime = {0} [s]".format(time.perf_counter() - t0))
     
+    return path_list
+
+
+
+if __name__ == "__main__":
+    goal = [-400.0, 200.0, -300.0]
+    start_angle = np.array([pi/2, pi/2, -pi/2, 0.0, 0.0, 0.0])
+    step_angle = 2
+    obs_R = 100
+    obs_C = np.array([-100, 336, -50])
     
-    ### animation ###
+    path_list = main(start_angle, step_angle, goal, obs_R, obs_C)
+
+    #### animation ################################################################################
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(projection="3d")
     
     #obs ball 1
-    u = np.linspace(0, 2*pi, 10)
-    v = np.linspace(0, pi, 10)
+    u = np.linspace(0, 2*pi, 15)
+    v = np.linspace(0, pi, 15)
     x1 = obs_R * np.outer(np.cos(u), np.sin(v)) + obs_C[0]
     y1 = obs_R * np.outer(np.sin(u), np.sin(v)) + obs_C[1]
     z1 = obs_R * np.outer(np.ones(np.size(u)), np.cos(v)) + obs_C[2]
@@ -177,7 +156,6 @@ def main():
             ee_path[1].append(y)
             ee_path[2].append(z)
     
-    
     def update(i):
         ax.cla()
         
@@ -192,7 +170,7 @@ def main():
         ax.plot(joint[0], joint[1], joint[2], "o-", label="arm")
         ax.plot(ee_path[0][:i], ee_path[1][:i], ee_path[2][:i], label="end effector ")
         ax.scatter(goal[0], goal[1], goal[2], marker="*", label="goal", color='#ff7f00', s=100)
-        ax.scatter(obs_C[0], obs_C[1], obs_C[2], label="obs")
+        ax.scatter(obs_C[0], obs_C[1], obs_C[2], marker="+", label="obs")
         ax.plot_surface(x1, y1, z1,color="C7",alpha=0.3,rcount=100, ccount=100, antialiased=False,)
         
         ax.grid(True)
@@ -212,13 +190,7 @@ def main():
         func = update,
         frames = range(0, len(path_list), 5)
     )
+    ani.save("anima.gif", writer="pillow")
     
     plt.show()
-    return
-
-
-
-
-
-if __name__ == "__main__":
-    main()
+    

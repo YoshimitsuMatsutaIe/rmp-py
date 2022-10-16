@@ -1,4 +1,4 @@
-"""シミュレーション"""
+"""rmpシミュレーション"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,56 +12,33 @@ import shutil
 import json
 from typing import Union
 
-from environment import *
+from environment import set_point, set_obstacle
 import rmp_node
 # import rmp_leaf
 import tree_constructor
 # import mappings
 import visualization
-from robot_utils import get_robot_model
+from robot_utils import KinematicsAll, get_robot_model, get_cpoint_ids
 
 
 class Simulator:
     
     def __init__(self):
+        self.flag = -1
         pass
     
-    
-    def set_obstacle(self, obs_params: list[dict]):
-        obstacle = []
-        for obs_param in obs_params:
-            type_ = obs_param["type"]
-            param_ = obs_param["param"]
-            
-            if type_ == "cylinder":
-                obstacle.extend(set_cylinder(**param_))
-            elif type_ == "sphere":
-                obstacle.extend(set_sphere(**param_))
-            elif type_ == "field":
-                obstacle.extend(set_field(**param_))
-            elif type_ == "box":
-                obstacle.extend(set_box(**param_))
-            elif type_ == "cubbie":
-                obstacle.extend(set_cubbie(**param_))
-            elif type_ == "point":
-                obstacle.extend(set_point(**param_))
-            elif type_ == "cylinder_rand":
-                obstacle.extend(set_cylinder_rand(**param_))
-            elif type_ == "sphere_rand":
-                obstacle.extend(set_sphere_rand(**param_))
-            elif type_ == "field_rand":
-                obstacle.extend(set_field_rand(**param_))
-            elif type_ == "box_rand":
-                obstacle.extend(set_box_rand(**param_))
-            elif type_ == "cubbie_rand":
-                obstacle.extend(set_cubbie_rand(**param_))
-            else:
-                assert False
-        return obstacle
+    def print_progress(self, t):
+        """sipy用プログレスバー"""
+        tmp = int(100 * t / self.TIME_SPAN)
+        a, b = divmod(tmp, 10)
+        if b == 0 and self.flag != a:
+            print(tmp, "%")
+        self.flag = a
     
     
     def dx_single(self, t, x, root: rmp_node.Root):
-        print("t = ", t)
+        self.print_progress(t)
+        
         dim = x.shape[0] // 2
         x = x.reshape(-1, 1)
         q_ddot = root.solve(x[:dim, :], x[dim:, :])
@@ -125,7 +102,54 @@ class Simulator:
         ]
 
 
-    def main(
+    def set_simulation(
+        self,
+        param_path: Union[str, None]=None,
+        param_dict: Union[dict, None]=None
+        ):
+        date_now = datetime.datetime.now()
+        name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
+        self.dir_base = "../rmp_result/rmp-py_result/" + name + "/"
+        os.makedirs(self.dir_base, exist_ok=True)
+        
+        if param_path is not None:
+            with open(param_path) as f:
+                param = json.load(f)
+            shutil.copy2(param_path, self.dir_base)  # 設定ファイルのコピー作成
+        elif param_dict is not None:
+            json_name = param_dict.pop("json_name")
+            with open(self.dir_base + json_name, "w") as f:
+                json.dump(param_dict, f)
+            param = param_dict
+        else:
+            assert False
+        
+        self.robot_name = param["robot_name"]
+        self.ex_robot_param = param["ex_robot_param"]
+        
+        
+        self.rm = get_robot_model(param["robot_name"])
+        
+        c_ = self.rm.CPoint(0, 0, **self.ex_robot_param)
+        self.c_dim = c_.c_dim
+        self.t_dim = c_.t_dim
+        self.ee_id = c_.ee_id
+        self.q_neutral = c_.q_neutral
+        self.q_max = c_.q_max
+        self.q_min = c_.q_min
+        self.km = KinematicsAll(self.robot_name, self.ex_robot_param)
+        self.calc_joint_position_all = c_.calc_joint_position_all
+        
+        env = param["env_param"]
+        self.obstacle = set_obstacle(env["obstacle"])
+        self.goal = set_point(**env["goal"]["param"])[0]
+
+
+
+        return param
+
+
+    def run_rmp_sim(
         self,
         param_path: Union[str, None]=None,
         param_dict: Union[dict, None]=None,
@@ -133,63 +157,39 @@ class Simulator:
     ):
         print("running...")
         
-        date_now = datetime.datetime.now()
-        name = date_now.strftime('%Y-%m-%d--%H-%M-%S')
-        base = "../rmp_result/rmp-py_result/" + name + "/"
-        os.makedirs(base, exist_ok=True)
-        
-        if param_path is not None:
-            with open(param_path) as f:
-                param = json.load(f)
-            shutil.copy2(param_path, base)  # 設定ファイルのコピー作成
-        elif param_dict is not None:
-            json_name = param_dict.pop("json_name")
-            with open(base + json_name, "w") as f:
-                json.dump(param_dict, f)
-            param = param_dict
-        else:
-            assert False
-        
-        self.robot_name = param["robot_name"]
-        if 'robot_param' in param:
-            robot_param = param["robot_param"]
+        param = self.set_simulation(param_path, param_dict)
         
         # if self.robot_name == "sice_ex":
         #     pass
         # else:
-        rm = get_robot_model(param["robot_name"])
+
         #q_neutral = rm.q_neutral()
-        c_dim = rm.CPoint.c_dim
-        t_dim = rm.CPoint.t_dim
+
         
         self.rmp_param = param["rmp_param"]
-        env = param["env_param"]
+
         
-        self.obstacle = self.set_obstacle(env["obstacle"])
-        self.goal = set_point(**env["goal"]["param"])[0]
-        
-        
-        self.node_ids = [(-1, 0)]
-        for i, Rs in enumerate(rm.CPoint.RS_ALL):
-            self.node_ids += [(i, j) for j in range(len(Rs))]
+        self.node_ids = get_cpoint_ids(self.rm, self.ex_robot_param)
+        self.node_ids.append((-1, 0))
         
         
-        TIME_SPAN = param["time_span"]
+        
+        self.TIME_SPAN = param["time_span"]
         TIME_INTERVAL = param["time_interval"]
         if 'initial_value' in param:
             print(param["initial_value"])
-            assert len(param["initial_value"]) == rm.CPoint.c_dim
+            assert len(param["initial_value"]) == self.c_dim
             q0 = np.array([param["initial_value"]]).T
         else:
-            q0 = rm.q_neutral()
+            q0 = self.q_neutral
         
         # 初期値
-        t_span = (0, TIME_SPAN)
-        t_eval = np.arange(0, TIME_SPAN, TIME_INTERVAL)
+        t_span = (0, self.TIME_SPAN)
+        t_eval = np.arange(0, self.TIME_SPAN, TIME_INTERVAL)
         x0 = np.ravel(
             np.concatenate([
                 q0,
-                np.zeros_like(rm.q_neutral())
+                np.zeros_like(q0)
             ])
         )
         
@@ -199,7 +199,9 @@ class Simulator:
             obs_ = self.obstacle
             self.obstacle = np.concatenate(self.obstacle, axis=1)
             root = tree_constructor.make_tree_root(
-                self.node_ids, self.goal, self.obstacle, self.rmp_param, self.robot_name
+                self.node_ids, self.goal, self.obstacle, self.rmp_param, self.robot_name,
+                self.ex_robot_param, self.c_dim, self.t_dim, self.ee_id,
+                self.q_neutral, self.q_max, self.q_min
             )
             sol = integrate.solve_ivp(
                 fun = self.dx_single,
@@ -217,7 +219,7 @@ class Simulator:
                 t_eval=t_eval
             )
         elif method == "multi_3":
-            x0 = np.ravel(rm.q_neutral()).tolist() + [0 for _ in range(rm.CPoint.c_dim)]
+            x0 = np.ravel(self.q_neutral).tolist() + [0 for _ in range(self.c_dim)]
             self.__make_ndarry_to_list()
             sol = integrate.solve_ivp(
                 fun = self.dx3,
@@ -247,9 +249,9 @@ class Simulator:
         ## CSV保存
         # まずはヘッダーを準備
         header = "t"
-        for i in range(c_dim):
+        for i in range(self.c_dim):
             header += ",x" + str(i)
-        for i in range(c_dim):
+        for i in range(self.c_dim):
             header += ",dx" + str(i)
         
 
@@ -261,15 +263,14 @@ class Simulator:
 
         # csvで保存
         np.savetxt(
-            base + 'configration.csv',
+            self.dir_base + 'configration.csv',
             data,
             header = header,
             comments = '',
             delimiter = ","
         )
         
-        ee_map_ = rm.CPoint(*rm.CPoint.ee_id)
-        ee_ = [ee_map_.phi(data[i:i+1, 1:c_dim+1].T) for i in range(len(sol.t))]
+        ee_ = [self.km.calc_ee_position(data[i:i+1, 1:self.c_dim+1].T) for i in range(len(sol.t))]
         ee_ = np.concatenate(ee_, axis=1)
         #print(ee_)
         error = np.linalg.norm(self.goal - ee_, axis=0)
@@ -277,7 +278,7 @@ class Simulator:
             [sol.t, error]
         ).T
         np.savetxt(
-            base + 'error.csv',
+            self.dir_base + 'error.csv',
             error_data,
             header = "t,error",
             comments = '',
@@ -289,9 +290,9 @@ class Simulator:
         
         
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 15))
-        for i in range(c_dim):
+        for i in range(self.c_dim):
             axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
-            axes[1].plot(sol.t, sol.y[i+c_dim], label="dq" + str(i))
+            axes[1].plot(sol.t, sol.y[i+self.c_dim], label="dq" + str(i))
         axes[2].plot(sol.t, error, label="error")
         axes[2].set_ylim(0,)
         
@@ -301,34 +302,26 @@ class Simulator:
         
         axes[2].set_xlabel("time [s]")
         
-        fig.savefig(base+"configration.png")
+        fig.savefig(self.dir_base+"configration.png")
 
 
 
         #### 以下アニメ化 ###
 
-        cpoint_phis = []
-        for i, rs in enumerate(rm.CPoint.RS_ALL):
-            for j, _ in enumerate(rs):
-                map_ = rm.CPoint(i, j)
-                cpoint_phis.append(map_.phi)
-
-        # map_ = rm.CPoint(c_dim, 0)
-        # cpoint_phis.append(map_.phi)
 
         q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
-            q_s = [sol.y[i] for i in range(c_dim)],
-            cpoint_phi_s=cpoint_phis,
-            joint_phi_s=rm.JOINT_PHI(),
-            ee_phi=ee_map_.phi,
-            is3D=True if t_dim==3 else False,
+            q_s = [sol.y[i] for i in range(self.c_dim)],
+            cpoint_phi_s=self.km.calc_cpoint_position_all,
+            joint_phi_s=self.calc_joint_position_all,
+            ee_phi=self.km.calc_ee_position,
+            is3D=True if self.t_dim==3 else False,
             #ee_phi=rm.o_ee
         )
 
-        if t_dim == 3:
+        if self.t_dim == 3:
             is3D = True
             goal_data = np.array([[self.goal[0,0], self.goal[1,0], self.goal[2,0]]*len(sol.t)]).reshape(len(sol.t), 3)
-        elif t_dim == 2:
+        elif self.t_dim == 2:
             is3D = False
             goal_data = np.array([[self.goal[0,0], self.goal[1,0],] * len(sol.t)]).reshape(len(sol.t), 2)
         else:
@@ -343,7 +336,7 @@ class Simulator:
             is3D=is3D,
             goal_data=goal_data,
             obs_data=np.concatenate(self.obstacle, axis=1).T,
-            save_path=base+"animation.gif",
+            save_path=self.dir_base+"animation.gif",
             #epoch_max=120
         )
         
@@ -369,39 +362,32 @@ class Simulator:
         self.rmp_param = param["rmp_param"]
         env = param["env_param"]
         
-        self.obstacle = self.set_obstacle(env["obstacle"])
+        self.obstacle = set_obstacle(env["obstacle"])
         self.goal = set_point(**env["goal"]["param"])[0]
         rm = get_robot_model(param["robot_name"])
 
         x0 = np.concatenate([
-            rm.q_neutral(),
-            rm.q_neutral()
+            self.q_neutral,
+            self.q_neutral
         ], axis=1)
-
-        c_dim = rm.CPoint.c_dim
-        t_dim = rm.CPoint.t_dim
 
         t = [0. for _ in range(2)]
         y = x0.tolist()
 
-        cpoint_phis = []
-        for i, rs in enumerate(rm.CPoint.RS_ALL):
-            for j, _ in enumerate(rs):
-                map_ = rm.CPoint(i, j)
-                cpoint_phis.append(map_.phi)
-
         q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
-            q_s = [y[i] for i in range(c_dim)],
-            cpoint_phi_s=cpoint_phis,
-            joint_phi_s=rm.JOINT_PHI(),
-            is3D=True if t_dim==3 else False,
+            q_s = [y[i] for i in range(self.c_dim)],
+            cpoint_phi_s=self.km.calc_cpoint_position_all,
+            joint_phi_s=self.JOINT_PHI,
+            ee_phi=self.km.calc_ee_position,
+            is3D=True if self.t_dim==3 else False,
             #ee_phi=rm.o_ee
         )
 
-        if t_dim == 3:
+
+        if self.t_dim == 3:
             is3D = True
             goal_data = np.array([[self.goal[0,0], self.goal[1,0], self.goal[2,0]]*len(t)]).reshape(len(t), 3)
-        elif t_dim == 2:
+        elif self.t_dim == 2:
             is3D = False
             goal_data = np.array([[self.goal[0,0], self.goal[1,0],] * len(t)]).reshape(len(t), 2)
         else:

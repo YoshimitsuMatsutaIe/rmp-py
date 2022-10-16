@@ -189,19 +189,16 @@ def jry_dot(q, i):
 
 
 
-def q_neutral():
-    return np.array([[0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
 
-def q_min():
-    return np.array([[-90, -90, -90, -90]]).T * np.pi/180
-
-def q_max():
-    return np.array([[90, 90, 90, 90]]).T * np.pi/180
 
 
 class CPoint(mappings.Identity):
     c_dim = 4
     t_dim = 2
+
+    q_neutral = np.array([[0, 0, 0, 0]]).T * np.pi/180  # ニュートラルの姿勢
+    q_min = np.array([[-90, -90, -90, -90]]).T * np.pi/180
+    q_max = np.array([[90, 90, 90, 90]]).T * np.pi/180
 
     rs_in_0 = (
         (0, 0),
@@ -231,11 +228,11 @@ class CPoint(mappings.Identity):
 
     ee_id = (4, 0)
 
-    def __init__(self, frame_num, position_num, l1=1.0, l2=1.0, l3=1.0, l4=1.0):
-        self.l1 = l1
-        self.l2 = l2
-        self.l3 = l3
-        self.l4 = l4
+    def __init__(self, frame_num, position_num, **kwargs):
+        self.l1 = kwargs.pop('l1')
+        self.l2 = kwargs.pop('l2')
+        self.l3 = kwargs.pop('l3')
+        self.l4 = kwargs.pop('l4')
         self.o = lambda q: o(q, frame_num, self.l1, self.l2, self.l3, self.l4)
         self.rx = lambda q: rx(q, frame_num)
         self.ry = lambda q: ry(q, frame_num)
@@ -263,15 +260,13 @@ class CPoint(mappings.Identity):
         J_dot = self.J_dot(q, dq)
         return x, x_dot, J, J_dot
 
-def JOINT_PHI(l1=1.0, l2=1.0, l3=1.0, l4=1.0):
-    return (
-        lambda _: np.zeros((2,1)),
-        lambda q: o(q, 0, l1, l2, l3, l4),
-        lambda q: o(q, 1, l1, l2, l3, l4),
-        lambda q: o(q, 2, l1, l2, l3, l4),
-        lambda q: o(q, 3, l1, l2, l3, l4),
-        lambda q: o(q, 4, l1, l2, l3, l4),
-    )
+    def calc_joint_position_all(self, q):
+        return [
+            o(q, i, self.l1, self.l2, self.l3, self.l4) for i in range(self.c_dim+1)
+        ]
+
+        
+        
 
 if __name__ == "__main__":
     pass

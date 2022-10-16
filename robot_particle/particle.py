@@ -6,21 +6,7 @@ from math import sin as sin
 import mappings
 
 
-def q_neutral():
-    return np.array([[0, 0]]).T  # ニュートラルの姿勢
-
-def q_min():
-    return np.array([[-1e10, -1e10]]).T
-
-def q_max():
-    return -q_min()
-
-
 class CPoint(mappings.Identity):
-    c_dim = 2
-    t_dim = 2
-
-
     rs_in_0 = (
         (0, 0),
     )  # ジョイント1によって回転する制御点
@@ -34,17 +20,22 @@ class CPoint(mappings.Identity):
 
     ee_id = (0, 0)
 
-    def __init__(self, frame_num, position_num):
-        pass
+    def __init__(self, frame_num, position_num, **kwargs):
+        self.c_dim = kwargs.pop('c_dim')
+        self.t_dim = self.c_dim
+        self.q_neutral =  np.zeros((self.c_dim, 1))  # ニュートラルの姿勢
+        self.q_min = np.array([[-1e10] * self.c_dim]).T
+        self.q_max = -self.q_min
+
     
     def phi(self, q):
         return q
     
     def J(self, q):
-        return np.eye(2)
+        return np.eye(self.c_dim)
 
     def J_dot(self, q, dq):
-        return np.zeros((2, 2))
+        return np.zeros((self.c_dim, self.c_dim))
 
     def calc_all(self, q, dq):
         x = self.phi(q)
@@ -53,10 +44,10 @@ class CPoint(mappings.Identity):
         J_dot = self.J_dot(q, dq)
         return x, x_dot, J, J_dot
 
-def JOINT_PHI():
-    return (
-        lambda q: q,
-    )
+    def calc_joint_position_all(self, q):
+        return [
+            q,
+        ]
 
 if __name__ == "__main__":
     pass

@@ -57,9 +57,10 @@ def make_data(
     
     joint_data = []
     for i in range(T_SIZE):
-        temp = [phi(q[:, i:i+1]) for phi in joint_phi_s]
-        #print(temp)
+        temp = joint_phi_s(q[:, i:i+1])
+        
         temp = np.concatenate(temp, axis=1)
+        #print(temp)
         joint_data.append(temp.tolist())
 
     if ee_phi is not None:
@@ -73,9 +74,9 @@ def make_data(
     if cpoint_phi_s is not None:
         cpoint_data = []
         for i in range(T_SIZE):
-            temp = [phi(q[:, i:i+1]) for phi in cpoint_phi_s]
-            temp = np.concatenate(temp, axis=1)
-            cpoint_data.append(temp.tolist())
+            temp = cpoint_phi_s(q[:, i:i+1])
+            temp_ = np.concatenate(temp, axis=1)
+            cpoint_data.append(temp_.tolist())
     else:
         cpoint_data = None
     
@@ -308,6 +309,7 @@ def make_2d_animation(
     ax = fig.add_subplot()
     time_template = 'time = %.2f [s]'
     
+    #print(joint_data)
     
     if obs_data is not None:
         ax.scatter(
