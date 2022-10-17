@@ -1,6 +1,9 @@
 {
     "//" : "siceのテスト",
     "robot_name" : "sice",
+    "ex_robot_param" : {
+        "l1" : 1.0, "l2" : 1.0, "l3" : 1.0, "l4" : 1.0
+    },
     "time_span" : 30.0,
     "time_interval" : 0.01,
     "rmp_param" : {

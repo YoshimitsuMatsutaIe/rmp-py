@@ -29,7 +29,7 @@ def HTM_dot(theta, l):
 
 
 @njit("Tuple((f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:]))(i8, f8[:,:], f8[:,:], f8[:], i8)", cache=True)
-def func(n, q, dq, l, c_dim):
+def calc_all_kinematics(n, q, dq, l, c_dim):
     t_dim = 2
     
     # local同時変換行列
@@ -107,6 +107,20 @@ def func(n, q, dq, l, c_dim):
     
     return rx, ry, oo, jrx, jry, joo
 
+
+def calc_kinematics(n, q, dq, l, c_dim):
+    if n == 0:
+        rx, ry, oo = np.zeros((2,1)), np.zeros((2,1)), np.zeros((2,1))
+        jrx, jry, joo = np.zeros((2,c_dim)), np.zeros((2,c_dim)), np.zeros((2,c_dim))
+    else:
+        rx, ry, oo, jrx_, jry_, joo_ = calc_all_kinematics(n, q, dq, l, n)
+        jrx = np.zeros((2, c_dim))
+        jry = np.zeros((2, c_dim))
+        joo = np.zeros((2, c_dim))
+        jrx[:, :n] = jrx_
+        jry[:, :n] = jry_
+        joo[:, :n] = joo_
+    return rx, ry, oo, jrx, jry, joo
 
 # def func(n, q, dq, l):
 #     # local同時変換行列
@@ -187,27 +201,6 @@ def func(n, q, dq, l, c_dim):
 class CPoint(mappings.Identity):
     t_dim = 2
     
-    # 追加
-    # RS_ALL = (
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),  #7
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),  # 10
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    #     ((0, 0),),
-    # )
-    
-
     def __init__(self, frame_num, position_num, **kwargs):
         self.c_dim = kwargs.pop('c_dim')
         self.ee_id = (self.c_dim, 0)
@@ -222,23 +215,11 @@ class CPoint(mappings.Identity):
         self.q_min = np.array([[-90] * self.c_dim]).T * np.pi/180
         self.q_max = -self.q_min
 
-    # def __init__(self, frame_num, position_num, c_dim=4, ls=None):
-    #     self.frame_num = frame_num
-    #     self.c_dim = c_dim
-    #     if ls is None:
-    #         self.ls = [1 for _ in range(c_dim)]
-    #     else:
-    #         assert len(ls) != c_dim
-    #         self.ls = ls
-        
-    #     self.r = self.RS_ALL[frame_num][position_num]
-    #     self.ee_id = (c_dim, 0)
-    
     def phi(self, q):
         return self.calc_o(self.c_dim, q)
     
     def calc_all(self, q, dq):
-        rx, ry, oo, jrx, jry, joo = func(self.frame_num, q, dq, self.ls, self.c_dim)
+        rx, ry, oo, jrx, jry, joo = calc_kinematics(self.frame_num, q, dq, self.ls, self.c_dim)
         
         x = rx * self.r[0] + ry * self.r[1] + oo
         J = jrx*self.r[0] + jry*self.r[1] + joo
@@ -250,7 +231,7 @@ class CPoint(mappings.Identity):
 
     def calc_o(self, n, q):
         #print(self.ls)
-        _, _, out, _, _, _ = func(n, q, np.zeros(q.shape), self.ls, self.c_dim)
+        _, _, out, _, _, _ = calc_kinematics(n, q, np.zeros(q.shape), self.ls, self.c_dim)
         return out
 
 
@@ -263,7 +244,13 @@ class CPoint(mappings.Identity):
 
 if __name__ == "__main__":
     import numpy as np
-    hoge = CPoint(0, 0, **{"c_dim": 4, "total_length": 4.0})
+    hoge = CPoint(4, 0, **{"c_dim": 4, "total_length": 4.0})
+    
+    
+    q = np.array([[1., 2., 3., 4.]]).T
+    ss = hoge.calc_all(q, q)
+    for s in ss:
+        print(s)
     
     # ss = hoge.JOINT_PHI()
     # for s in ss:

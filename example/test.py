@@ -130,5 +130,10 @@ s = Simulator()
 
 
 #s.environment_visualization("./config/sice_ex_test.json")
-s.run_rmp_sim("./config/sice_ex_test.json")
+#s.run_rmp_sim("./config/sice_ex_test.json")
 #s.run_rm/home/matsuta/src/rmp-py/robot_sice_exp_sim("./config/particle_have_initial.json")
+
+
+
+#s.run_planning_sim("./config/sice_ex_test.json")
+s.run_planning_sim("./config/franka_sphere.json")

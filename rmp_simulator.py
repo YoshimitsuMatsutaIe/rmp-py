@@ -19,7 +19,7 @@ import tree_constructor
 # import mappings
 import visualization
 from robot_utils import KinematicsAll, get_robot_model, get_cpoint_ids
-
+from planning_ryo import planning
 
 class Simulator:
     
@@ -144,6 +144,12 @@ class Simulator:
         self.obstacle = set_obstacle(env["obstacle"])
         self.goal = set_point(**env["goal"]["param"])[0]
 
+        if 'initial_value' in param:
+            print(param["initial_value"])
+            assert len(param["initial_value"]) == self.c_dim
+            self.q0 = np.array([param["initial_value"]]).T
+        else:
+            self.q0 = self.q_neutral
 
 
         return param
@@ -158,38 +164,22 @@ class Simulator:
         print("running...")
         
         param = self.set_simulation(param_path, param_dict)
-        
-        # if self.robot_name == "sice_ex":
-        #     pass
-        # else:
-
-        #q_neutral = rm.q_neutral()
-
-        
         self.rmp_param = param["rmp_param"]
 
         
         self.node_ids = get_cpoint_ids(self.rm, self.ex_robot_param)
         self.node_ids.append((-1, 0))
         
-        
-        
         self.TIME_SPAN = param["time_span"]
         TIME_INTERVAL = param["time_interval"]
-        if 'initial_value' in param:
-            print(param["initial_value"])
-            assert len(param["initial_value"]) == self.c_dim
-            q0 = np.array([param["initial_value"]]).T
-        else:
-            q0 = self.q_neutral
         
         # 初期値
         t_span = (0, self.TIME_SPAN)
         t_eval = np.arange(0, self.TIME_SPAN, TIME_INTERVAL)
         x0 = np.ravel(
             np.concatenate([
-                q0,
-                np.zeros_like(q0)
+                self.q0,
+                np.zeros_like(self.q0)
             ])
         )
         
@@ -239,7 +229,7 @@ class Simulator:
             self.obstacle = obs_
         else:
             assert False
-            
+        
         sim_time =  time.perf_counter() - t0
         print("sim time = ", sim_time)
         print(sol.message)
@@ -272,7 +262,6 @@ class Simulator:
         
         ee_ = [self.km.calc_ee_position(data[i:i+1, 1:self.c_dim+1].T) for i in range(len(sol.t))]
         ee_ = np.concatenate(ee_, axis=1)
-        #print(ee_)
         error = np.linalg.norm(self.goal - ee_, axis=0)
         error_data = np.stack(
             [sol.t, error]
@@ -285,10 +274,7 @@ class Simulator:
             delimiter = ","
         )
         
-        
         ### 以下グラフ化 ###
-        
-        
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 15))
         for i in range(self.c_dim):
             axes[0].plot(sol.t, sol.y[i], label="q" + str(i))
@@ -305,10 +291,7 @@ class Simulator:
         fig.savefig(self.dir_base+"configration.png")
 
 
-
         #### 以下アニメ化 ###
-
-
         q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
             q_s = [sol.y[i] for i in range(self.c_dim)],
             cpoint_phi_s=self.km.calc_cpoint_position_all,
@@ -343,6 +326,85 @@ class Simulator:
         plt.show()
 
 
+    def run_planning_sim(
+        self,
+        param_path: Union[str, None]=None,
+        param_dict: Union[dict, None]=None,
+        method: str="single"
+        ):
+
+        self.set_simulation(param_path, param_dict)
+        q_path_list = planning(
+            robot_name=self.robot_name,
+            ex_robot_param=self.ex_robot_param,
+            q_init = self.q0,
+            q_step = 2,
+            goal = self.goal,
+            obs_R = 0.2,
+            obs_Cs = self.obstacle,
+            Kat = 1.0,
+            Kre = 0.05,
+            q_step_n=1,
+            max_step=10000
+        )
+        
+        data = np.concatenate(q_path_list, axis=1)
+        ee_ = [self.km.calc_ee_position(q) for q in q_path_list]
+        ee_ = np.concatenate(ee_, axis=1)
+        error_data = np.linalg.norm(self.goal - ee_, axis=0)
+        
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 10))
+        for i in range(self.c_dim):
+            axes[0].plot(data[i, :], label="q" + str(i))
+        axes[1].plot(error_data, label="error")
+        axes[1].set_ylim(0,)
+        
+        for i in range(2):
+            axes[i].legend()
+            axes[i].grid()
+        
+        axes[1].set_xlabel("i")
+        
+        fig.savefig(self.dir_base+"configration.png")
+        
+        
+        #### 以下アニメ化 ###
+        t = list(range(len(q_path_list)))
+
+        q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+            q_s = data.tolist(),
+            cpoint_phi_s=self.km.calc_cpoint_position_all,
+            joint_phi_s=self.calc_joint_position_all,
+            ee_phi=self.km.calc_ee_position,
+            is3D=True if self.t_dim==3 else False,
+            #ee_phi=rm.o_ee
+        )
+
+        if self.t_dim == 3:
+            is3D = True
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0], self.goal[2,0]]*len(t)]).reshape(len(t), 3)
+        elif self.t_dim == 2:
+            is3D = False
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0],] * len(t)]).reshape(len(t), 2)
+        else:
+            assert False
+
+
+        visualization.make_animation(
+            t_data = t,
+            joint_data=joint_data,
+            cpoint_data=cpoint_data,
+            ee_data=ee_data,
+            is3D=is3D,
+            goal_data=goal_data,
+            obs_data=np.concatenate(self.obstacle, axis=1).T,
+            save_path=self.dir_base+"animation.gif",
+            #epoch_max=120
+        )
+        
+        plt.show()
+
+
     def environment_visualization(
         self,
         param_path: Union[str, None]=None,
@@ -350,14 +412,8 @@ class Simulator:
     ):
         """チェック用"""
 
-        if param_path is not None:
-            with open(param_path) as f:
-                param = json.load(f)
-        elif param_dict is not None:
-            param = param_dict
-        else:
-            assert False
-        
+        param = self.set_simulation(param_path, param_dict)
+
         self.robot_name = param["robot_name"]
         self.rmp_param = param["rmp_param"]
         env = param["env_param"]
@@ -377,7 +433,7 @@ class Simulator:
         q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
             q_s = [y[i] for i in range(self.c_dim)],
             cpoint_phi_s=self.km.calc_cpoint_position_all,
-            joint_phi_s=self.JOINT_PHI,
+            joint_phi_s=self.calc_joint_position_all,
             ee_phi=self.km.calc_ee_position,
             is3D=True if self.t_dim==3 else False,
             #ee_phi=rm.o_ee
