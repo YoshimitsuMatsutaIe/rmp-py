@@ -135,5 +135,5 @@ s = Simulator()
 
 
 
-#s.run_planning_sim("./config/sice_ex_test.json")
-s.run_planning_sim("./config/franka_sphere.json")
+s.run_planning_sim("./config/sice_ex_test.json")
+#s.run_planning_sim("./config/franka_sphere.json")

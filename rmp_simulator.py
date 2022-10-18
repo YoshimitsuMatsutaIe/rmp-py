@@ -332,20 +332,21 @@ class Simulator:
         param_dict: Union[dict, None]=None,
         method: str="single"
         ):
-
-        self.set_simulation(param_path, param_dict)
+        param = self.set_simulation(param_path, param_dict)
+        pp = param["planning_param"]
+        
         q_path_list = planning(
             robot_name=self.robot_name,
             ex_robot_param=self.ex_robot_param,
             q_init = self.q0,
-            q_step = 2,
+            q_step = pp["q_step"],
             goal = self.goal,
-            obs_R = 0.2,
+            obs_R = pp["obs_R"],
             obs_Cs = self.obstacle,
-            Kat = 1.0,
-            Kre = 0.05,
-            q_step_n=1,
-            max_step=10000
+            Kat = pp["Kat"],
+            Kre = pp["Kre"],
+            q_step_n=pp["q_step_n"],
+            max_step=1000
         )
         
         data = np.concatenate(q_path_list, axis=1)
