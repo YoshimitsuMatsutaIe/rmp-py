@@ -122,7 +122,7 @@ def HTM_dot_by_q_dot_by_t(theta, theta_dot):
 #     return rx, ry, oo, jrx, jry, joo
 
 
-#@njit("Tuple((f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:]))(i8, f8[:,:], f8[:,:], f8[:], i8)", cache=True)
+@njit("Tuple((f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:]))(i8, f8[:,:], f8[:,:], f8[:], i8)", cache=True)
 def calc_all_kinematics2(n, q, dq, l, c_dim):
     """1と変わらん"""
     t_dim = 2
@@ -221,9 +221,9 @@ def calc_all_kinematics2(n, q, dq, l, c_dim):
                     tmp.append(T_local_dot[0])
             else:
                 if j == i:
-                    tmp.append(tmp[j-1] @ dTdq_local[j] + T_global[j-1] @ dTdq_local_dot[j])
+                    tmp.append(tmp[j-1] @ dTdq_local[j] + dTdq_s[i][j-1] @ dTdq_local_dot[j])
                 else:
-                    tmp.append(tmp[j-1] @ T_local[j] + T_global[j-1] @ T_local_dot[j])
+                    tmp.append(tmp[j-1] @ T_local[j] + dTdq_s[i][j-1] @ T_local_dot[j])
         dTdq_dot_s.append(tmp)
 
 
@@ -324,8 +324,8 @@ if __name__ == "__main__":
     from numpy import linalg as LA
     import robot_sice.sice as sice
     q = np.array([[1.1, 2.4, 3.3, 4.]]).T
-    #dq = q + 1
-    dq = np.zeros((4,1))
+    dq = q + 1
+    #dq = np.zeros((4,1))
     l = np.array([1., 1., 1., 1.])
     for i in range(5):
         rx, ry, oo, jrx, jry, joo, jrx_dot, jry_dot, joo_dot = calc_all_kinematics2(i, q, dq, l, 4)
@@ -336,7 +336,7 @@ if __name__ == "__main__":
         jry_ = sice.jry(q, i)
         joo_ = sice.jo(q, i, *l)
         jrx_dot_ = sice.jrx_dot(q, dq, i)
-        jry_dot_ = sice.jry_dot(q, i)
+        jry_dot_ = sice.jry_dot(q, dq, i)
         joo_dot_ = sice.jo_dot(q, dq, i, *l)
         print("\ni = ", i)
         # print("Jrx_dot = \n", jrx_dot - jrx_dot_)
@@ -345,12 +345,12 @@ if __name__ == "__main__":
         # print("rx      = ", LA.norm(rx - rx_))
         # print("ry      = ", LA.norm(ry - ry_))
         # print("oo      = ", LA.norm(oo - oo_))
-        print("jrx     = ", LA.norm(jrx - jrx_))
-        #print("ori = \n", jrx_, "\ngen = \n", jrx, "\n")
-        print("jry     = ", LA.norm(jry - jry_))
-        #print("ori = \n", jry_, "\ngen = \n", jry, "\n")
-        print("joo     = ", LA.norm(joo - joo_))
-        #print("ori = \n", joo_, "\ngen = \n", joo, "\n")
+        # print("jrx     = ", LA.norm(jrx - jrx_))
+        # #print("ori = \n", jrx_, "\ngen = \n", jrx, "\n")
+        # print("jry     = ", LA.norm(jry - jry_))
+        # #print("ori = \n", jry_, "\ngen = \n", jry, "\n")
+        # print("joo     = ", LA.norm(joo - joo_))
+        # #print("ori = \n", joo_, "\ngen = \n", joo, "\n")
         
         
         print("Jrx_dot = ", LA.norm(jrx_dot - jrx_dot_))
