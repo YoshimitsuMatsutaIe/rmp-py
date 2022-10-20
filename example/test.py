@@ -35,7 +35,7 @@ param = {
     "json_name" : "temp.json",
     "//" : "franka emika box test",
     "robot_name" : "franka_emika",
-    "time_span" : 40.0,
+    "time_span" : 4.0,
     "time_interval" : 0.01,
     "rmp_param" : rmp_param,
     "env_param" : {

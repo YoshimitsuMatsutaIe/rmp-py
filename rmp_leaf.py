@@ -105,6 +105,9 @@ class GoalAttractor(LeafBase):
                 alpha = self.alpha,
                 epsilon = self.epsilon
             )
+        
+        # print("f = ", self.f)
+        # print("M = ", self.M)
 
 
 

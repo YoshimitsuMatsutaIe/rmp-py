@@ -297,12 +297,14 @@ class CPoint(mappings.Identity):
     
     def calc_all(self, q, dq):
         rx, ry, oo, jrx, jry, joo, jrx_dot, jry_dot, joo_dot = calc_kinematics(self.frame_num, q, dq, self.ls, self.c_dim)
-        
+        #print("dq = ", dq.T)
+        #print("Joo_dot_norm = ", np.linalg.norm(joo_dot))
         x = rx * self.r[0] + ry * self.r[1] + oo
         J = jrx*self.r[0] + jry*self.r[1] + joo
         x_dot = J @ dq
-        J_dot = jrx_dot*self.r[0] + jry_dot*self.r[1] + joo_dot
         
+        J_dot = jrx_dot*self.r[0] + jry_dot*self.r[1] + joo_dot
+        #J_dot = np.zeros(J.shape)
         return x, x_dot, J, J_dot
 
 

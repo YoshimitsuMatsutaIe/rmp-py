@@ -21,7 +21,12 @@ import visualization
 from robot_utils import KinematicsAll, get_robot_model, get_cpoint_ids
 from planning_ryo import planning
 
+
+
 class Simulator:
+    EPOCH_MAX = 60  #animation frame max
+    
+    
     
     def __init__(self):
         self.flag = -1
@@ -163,6 +168,7 @@ class Simulator:
     ):
         print("running...")
         
+        
         param = self.set_simulation(param_path, param_dict)
         self.rmp_param = param["rmp_param"]
 
@@ -229,12 +235,11 @@ class Simulator:
             self.obstacle = obs_
         else:
             assert False
-        
+            
+        print(sol.message)
         sim_time =  time.perf_counter() - t0
         print("sim time = ", sim_time)
-        print(sol.message)
-
-
+        
 
         ## CSV保存
         # まずはヘッダーを準備
@@ -292,27 +297,37 @@ class Simulator:
 
 
         #### 以下アニメ化 ###
-        q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+        
+        T_SIZE = len(sol.t)
+        if T_SIZE < self.EPOCH_MAX:
+            step = 1
+        else:
+            step = T_SIZE // self.EPOCH_MAX
+        t_ = sol.t[::step]
+
+        start_time = time.perf_counter()
+        _, joint_data, ee_data, cpoint_data = visualization.make_data(
             q_s = [sol.y[i] for i in range(self.c_dim)],
             cpoint_phi_s=self.km.calc_cpoint_position_all,
             joint_phi_s=self.calc_joint_position_all,
             ee_phi=self.km.calc_ee_position,
-            is3D=True if self.t_dim==3 else False,
-            #ee_phi=rm.o_ee
+            #ee_phi=rm.o_ee,
+            epoch_max=self.EPOCH_MAX,
+            step=step
         )
 
         if self.t_dim == 3:
             is3D = True
-            goal_data = np.array([[self.goal[0,0], self.goal[1,0], self.goal[2,0]]*len(sol.t)]).reshape(len(sol.t), 3)
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0], self.goal[2,0]]*len(t_)]).reshape(len(t_), 3)
         elif self.t_dim == 2:
             is3D = False
-            goal_data = np.array([[self.goal[0,0], self.goal[1,0],] * len(sol.t)]).reshape(len(sol.t), 2)
+            goal_data = np.array([[self.goal[0,0], self.goal[1,0],] * len(t_)]).reshape(len(t_), 2)
         else:
             assert False
 
 
         visualization.make_animation(
-            t_data = sol.t,
+            t_data = t_,
             joint_data=joint_data,
             cpoint_data=cpoint_data,
             ee_data=ee_data,
@@ -320,8 +335,10 @@ class Simulator:
             goal_data=goal_data,
             obs_data=np.concatenate(self.obstacle, axis=1).T,
             save_path=self.dir_base+"animation.gif",
-            #epoch_max=120
+            epoch_max=self.EPOCH_MAX,
+            step=step
         )
+        print("ani time = ", time.perf_counter() - start_time)
         
         plt.show()
 
@@ -370,15 +387,18 @@ class Simulator:
         
         
         #### 以下アニメ化 ###
-        t = list(range(len(q_path_list)))
+        T_SIZE = len(q_path_list)
+        step = 1
+        t = list(range(0, len(q_path_list), step))
 
-        q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+        _, joint_data, ee_data, cpoint_data = visualization.make_data(
             q_s = data.tolist(),
             cpoint_phi_s=self.km.calc_cpoint_position_all,
             joint_phi_s=self.calc_joint_position_all,
             ee_phi=self.km.calc_ee_position,
-            is3D=True if self.t_dim==3 else False,
             #ee_phi=rm.o_ee
+            epoch_max=T_SIZE,
+            step=step
         )
 
         if self.t_dim == 3:
@@ -400,7 +420,8 @@ class Simulator:
             goal_data=goal_data,
             obs_data=np.concatenate(self.obstacle, axis=1).T,
             save_path=self.dir_base+"animation.gif",
-            #epoch_max=120
+            epoch_max=T_SIZE,
+            step=step
         )
         
         plt.show()
@@ -431,13 +452,14 @@ class Simulator:
         t = [0. for _ in range(2)]
         y = x0.tolist()
 
-        q_data, joint_data, ee_data, cpoint_data = visualization.make_data(
+        _, joint_data, ee_data, cpoint_data = visualization.make_data(
             q_s = [y[i] for i in range(self.c_dim)],
             cpoint_phi_s=self.km.calc_cpoint_position_all,
             joint_phi_s=self.calc_joint_position_all,
             ee_phi=self.km.calc_ee_position,
-            is3D=True if self.t_dim==3 else False,
             #ee_phi=rm.o_ee
+            epoch_max=2,
+            step=1
         )
 
 
@@ -450,7 +472,6 @@ class Simulator:
         else:
             assert False
 
-
         visualization.make_animation(
             t_data = t,
             joint_data=joint_data,
@@ -459,7 +480,8 @@ class Simulator:
             is3D=is3D,
             goal_data=goal_data,
             obs_data=np.concatenate(self.obstacle, axis=1).T,
-            #epoch_max=120
+            epoch_max=1,
+            step=1
         )
         
         plt.show()
