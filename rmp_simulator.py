@@ -27,7 +27,6 @@ class Simulator:
     EPOCH_MAX = 60  #animation frame max
     
     
-    
     def __init__(self):
         self.flag = -1
         pass
@@ -153,6 +152,7 @@ class Simulator:
             print(param["initial_value"])
             assert len(param["initial_value"]) == self.c_dim
             self.q0 = np.array([param["initial_value"]]).T
+            print("q0 = ", self.q0)
         else:
             self.q0 = self.q_neutral
 

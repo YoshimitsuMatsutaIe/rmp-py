@@ -4,6 +4,61 @@ import sys
 sys.path.append('.')
 from rmp_simulator import Simulator
 
+s = Simulator()
+
+
+#simulator.main("./config/franka.json")
+
+#s.run_rmp_sim("./config/franka_sphere.json")
+
+#s.environment_visualization("./config/franka_wall.json")
+#s.run_rmp_sim("./config/franka_wall.json")
+#s.run_rmp_sim("./config/baxter.json")
+
+#s.run_rmp_sim("./config/franka_sphere.json")
+
+#s.run_rmp_sim("./config/test_sice.json", method="single")
+#s.run_rmp_sim("./config/sice_non_obs.json")
+
+
+#simulator.main("./../rmp-cpp/config/sice.json")
+
+#s.run_rmp_sim("./config/particle_test.json")
+
+#s.run_rmp_sim("./config/franka_cubbie.json")
+
+# cppのやつ
+#simulator.main("../rmp-cpp/config/sice.json")
+#s.run_rmp_sim("../rmp-cpp/config/franka_sphere.json")
+
+
+
+
+
+#s.environment_visualization("./config/yamanaka_test.json")
+#s.run_rmp_sim("./config/yamanaka_test.json")
+
+
+
+#s.environment_visualization("./config/sice_ex_test.json")
+#s.run_rmp_sim("./config/sice_ex_test.json")
+#s.run_rm/home/matsuta/src/rmp-py/robot_sice_exp_sim("./config/particle_have_initial.json")
+
+
+
+#s.run_planning_sim("./config/sice_ex_test.json")
+#s.run_planning_sim("./config/franka_sphere.json")
+
+
+
+
+s.run_rmp_sim("./config/sice_ex_e.json")
+
+
+
+
+
+
 
 rmp_param = {
     "goal_attractor" : {
@@ -93,47 +148,5 @@ param = {
 
 
 
-s = Simulator()
 # s.main(param_dict = param)
 
-#simulator.main("./config/franka.json")
-
-#s.run_rmp_sim("./config/franka_sphere.json")
-
-#s.environment_visualization("./config/franka_wall.json")
-#s.run_rmp_sim("./config/franka_wall.json")
-#s.run_rmp_sim("./config/baxter.json")
-
-#s.run_rmp_sim("./config/franka_sphere.json")
-
-#s.run_rmp_sim("./config/test_sice.json", method="single")
-#s.run_rmp_sim("./config/sice_non_obs.json")
-
-
-#simulator.main("./../rmp-cpp/config/sice.json")
-
-#s.run_rmp_sim("./config/particle_test.json")
-
-#s.run_rmp_sim("./config/franka_cubbie.json")
-
-# cppのやつ
-#simulator.main("../rmp-cpp/config/sice.json")
-#s.run_rmp_sim("../rmp-cpp/config/franka_sphere.json")
-
-
-
-
-
-#s.environment_visualization("./config/yamanaka_test.json")
-#s.run_rmp_sim("./config/yamanaka_test.json")
-
-
-
-#s.environment_visualization("./config/sice_ex_test.json")
-s.run_rmp_sim("./config/sice_ex_test.json")
-#s.run_rm/home/matsuta/src/rmp-py/robot_sice_exp_sim("./config/particle_have_initial.json")
-
-
-
-#s.run_planning_sim("./config/sice_ex_test.json")
-#s.run_planning_sim("./config/franka_sphere.json")

@@ -2,18 +2,16 @@
     "//" : "siceのテスト",
     "robot_name" : "sice_ex",
     "ex_robot_param" : {
-        "c_dim" : 10,
+        "c_dim" : 15,
         "total_length" : 4.0
     },
+    "initial_value" : [
+        0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0
+    ],
     "time_span" : 30.0,
     "time_interval" : 0.01,
-    "planning_param" : {
-        "Kat" : 1.0,
-        "Kre" : 0.01,
-        "obs_R" : 0.8,
-        "q_step" : 1,
-        "q_step_n" : 1
-    },
     "rmp_param" : {
         "goal_attractor" : {
             "max_speed" : 5.0,
@@ -28,7 +26,7 @@
         "obstacle_avoidance" : {
             "gain" : 5.0,
             "sigma" : 1.0,
-            "rw" : 0.5
+            "rw" : 0.3
         },
         "joint_limit_avoidance" : {
             "gamma_p" : 0.05,
@@ -50,18 +48,18 @@
                 "type" : "sphere",
                 "param" : {
                     "d" : 0.1,
-                    "r" : 0.6,
-                    "x" : 0.5,
-                    "y" : 1.0
+                    "r" : 0.5,
+                    "x" : 2.0,
+                    "y" : 2.0
                 }
             },
             {
                 "type" : "sphere",
                 "param" : {
                     "d" : 0.1,
-                    "r" : 0.6,
-                    "x" : 3.0,
-                    "y" : 2.0
+                    "r" : 0.2,
+                    "x" : 0.0,
+                    "y" : 1.0
                 }
             }
         ]
