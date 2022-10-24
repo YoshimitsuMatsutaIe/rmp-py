@@ -303,8 +303,8 @@ def make_3d_animation(
         joint_p.set_3d_properties(joint_data[i][2])
         
         if ee_data is not None:
-            ee_p.set_data(ee_data[0, :i], ee_data[1, :i])
-            ee_p.set_3d_properties(ee_data[2, :i])
+            ee_p.set_data(ee_data[0, :i*step], ee_data[1, :i*step])
+            ee_p.set_3d_properties(ee_data[2, :i*step])
         
         if cpoint_data is not None:
             temp = list(zip(*cpoint_data[i]))

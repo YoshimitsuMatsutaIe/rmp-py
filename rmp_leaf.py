@@ -216,6 +216,10 @@ class ObstacleAvoidanceMulti(LeafBase):
         xi = 1/2 * u2 * w2_dot * s_dot**2
         grad_phi = self.gain * w2 * w2_dot
         
+        
+        #grad_phi = 4*self.gain*s**(-9)*0.001
+        #m = s**(-4)*u2
+        
         m = w2 * delta
         f = -grad_phi - xi
         
