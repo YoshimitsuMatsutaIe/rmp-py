@@ -17,7 +17,7 @@ s = Simulator()
 
 s.run_rmp_sim("./config/franka_sphere.json")
 
-#s.run_rmp_sim("./config/test_sice.json", method="single")
+s.run_rmp_sim("./config/test_sice.json", method="single")
 #s.run_rmp_sim("./config/sice_non_obs.json")
 
 
