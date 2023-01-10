@@ -1,15 +1,14 @@
 {
     "//" : "siceのテスト",
-    "robot_name" : "particle",
+    "robot_name" : "sice",
     "ex_robot_param" : {
-        "c_dim": 2
+        "l1" : 1.0, "l2" : 1.0, "l3" : 1.0, "l4" : 1.0
     },
-    "time_span" : 30.0,
+    "time_span" : 300.0,
     "time_interval" : 0.01,
-    "initial_value" : [4.0, 0.0],
     "rmp_param" : {
         "goal_attractor" : {
-            "max_speed" : 2.0,
+            "max_speed" : 5.0,
             "gain" : 3.0,
             "sigma_alpha" : 1.0,
             "sigma_gamma" : 1.0,
@@ -35,34 +34,16 @@
             "type" : "static",
             "param" : {
                 "x" : 1.0,
-                "y" : 2.2
+                "y" : 2.0
             }
         },
         "obstacle" : [
             {
                 "type" : "sphere",
                 "param" : {
-                    "d" : 0.08,
+                    "d" : 0.1,
                     "r" : 0.6,
                     "x" : 2.0,
-                    "y" : 2.0
-                }
-            },
-            {
-                "type" : "sphere",
-                "param" : {
-                    "d" : 0.08,
-                    "r" : 0.6,
-                    "x" : 2.0,
-                    "y" : 0.0
-                }
-            },
-            {
-                "type" : "sphere",
-                "param" : {
-                    "d" : 0.08,
-                    "r" : 0.3,
-                    "x" : 1.0,
                     "y" : 1.5
                 }
             }
