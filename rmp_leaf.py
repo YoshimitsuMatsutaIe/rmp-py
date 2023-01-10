@@ -313,6 +313,13 @@ class JointLimitAvoidance(LeafBase):
 
 
 
+class ObstacleAvoidanceFabric(LeafBase):
+    def __init__(self,):
+        pass
+    
+    
+
+
 
 # class GoalAttractor_1(rmp_tree.LeafBase):
 #     """曲率なし"""

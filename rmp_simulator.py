@@ -150,11 +150,14 @@ class Simulator:
 
         if 'initial_value' in param:
             print(param["initial_value"])
-            assert len(param["initial_value"]) == self.c_dim
-            self.q0 = np.array([param["initial_value"]]).T
-            print("q0 = ", self.q0)
+            assert len(param["initial_value"]) == self.c_dim*2
+            self.X_init = np.array([param["initial_value"]]).T
+            print("X0 = ", self.X_init)
         else:
-            self.q0 = self.q_neutral
+            self.X_init = np.concatenate([
+                self.q_neutral,
+                np.zeros_like(self.q_neutral)
+            ]) 
 
 
         return param
@@ -182,12 +185,7 @@ class Simulator:
         # 初期値
         t_span = (0, self.TIME_SPAN)
         t_eval = np.arange(0, self.TIME_SPAN, TIME_INTERVAL)
-        x0 = np.ravel(
-            np.concatenate([
-                self.q0,
-                np.zeros_like(self.q0)
-            ])
-        )
+        x0 = np.ravel(self.X_init)
         
         ### main ###
         t0 = time.perf_counter()

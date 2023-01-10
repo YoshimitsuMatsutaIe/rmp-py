@@ -57,7 +57,7 @@ s = Simulator()
 #s.run_rmp_sim("./config/fe_sphere2.json")
 
 
-s.run_rmp_sim("./config/particle_have_initial.json")
+s.run_rmp_sim("./config/particle_have_initial.json", method="single")
 
 
 

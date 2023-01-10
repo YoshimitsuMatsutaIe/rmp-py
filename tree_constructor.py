@@ -394,15 +394,29 @@ def make_tree_root(
                 node.add_child(attracter)
 
             ### 障害物 ###
-            obs_node = ObstacleAvoidanceMulti(
-                name="obs_multi" + node.name,
-                calc_mappings = mappings.Identity(),
-                dim = t_dim,
-                o_s = o_s,
-                **rmp_param["obstacle_avoidance"],
-                parent_dim=t_dim
-            )
-            node.add_child(obs_node)
+            # obs_node = ObstacleAvoidanceMulti(
+            #     name="obs_multi" + node.name,
+            #     calc_mappings = mappings.Identity(),
+            #     dim = t_dim,
+            #     o_s = o_s,
+            #     **rmp_param["obstacle_avoidance"],
+            #     parent_dim=t_dim
+            # )
+            # node.add_child(obs_node)
+            
+            print(o_s.shape)
+            for i in range(o_s.shape[1]):
+                o = o_s[:, i:i+1]
+                obs_node = ObstacleAvoidance(
+                    name="obs_single" + node.name,
+                    calc_mappings = mappings.Distance(o, np.zeros_like(o)),
+                    **rmp_param["obstacle_avoidance"],
+                    parent_dim=t_dim
+                )
+                node.add_child(obs_node)
+            
+            
+            
             root.add_child(node)
 
     return root

@@ -6,11 +6,11 @@
     },
     "time_span" : 30.0,
     "time_interval" : 0.01,
-    "initial_value" : [4.0, 0.0],
+    "initial_value" : [4.0, 0.0, -0.0, -1.0],
     "rmp_param" : {
         "goal_attractor" : {
-            "max_speed" : 2.0,
-            "gain" : 3.0,
+            "max_speed" : 3.0,
+            "gain" : 2.0,
             "sigma_alpha" : 1.0,
             "sigma_gamma" : 1.0,
             "wu" : 10.0,
