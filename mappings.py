@@ -32,6 +32,7 @@ class Translation(Identity):
         self.__J = np.eye(g.shape[0])
         self.__J_dot = np.zeros((g.shape[0], g.shape[0]))
     
+    
     def phi(self, x):
         return x - self.g
     
