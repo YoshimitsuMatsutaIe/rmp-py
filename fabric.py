@@ -62,7 +62,6 @@ class ObstacleAvoidance:
         self.k_b = k_b
         self.alpha_b = alpha_b
     
-    @njit
     def calc_fabric(self, x, x_dot, xo):
         
         xxo_norm = LA.norm(x - xo)
@@ -75,7 +74,7 @@ class ObstacleAvoidance:
         )
         
         m = sgn(s_dot) * self.k_b / s**2
-        xi = -2 * s_dot**2 / x**3 * sgn(s_dot)
+        xi = -2 * s_dot**2 / s**3 * sgn(s_dot)
         pi = -1 * (-4 * self.alpha_b * s**(-9)) * sgn(s_dot) * s_dot**2 * m
         damp = 0. * s_dot
         f = pi - xi - damp
