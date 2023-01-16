@@ -66,7 +66,7 @@ class ObstacleAvoidance:
         
         xxo_norm = LA.norm(x - xo)
         s = xxo_norm / self.r - 1
-        J = 1 / (self.r * xxo_norm) * x.T
+        J = 1 / (self.r * xxo_norm) * (x-xo).T
         s_dot = (J @ x_dot)[0,0]
         J_dot = 1/self.r * (
             -xxo_norm**(-3/2)*(np.sum(x_dot))*x.T + \
