@@ -3,6 +3,7 @@ import numpy as np
 from numpy import linalg as LA
 import numpy.typing as npt
 
+import time
 import matplotlib.pyplot as plt
 import matplotlib.animation as anm
 import matplotlib.patches as patches
@@ -40,11 +41,17 @@ for i in range(5):
 def test():
     """ロボット5台でテスト"""
     
+    #sim_name = "con"
+    sim_name = "pro"
+    
     N = 5
     
-    xg = np.array([[2, 2]]).T
-    xo = np.array([[1.0, 1.5]]).T
-    xo2 = np.array([[2.0, 0.5]]).T
+    xg = np.array([[4, 4]]).T
+    xo_s = [
+        np.array([[1.0, 1.5]]).T,
+        np.array([[2.0, 0.5]]).T,
+        np.array([[3, 2]]).T,
+    ]
 
     d = 0.5
     c = 1
@@ -113,7 +120,7 @@ def test():
 
 
     def dX(t, X):
-        print("t = ", t)
+        #print("t = ", t)
         X_dot = np.zeros((4*N, 1))
         x_s, x_dot_s = [], []
         for i in range(N):
@@ -137,21 +144,13 @@ def test():
                     root_M += M
                     root_F += F
             
-            # M, F = pair_obs_obs.calc_rmp(x_s[i], x_dot_s[i], xo)
-            # root_M += M
-            # root_F += F
-            
-            # M, F = pair_obs_obs.calc_rmp(x_s[i], x_dot_s[i], xo2)
-            # root_M += M
-            # root_F += F
+            for xo in xo_s:
+                #M, F = pair_obs_obs.calc_rmp(x_s[i], x_dot_s[i], xo)
+                M, F, _, _, _, _, _ = obs_fabric.calc_fabric(x_s[i], x_dot_s[i], xo)
+                root_M += M
+                root_F += F
+        
 
-            M, F, _, _, _, _, _ = obs_fabric.calc_fabric(x_s[i], x_dot_s[i], xo)
-            root_M += M
-            root_F += F
-            
-            M, F, _, _, _, _, _ = obs_fabric.calc_fabric(x_s[i], x_dot_s[i], xo2)
-            root_M += M
-            root_F += F
 
 
             for j in pres_pair[i]:
@@ -167,8 +166,10 @@ def test():
         
         return np.ravel(X_dot)
 
+    t0 = time.perf_counter()
     sol = integrate.solve_ivp(fun=dX, t_span=tspan, y0=X0, t_eval=teval)
     print(sol.message)
+    print("time = ", time.perf_counter() - t0)
 
 
     fig = plt.figure()
@@ -176,15 +177,20 @@ def test():
     for i in range(N):
         ax.plot(sol.y[4*i], sol.y[4*i+1], label="r{0}".format(i))
     
+    for j in range(N):
+        for k in pres_pair[j]:
+            frame_x = [sol.y[4*k][-1], sol.y[4*j][-1]]
+            frame_y = [sol.y[4*k+1][-1], sol.y[4*j+1][-1]]
+            ax.plot(frame_x, frame_y, color="k")
+    
     ax.scatter([xg[0,0]], [xg[1,0]], marker="*", color = "r", label="goal")
-    c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
-    ax.add_patch(c)
-    c = patches.Circle(xy=(xo2[0,0], xo2[1,0]), radius=obs_R, ec='k', fill=False)
-    ax.add_patch(c)
+    for xo in xo_s:
+        c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
+        ax.add_patch(c)
     
     ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
     ax.grid();ax.set_aspect('equal'); ax.legend()
-    fig.savefig("multi_test_1.png")
+    fig.savefig(sim_name + ".png")
 
     # xi_s, pi_s, d_s, f_s, M_s = [], [], [], [], []
     # xi_n_s, pi_n_s, d_n_s, f_n_s = [], [], [], []
@@ -251,10 +257,9 @@ def test():
     def update(i):
         ax.cla()
         ax.scatter([xg[0,0]], [xg[1,0]], marker="*", color = "r", label="goal")
-        c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
-        ax.add_patch(c)
-        c = patches.Circle(xy=(xo2[0,0], xo2[1,0]), radius=obs_R, ec='k', fill=False)
-        ax.add_patch(c)
+        for xo in xo_s:
+            c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
+            ax.add_patch(c)
         
         for j in range(N):
             ax.plot(sol.y[4*j][:i], sol.y[4*j+1][:i], label="r{0}".format(j))
@@ -316,7 +321,7 @@ def test():
         frames = range(0, len(sol.t), step),
         interval=60
     )
-    ani.save("multi_test_1.gif", writer="pillow")
+    ani.save(sim_name + ".gif", writer="pillow")
 
     plt.show()
 

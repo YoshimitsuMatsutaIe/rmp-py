@@ -56,6 +56,31 @@ def sgn(x_dot):
     else:
         return 0
 
+
+@njit
+def ObstacleAvoidance_rmp(x, x_dot, xo, r, k_b, alpha_b):
+    
+    xxo_norm = LA.norm(x - xo)
+    s = xxo_norm / r - 1
+    J = 1 / (r * xxo_norm) * (x-xo).T
+    s_dot = (J @ x_dot)[0,0]
+    J_dot = 1/r * (
+        -xxo_norm**(-3/2)*(np.sum(x_dot))*x.T + \
+            xxo_norm**(-1/2)*x_dot.T
+    )
+    
+    m = sgn(s_dot) * k_b / s**2
+    xi = -2 * s_dot**2 / s**3 * sgn(s_dot)
+    pi = -1 * (-4 * alpha_b * s**(-9)) * sgn(s_dot) * s_dot**2 * m
+    damp = 0. * s_dot
+    f = pi - xi - damp
+    
+    M = m * J.T @ J
+    F = J.T * (f + m * (J_dot @ x_dot)[0,0])
+    
+    return M, F, m, xi, pi, damp, f
+
+
 class ObstacleAvoidance:
     def __init__(self, r, k_b, alpha_b):
         self.r = r
@@ -63,27 +88,7 @@ class ObstacleAvoidance:
         self.alpha_b = alpha_b
     
     def calc_fabric(self, x, x_dot, xo):
-        
-        xxo_norm = LA.norm(x - xo)
-        s = xxo_norm / self.r - 1
-        J = 1 / (self.r * xxo_norm) * (x-xo).T
-        s_dot = (J @ x_dot)[0,0]
-        J_dot = 1/self.r * (
-            -xxo_norm**(-3/2)*(np.sum(x_dot))*x.T + \
-                xxo_norm**(-1/2)*x_dot.T
-        )
-        
-        m = sgn(s_dot) * self.k_b / s**2
-        xi = -2 * s_dot**2 / s**3 * sgn(s_dot)
-        pi = -1 * (-4 * self.alpha_b * s**(-9)) * sgn(s_dot) * s_dot**2 * m
-        damp = 0. * s_dot
-        f = pi - xi - damp
-        
-        M = m * J.T @ J
-        F = J.T * (f - m * (J_dot @ x_dot)[0,0])
-        
-        return M, F, m, xi, pi, damp, f
-
+        return ObstacleAvoidance_rmp(x, x_dot, xo, self.r, self.k_b, self.alpha_b)
 
 
 
