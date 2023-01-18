@@ -20,7 +20,7 @@ class GoalAttractor:
         x_norm = sy.sqrt(x[0,0]**2 + x[1,0]**2)
         m_u, m_l, alpha_m, k, alpha_psi = sy.symbols('m_U, m_l, alpha_m, k, alpha_psi')
 
-        G = (m_u - m_l) * sy.exp(-(alpha_m * x_norm)**2) * sy.eye(2) + m_u * sy.eye(2)
+        G = (m_u - m_l) * sy.exp(-(alpha_m * x_norm)**2) * sy.eye(2) + m_l * sy.eye(2)
         psi_1 = k * (x_norm + 1/alpha_psi * sy.ln(1 + sy.exp(-2 * alpha_psi * x_norm)))
 
         L = (x_dot.T * G * x_dot)[0,0]
@@ -89,6 +89,49 @@ class ObstacleAvoidance:
     
     def calc_fabric(self, x, x_dot, xo):
         return ObstacleAvoidance_rmp(x, x_dot, xo, self.r, self.k_b, self.alpha_b)
+
+
+
+@njit
+def ParwiseDistancePreservation_rmp(x, x_dot, y, y_dot, d, m_u, m_l, alpha_m, k, alpha_psi, k_d):
+    s = LA.norm(x-y) - d
+    s_dot = (1/LA.norm(x-y) * (x-y).T @ (x_dot-y_dot))[0,0]
+    J = 1 / LA.norm(x-y) * (x-y).T
+    J_dot = -LA.norm(x-y)**(-2)*s_dot*(x-y).T + LA.norm(x-y)*(x_dot-y_dot).T
+    
+    m =  (m_u - m_l) * np.exp(-(alpha_m * s)**2) + m_l
+    
+    xi = -2 * (m_u - m_l) * alpha_m**2 * s**3 * np.exp(-alpha_m*s**2)
+    
+    grad_psi = k * (1 - np.exp(-2 * alpha_psi * s)) / (1 + np.exp(-2 * alpha_psi * s))
+
+    
+    f =  -m * grad_psi - xi - k_d*s_dot
+    
+    
+    M = m * J.T @ J
+    F = J.T * (f + m * (J_dot @ x_dot)[0,0])
+    
+    return M, F
+
+
+class ParwiseDistancePreservation:
+    """新規性"""
+    def __init__(self, d, m_u, m_l, alpha_m, k, alpha_psi, k_d):
+        self.d = d
+        self.m_u = m_u
+        self.m_l = m_l
+        self.alpha_m = alpha_m
+        self.k = k
+        self.alpha_psi = alpha_psi
+        self.k_d = k_d
+    
+    def calc_rmp(self, x, x_dot, y, y_dot=np.zeros((2,1))):
+        return ParwiseDistancePreservation_rmp(
+            x, x_dot, y, y_dot,
+            self.d, self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d
+        )
+
 
 
 

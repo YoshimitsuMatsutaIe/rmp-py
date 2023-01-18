@@ -90,6 +90,8 @@ def UnitaryGoalAttractor_a_rmp(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha,
     z = x - xg
     z_dot = x_dot - xg_dot
     z_norm = LA.norm(z)
+    z_dot_norm = LA.norm(z_dot)
+    
     beta = np.exp(- z_norm**2 / 2 / (sigma**2))
     w = (wu - wl) * beta + wl
     s = (1 - np.exp(-2 * alpha * z_norm)) / (1 + np.exp(-2 * alpha * z_norm))
@@ -99,15 +101,12 @@ def UnitaryGoalAttractor_a_rmp(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha,
     if z_norm > tol:
         grad_Phi = s / z_norm * w * gain * z
     else:
-        grad_Phi = np.zeros((2,1), np.float64)
-    
+        grad_Phi = np.zeros((2,1))
     
     Bx_dot = eta * w * z_dot
-
     grad_w = - beta * (wu - wl) / sigma**2 * z
 
-    z_dot_norm = LA.norm(z_dot)
-    xi = -0.5 * (z_dot_norm ** 2 * grad_w - 2 *
+    xi = -0.5 * (z_dot_norm**2 * grad_w - 2 *
         np.dot(np.dot(z_dot, z_dot.T), grad_w))
     
     F = -grad_Phi - Bx_dot - xi

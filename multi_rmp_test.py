@@ -40,67 +40,18 @@ for i in range(5):
 
 def test():
     """ロボット5台でテスト"""
-    
-    #sim_name = "con"
-    sim_name = "pro"
-    
-    N = 5
-    
+
+    sim_name = "con"
+    #sim_name = "pro"
+
     xg = np.array([[4, 4]]).T
     xo_s = [
         np.array([[1.0, 1.5]]).T,
         np.array([[2.0, 0.5]]).T,
-        np.array([[3, 2]]).T,
+        np.array([[2.5, 2.5]]).T,
     ]
 
-    d = 0.5
-    c = 1
-    alpha = 1
-    eta = 10
-    pair_dis_pres = multi_robot_rmp.ParwiseDistancePreservation_a(d, c, alpha, eta)
-    
-    Ds = 0.2
-    pair_obs = multi_robot_rmp.PairwiseObstacleAvoidance(
-        Ds=Ds, alpha=1e-5, eta=0.2, epsilon=1e-5
-    )
-    
-    obs_R = 0.5
-    pair_obs_obs = multi_robot_rmp.PairwiseObstacleAvoidance(
-        Ds=obs_R, alpha=1e-5, eta=0.2, epsilon=1e-5
-    )
-    
-    obs_fabric = fabric.ObstacleAvoidance(
-        r=obs_R, k_b=20, alpha_b=0.75,
-    )
-    
-    
-    
-    uni_attractor = multi_robot_rmp.UnitaryGoalAttractor_a(
-        wu=10, wl=0.1, gain=10, sigma=0.1, alpha=1, tol=1e-3, eta=1
-    )
-    
-    # X0 = np.array([
-    #     0, 1, 0, 0,
-    #     1.5, 1, 0, 0,
-    #     2, 1, 0, 0,
-    #     2, -1, 0, 0,
-    #     0, -1, 0, 0
-    # ])
-    
-    
-    X0 = np.array([
-        xs[0], ys[0], 0, 0,
-        xs[1], ys[1], 0, 0,
-        xs[2], ys[2], 0, 0,
-        xs[3], ys[3], 0, 0,
-        xs[4], ys[4], 0, 0
-    ])# + (np.random.rand(20) - 0.5)*0.1
-    
-    time_interval = 0.01
-    time_span = 500*2
-    tspan = (0, time_span)
-    teval = np.arange(0, time_span, time_interval)
-
+    N = 5
 
     pres_pair = [
         [1, 4],
@@ -108,16 +59,113 @@ def test():
         [1, 3],
         [2, 4],
         [0, 3]
-    ]
-    
+    ]  # 五角形
+
     # pres_pair = [
     #     [1, 2],
     #     [0, 2, 3],
     #     [0, 1, 4],
     #     [1],
     #     [2]
-    # ]
+    # ]  #鶴翼の陣
 
+    # pres_pair = [
+    #     [1],
+    #     [0, 2],
+    #     [1, 3],
+    #     [2, 4],
+    #     [3]
+    # ]  #鶴翼の陣
+
+
+    # X0 = np.array([
+    #     1, 1, 0, 0,
+    #     0, 1, 0, 0,
+    #     0, 0, 0, 0,
+    #     1, -1, 0, 0,
+    #     1, 0, 0, 0
+    # ])
+
+
+    # X0 = np.array([
+    #     xs[0], ys[0], 0, 0,
+    #     xs[1], ys[1], 0, 0,
+    #     xs[2], ys[2], 0, 0,
+    #     xs[3], ys[3], 0, 0,
+    #     xs[4], ys[4], 0, 0
+    # ]) + (np.random.rand(20) - 0.5)*0.9
+
+
+    xu = 5; xl = 0
+    yu = 5; yl = 0
+    X0 = np.array([
+        (xu-xl)*np.random.rand()+xl, (yu-yl)*np.random.rand()+yl, 0, 0,
+        (xu-xl)*np.random.rand()+xl, (yu-yl)*np.random.rand()+yl, 0, 0,
+        (xu-xl)*np.random.rand()+xl, (yu-yl)*np.random.rand()+yl, 0, 0,
+        (xu-xl)*np.random.rand()+xl, (yu-yl)*np.random.rand()+yl, 0, 0,
+        (xu-xl)*np.random.rand()+xl, (yu-yl)*np.random.rand()+yl, 0, 0
+    ])
+
+
+    # N = 3
+    # pres_pair = [
+    #     [1, 2],
+    #     [2, 0],
+    #     [1, 0]
+    # ]
+    # X0 = np.array([
+    #     0, -1, 0, 0,
+    #     0, 0, 0, 0,
+    #     1, 0, 0, 0
+    # ])
+
+
+
+    ### フォーメーション維持 ###
+    d = 0.5  #フォーメーション距離
+    c = 1
+    alpha = 5
+    eta = 10
+    pair_dis_pres = multi_robot_rmp.ParwiseDistancePreservation_a(d, c, alpha, eta)
+    pair_dis_pres_fabric = fabric.ParwiseDistancePreservation(
+        d=d, m_u=2, m_l=0.1, alpha_m=0.75, k=5, alpha_psi=1, k_d=10
+    )
+
+
+    # ロボット間の障害物回避
+    Ds = 0.5
+    pair_obs = multi_robot_rmp.PairwiseObstacleAvoidance(
+        Ds=Ds, alpha=1e-5, eta=0.2, epsilon=1e-5
+    )
+    pair_obs_fabric = fabric.ObstacleAvoidance(
+        r=Ds, k_b=20, alpha_b=0.75,
+    )
+
+    # 障害物回避
+    obs_R = 0.5
+    pair_obs_obs = multi_robot_rmp.PairwiseObstacleAvoidance(
+        Ds=obs_R, alpha=10, eta=0.2, epsilon=1e-5
+    )
+
+    obs_fabric = fabric.ObstacleAvoidance(
+        r=obs_R, k_b=20, alpha_b=0.75,
+    )
+
+
+    # 目標アトラクタ
+    uni_attractor = multi_robot_rmp.UnitaryGoalAttractor_a(
+        wu=10, wl=0.1, gain=150, sigma=1, alpha=1, tol=1e-3, eta=50
+    )
+
+    attractor_fabiic = fabric.GoalAttractor(
+        m_u=2, m_l=0.2, alpha_m=0.75, k=150, alpha_psi=1, k_d=50
+    )
+
+
+    time_interval = 0.01
+    time_span = 30
+    tspan = (0, time_span)
+    teval = np.arange(0, time_span, time_interval)
 
     def dX(t, X):
         #print("t = ", t)
@@ -126,44 +174,55 @@ def test():
         for i in range(N):
             x_s.append(np.array([[X[4*i+0], X[4*i+1]]]).T)
             x_dot_s.append(np.array([[X[4*i+2], X[4*i+3]]]).T)
-        
+
         for i in range(N):
             #print("i = ", i)
             root_M = np.zeros((2, 2))
             root_F = np.zeros((2, 1))
-            
-            
-            if i == 0:
-                M, F = uni_attractor.calc_rmp(x_s[i], x_dot_s[i], xg)
-                root_M += M
-                root_F += F
-            
-            for j in range(N): # ロボット自身
+
+            # if i == 0:
+            #     if sim_name == "con":
+            #         M, F = uni_attractor.calc_rmp(x_s[i], x_dot_s[i], xg)
+            #     elif sim_name == "pro":
+            #         M, F, _, _, _ = attractor_fabiic.calc_fabric(x_s[i], x_dot_s[i], xg)
+            #     else:
+            #         assert False
+            #     #print("Fat = ", F.T)
+            #     root_M += M; root_F += F
+
+            for j in range(N): #ロボット間の回避
                 if i != j:
-                    M, F = pair_obs.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
-                    root_M += M
-                    root_F += F
-            
-            for xo in xo_s:
-                #M, F = pair_obs_obs.calc_rmp(x_s[i], x_dot_s[i], xo)
-                M, F, _, _, _, _, _ = obs_fabric.calc_fabric(x_s[i], x_dot_s[i], xo)
-                root_M += M
-                root_F += F
-        
+                    if sim_name == "con":
+                        M, F = pair_obs.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+                    elif sim_name =="pro":
+                        M, F, _, _, _, _, _ = pair_obs_fabric.calc_fabric(x_s[i], x_dot_s[i], x_s[j])
+                    else:
+                        assert False
+                    root_M += M; root_F += F
 
+            # for xo in xo_s:  #障害物回避
+            #     if sim_name == "con":
+            #         M, F = pair_obs_obs.calc_rmp(x_s[i], x_dot_s[i], xo)
+            #     elif sim_name == "pro":
+            #         M, F, _, _, _, _, _ = obs_fabric.calc_fabric(x_s[i], x_dot_s[i], xo)
+            #     else:
+            #         assert False
+            #     root_M += M; root_F += F
 
+            for j in pres_pair[i]:  #フォーメーション維持
+                if sim_name == "con":
+                    M, F = pair_dis_pres.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+                elif sim_name == "pro":
+                    M, F = pair_dis_pres_fabric.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+                else:
+                    assert False
+                root_M += M; root_F += F
 
-            for j in pres_pair[i]:
-                M, F = pair_dis_pres.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
-                root_M += M
-                root_F += F
-            
-            
-            a = LA.pinv(root_M) @ root_F
+            a = LA.pinv(root_M) @ root_F# + np.random.rand(2, 1)*10
             X_dot[4*i+0:4*i+1+1, :] = x_dot_s[i]
             X_dot[4*i+2:4*i+3+1, :] = a
             #print("a = ", a.T)
-        
+
         return np.ravel(X_dot)
 
     t0 = time.perf_counter()
@@ -176,18 +235,18 @@ def test():
     ax = fig.add_subplot(111)
     for i in range(N):
         ax.plot(sol.y[4*i], sol.y[4*i+1], label="r{0}".format(i))
-    
+
     for j in range(N):
         for k in pres_pair[j]:
             frame_x = [sol.y[4*k][-1], sol.y[4*j][-1]]
             frame_y = [sol.y[4*k+1][-1], sol.y[4*j+1][-1]]
             ax.plot(frame_x, frame_y, color="k")
-    
+
     ax.scatter([xg[0,0]], [xg[1,0]], marker="*", color = "r", label="goal")
     for xo in xo_s:
         c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
         ax.add_patch(c)
-    
+
     ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
     ax.grid();ax.set_aspect('equal'); ax.legend()
     fig.savefig(sim_name + ".png")
@@ -236,9 +295,9 @@ def test():
     for i in range(N):
         x_all.extend (sol.y[4*i])
         y_all.extend(sol.y[4*i+1])
-    
+
     x_all.append(xg[0,0]); y_all.append(xg[1,0])
-        
+
     max_x = max(x_all)
     min_x = min(x_all)
     max_y = max(y_all)
@@ -260,21 +319,22 @@ def test():
         for xo in xo_s:
             c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
             ax.add_patch(c)
-        
+
         for j in range(N):
+
             ax.plot(sol.y[4*j][:i], sol.y[4*j+1][:i], label="r{0}".format(j))
-        
+
         for j in range(N):
             for k in pres_pair[j]:
                 frame_x = [sol.y[4*k][i], sol.y[4*j][i]]
                 frame_y = [sol.y[4*k+1][i], sol.y[4*j+1][i]]
                 ax.plot(frame_x, frame_y, color="k")
-        
+
         ax.set_title(time_template % sol.t[i])
         ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
         #ax.plot(sol.y[0][:i], sol.y[1][:i])
 
-        
+
         # eigvals, eigvecs = LA.eig(M_s[i])  # 計量の固有値と固有ベクトルを計算
         # if np.any(np.iscomplex(eigvals)) or np.any(eigvals <= 1e-3): # not正定対称．リーマンじゃないのでスキップ
         #     met_axes_lengths = np.array([0, 0])
@@ -288,13 +348,13 @@ def test():
         #     met_angle = np.rad2deg(np.arctan2(eigvecs[1, 0], eigvecs[0, 0]))  # 楕円の傾き
 
         # c = patches.Ellipse(
-        #     xy=(sol.y[0][i], sol.y[1][i]), 
+        #     xy=(sol.y[0][i], sol.y[1][i]),
         #     width = met_axes_lengths[0], height = met_axes_lengths[1],
         #     angle = met_angle,
         #     ec='k', fill=False
         # )
         # ax.add_patch(c)
-        
+
         # x = np.array([[sol.y[0][i], sol.y[1][i]]]).T
         # xi = x + xi_s[i]*f_scale
         # ax.plot([x[0,0], xi[0,0]], [x[1,0], xi[1,0]], label="xi")
@@ -302,14 +362,14 @@ def test():
         # ax.plot([x[0,0], pi[0,0]], [x[1,0], pi[1,0]], label="pi")
         # f = x + f_s[i]*f_scale
         # ax.plot([x[0,0], f[0,0]], [x[1,0], f[1,0]], label="f")
-        
+
         ax.set_xlim(mid_x-max_range, mid_x+max_range)
         ax.set_ylim(mid_y-max_range, mid_y+max_range)
         ax.grid()
         ax.set_aspect('equal')
         ax.legend()
 
-    epoch_max = 60
+    epoch_max = 80
     if len(sol.t) < epoch_max:
         step = 1
     else:
@@ -328,5 +388,5 @@ def test():
 
 
 if __name__ == "__main__":
-    
+
     test()
