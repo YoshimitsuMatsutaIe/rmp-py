@@ -42,17 +42,17 @@ from multiprocessing import Pool, cpu_count
 
 
 
-def test(sim_param_path):
+def test(exp_name, sim_param_path, i, rand):
     """ロボット5台でテスト"""
-    date_now = datetime.datetime.now()
-    data_label = date_now.strftime('%Y-%m-%d--%H-%M-%S')
-    dir_base = "../syuron/formation_preservation_only/"
+    
+    data_label = str(i)
+    dir_base = "../syuron/formation_preservation_only/" + exp_name + "/"
     os.makedirs(dir_base, exist_ok=True)
     os.makedirs(dir_base + "csv", exist_ok=True)
     os.makedirs(dir_base + "fig", exist_ok=True)
     os.makedirs(dir_base + "animation", exist_ok=True)
     os.makedirs(dir_base + "config", exist_ok=True)
-    os.makedirs(dir_base + "initial", exist_ok=True)
+    os.makedirs(dir_base + "message", exist_ok=True)
     
     #shutil.copy2(sim_param_path, self.dir_base)
     with open(sim_param_path) as f:
@@ -124,12 +124,13 @@ def test(sim_param_path):
     X0_ = []
     for _ in range(N):
         X0_.extend([
-            (xu-xl)*np.random.rand()+xl,
-            (yu-yl)*np.random.rand()+yl,
+            rand.uniform(xl, xu),
+            rand.uniform(yl, yu),
             0,
             0,
         ])
     X0 = np.array(X0_)
+    #print(X0)
 
 
     # N = 3
@@ -192,15 +193,15 @@ def test(sim_param_path):
                 #print("Fat = ", F.T)
                 root_M += M; root_F += F
 
-            # for j in range(N): #ロボット間の回避
-            #     if i != j:
-            #         if sim_name == "rmp":
-            #             M, F = pair_obs.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
-            #         elif sim_name =="fabric":
-            #             M, F, _, _, _, _, _ = pair_obs_fabric.calc_fabric(x_s[i], x_dot_s[i], x_s[j])
-            #         else:
-            #             assert False
-            #         root_M += M; root_F += F
+            for j in range(N): #ロボット間の回避
+                if i != j:
+                    if sim_name == "rmp":
+                        M, F = pair_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+                    elif sim_name =="fabric":
+                        M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(x_s[i], x_dot_s[i], x_s[j])
+                    else:
+                        assert False
+                    root_M += M; root_F += F
 
             if xo_s is not None:
                 for xo in xo_s:  #障害物回避
@@ -238,7 +239,8 @@ def test(sim_param_path):
             args=(sim_name,)
         )
         #print(sol.message)
-        
+        with open(dir_base + "message/" + data_label + "_" + sim_name + '.txt', 'w') as f:
+            f.write(sol.message)
         #print("time = ", time.perf_counter() - t0)
 
         ## CSV保存
@@ -373,16 +375,21 @@ def test(sim_param_path):
             frames = range(0, len(sol.t), step),
             interval=60
         )
-        ani.save(dir_base + "animation/" + sim_name + "_" + data_label + '.gif', writer="pillow")
+        ani.save(dir_base + "animation/" + data_label+ sim_name + "_"  + '.gif', writer="pillow")
 
         #print("ani_time = ", time.perf_counter() - t0)
 
 
-
-if __name__ == "__main__":
-    sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/test1.yaml"
+def runner(sim_path, n):
+    date_now = datetime.datetime.now()
+    data_label = date_now.strftime('%Y-%m-%d--%H-%M-%S')
+    dir_base = "../syuron/formation_preservation_only/" + data_label
+    os.makedirs(dir_base, exist_ok=True)
     
-    sim_path_s = [sim_path for _ in range(10)]
+    itr = [
+        (data_label, sim_path, i, np.random.RandomState(np.random.randint(0, 10000000)))
+        for i in range(n)
+    ]
     
     
     core = cpu_count()
@@ -390,5 +397,10 @@ if __name__ == "__main__":
     with Pool(core) as p:
         result = p.starmap(
             func = test,
-            iterable = ((s,) for s in sim_path_s)
+            iterable = itr
         )
+
+
+if __name__ == "__main__":
+    sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/test1.yaml"
+    runner(sim_path, 10)
