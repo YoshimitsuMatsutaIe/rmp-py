@@ -58,16 +58,27 @@ def sgn(x_dot):
 
 
 @njit
-def ObstacleAvoidance_rmp(x, x_dot, xo, r, k_b, alpha_b):
-    
+def task_map2(r, x, x_dot, xo, xo_dot):
+    """円形障害物回避"""
     xxo_norm = LA.norm(x - xo)
     s = xxo_norm / r - 1
-    J = 1 / (r * xxo_norm) * (x-xo).T
-    s_dot = (J @ x_dot)[0,0]
-    J_dot = 1/r * (
-        -xxo_norm**(-3/2)*(np.sum(x_dot))*x.T + \
-            xxo_norm**(-1/2)*x_dot.T
-    )
+    J = 1/(r * xxo_norm) * (x-xo).T
+    s_dot = (1/(r * xxo_norm) * (x-xo).T @ (x_dot-xo_dot))[0,0]
+    s_dot_ = s_dot*r
+    J_dot = 1/r * (-xxo_norm**(-2)*s_dot_*(x-xo).T + xxo_norm**(-1)*(x_dot-xo_dot).T)
+
+    return s, s_dot, J, J_dot
+
+
+@njit
+def ObstacleAvoidance_rmp(x, x_dot, xo, xo_dot, r, k_b, alpha_b):
+    
+    # xxo_norm = LA.norm(x - xo)
+    # s = xxo_norm / r - 1
+    # J = 1 / (r * xxo_norm) * (x-xo).T
+    # s_dot = (J @ x_dot)[0,0]
+    # J_dot = 1/r * (-xxo_norm**(-3/2)*(np.sum(x_dot))*x.T + xxo_norm**(-1/2)*x_dot.T)
+    s, s_dot, J, J_dot = task_map2(r, x, x_dot, xo, xo_dot)
     
     m = sgn(s_dot) * k_b / s**2
     xi = -2 * s_dot**2 / s**3 * sgn(s_dot)
@@ -87,8 +98,8 @@ class ObstacleAvoidance:
         self.k_b = k_b
         self.alpha_b = alpha_b
     
-    def calc_fabric(self, x, x_dot, xo):
-        return ObstacleAvoidance_rmp(x, x_dot, xo, self.r, self.k_b, self.alpha_b)
+    def calc_fabric(self, x, x_dot, xo, xo_dot):
+        return ObstacleAvoidance_rmp(x, x_dot, xo, xo_dot, self.r, self.k_b, self.alpha_b)
 
 
 
@@ -99,12 +110,11 @@ def ParwiseDistancePreservation_rmp(x, x_dot, y, y_dot, d, m_u, m_l, alpha_m, k,
     J = 1 / LA.norm(x-y) * (x-y).T
     J_dot = -LA.norm(x-y)**(-2)*s_dot*(x-y).T + LA.norm(x-y)*(x_dot-y_dot).T
     
+    #s, s_dot, J, J_dot = task_map2(d, x, x_dot, y, y_dot)
+    
     m =  (m_u - m_l) * np.exp(-(alpha_m * s)**2) + m_l
-    
     xi = -2 * (m_u - m_l) * alpha_m**2 * s**3 * np.exp(-alpha_m*s**2)
-    
     grad_psi = k * (1 - np.exp(-2 * alpha_psi * s)) / (1 + np.exp(-2 * alpha_psi * s))
-
     
     f =  -m * grad_psi - xi - k_d*s_dot
     
@@ -116,7 +126,7 @@ def ParwiseDistancePreservation_rmp(x, x_dot, y, y_dot, d, m_u, m_l, alpha_m, k,
 
 
 class ParwiseDistancePreservation:
-    """新規性"""
+    """新規性 距離維持"""
     def __init__(self, d, m_u, m_l, alpha_m, k, alpha_psi, k_d):
         self.d = d
         self.m_u = m_u

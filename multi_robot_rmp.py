@@ -29,12 +29,12 @@ def PairwiseObstacleAvoidance_rmp(x, x_dot, xo, Ds, alpha, eta, epsilon):
     xi = 0.5 * s_dot**2 * u * grad_w
 
     m = g + 0.5 * s_dot * w * grad_u
-    m = np.minimum(np.maximum(m, - 1e5), 1e5)
+    #m = np.minimum(np.maximum(m, - 1e5), 1e5)
 
     Bx_dot = eta * g * s_dot
 
     f = - grad_Phi - xi - Bx_dot
-    f = np.minimum(np.maximum(f, - 1e10), 1e10)
+    #f = np.minimum(np.maximum(f, - 1e10), 1e10)
     
     
     M = m * J.T @ J
@@ -51,11 +51,14 @@ class PairwiseObstacleAvoidance:
         self.epsilon = epsilon
 
     def calc_rmp(self, x, x_dot, xo):
-        return PairwiseObstacleAvoidance_rmp(x, x_dot, xo, self.Ds, self.alpha, self.eta, self.epsilon)
+        return PairwiseObstacleAvoidance_rmp(
+            x, x_dot, xo, self.Ds, self.alpha, self.eta, self.epsilon
+        )
 
 
 @njit
 def ParwiseDistancePreservation_a_rmp(x, x_dot, y, y_dot, d, c, alpha, eta):
+    "距離維持rmpを計算"
     s = LA.norm(x-y) - d
     s_dot = (1/LA.norm(x-y) * (x-y).T @ (x_dot-y_dot))[0,0]
     J = 1 / LA.norm(x-y) * (x-y).T
@@ -72,6 +75,7 @@ def ParwiseDistancePreservation_a_rmp(x, x_dot, y, y_dot, d, c, alpha, eta):
 
 
 class ParwiseDistancePreservation_a:
+    "rmpflowの距離維持"
     def __init__(self, d, c, alpha, eta,):
         self.d = d #desired distance
         self.c = c #weight
@@ -84,7 +88,6 @@ class ParwiseDistancePreservation_a:
         )
 
 
-#@njit("Tuple((f8[:,:], f8[:,:]))(f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8, f8, f8, f8, f8, f8, f8)")
 @njit
 def UnitaryGoalAttractor_a_rmp(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha, tol, eta):
     z = x - xg

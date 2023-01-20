@@ -12,9 +12,9 @@ pair :
 initial_condition :
   type : random
   value :
-    x_max : 5
+    x_max : 1
     x_min : 0
-    y_max : 5
+    y_max : 1
     y_min : 0
   velocity :
     type : fixed
@@ -24,17 +24,17 @@ obstacle : []
 controller : 
   rmp :
     formation_preservation :
-      d : 0.5
+      d : 0.1
       c : 1
       alpha : 5
-      eta : 10
+      eta : 100
     pair_avoidance :
-      Ds : 0.5
+      Ds : 0.1
       alpha : 0.00001
       eta : 0.2
       epsilon : 0.00001
     obstacle_avoidance:
-      Ds : 0.5
+      Ds : 0.1
       alpha : 0.00001
       eta : 0.2
       epsilon : 0.00001
@@ -48,19 +48,19 @@ controller :
       eta : 50
   fabric :
     formation_preservation :
-      d : 5
+      d : 0.1
       m_u : 2
       m_l : 0.1
       alpha_m : 0.75
       k : 5
       alpha_psi : 1
-      k_d : 10
+      k_d : 100
     pair_avoidance :
-      r : 0.5
+      r : 0.1
       k_b : 20
       alpha_b : 0.75
     obstacle_avoidance:
-      r : 0.5
+      r : 0.1
       k_b : 20
       alpha_b : 0.75
     goal_attractor:
