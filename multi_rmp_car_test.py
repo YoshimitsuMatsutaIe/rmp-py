@@ -535,4 +535,4 @@ def runner(sim_path, n):
 
 if __name__ == "__main__":
     sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/car_1.yaml"
-    runner(sim_path, 1)
+    runner(sim_path, 1000)

@@ -2,12 +2,7 @@ model : car
 time_span : 5
 time_interval : 0.01
 N : 3
-pair :
-  [
-    [1, 2],
-    [0, 2],
-    [1, 0]
-  ]
+pair : 1
 robot_r : &robot_r 0.1  #ロボットの半径
 initial_condition :
   # type : specigyde

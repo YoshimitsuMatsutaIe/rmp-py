@@ -25,7 +25,7 @@ import fabric
 import multi_robot_rmp
 from multiprocessing import Pool, cpu_count
 
-
+import config_syuron.car_1 as car_1
 
 
 # def print_progress(t, time_span, flag):
@@ -44,14 +44,14 @@ from multiprocessing import Pool, cpu_count
 #     xs.append(r * cos(2*pi/5 * i + pi/2))
 #     ys.append(r * sin(2*pi/5 * i + pi/2))
 
-@njit
+#@njit("f8[:,:](f8)")
 def rotate(theta):
     return np.array([
         [cos(theta), -sin(theta)],
         [sin(theta), cos(theta)]
     ])
 
-@njit
+#@njit("f8[:,:](f8)")
 def rotate_dot(theta):
     """theta微分"""
     return np.array([
@@ -92,30 +92,29 @@ def turtle_bot(x, y, theta, dx, dy, omega, v, xi):
     
     return J, T
 
-@njit
-def J_transform(x_bar: float, y_bar: float, theta: float):
+@njit("f8[:,:](f8[:,:], f8)")
+def J_transform(x_bar, theta):
     return np.array([
-        [1.0, 0.0, -sin(theta)*x_bar - cos(theta)*y_bar],
-        [0.0, 1.0, cos(theta)*x_bar - sin(theta)*y_bar]
+        [1.0, 0.0, -sin(theta)*x_bar[0,0] - cos(theta)*x_bar[1,0]],
+        [0.0, 1.0, cos(theta)*x_bar[0,0] - sin(theta)*x_bar[1,0]]
     ])
 
 
-@njit
-def calc_cpoint_state(x_s, x_dot_s, theta_s, omega_s, x_bars):
+#@njit#("f8[:,:](f8)")
+def calc_cpoint_state(x, x_dot, theta, omega, x_bars):
     y_s = []
     y_dot_s = []
     for i, x_bar in enumerate(x_bars):
         y_s.append(
-            x_s[i] + rotate(theta_s[i]) @ x_bar
+            x + rotate(theta) @ x_bar
         )
         y_dot_s.append(
-            x_dot_s[i] + omega_s[i]*rotate_dot(theta_s[i]) @ x_bar
+            x_dot + omega*rotate_dot(theta) @ x_bar
         )
     return y_s, y_dot_s
 
 
-def test(exp_name, sim_param_path, i, rand):
-    """ロボット5台でテスト"""
+def test(exp_name, sim_param, i, rand):
     
     data_label = str(i)
     dir_base = "../syuron/formation_preservation_only/" + exp_name + "/"
@@ -127,8 +126,6 @@ def test(exp_name, sim_param_path, i, rand):
     os.makedirs(dir_base + "message", exist_ok=True)
     os.makedirs(dir_base + "state", exist_ok=True)
     
-    with open(sim_param_path) as f:
-        sim_param = yaml.safe_load(f)
     with open(dir_base + "config/" + data_label + '.yaml', 'w') as f:
         yaml.dump(sim_param, f)
 
@@ -149,16 +146,14 @@ def test(exp_name, sim_param_path, i, rand):
     sdim = 8
     pres_pair = sim_param["pair"]
     
-    cpoint_num = 4  #ロボット一台あたりの制御点の数
+    cpoint_num = sim_param["robot_cpoints_num"]  #ロボット一台あたりの制御点の数
     x_bar_s = []
-    for i in range(N):
-        x_ = []
-        for j in range(cpoint_num):
-            theta = 2*np.pi/2 / cpoint_num * j
-            x_.append(
-                np.array([[robot_r*cos(theta), robot_r*sin(theta)]]).T
-            )
-        x_bar_s.append(x_)
+    for j in range(cpoint_num):
+        theta = 2*np.pi / cpoint_num * j
+        x_bar_s.append(
+            np.array([[robot_r*cos(theta), robot_r*sin(theta)]]).T
+        )
+    #print(x_bar_s)
 
     rmp = sim_param["controller"]["rmp"]
     fab = sim_param["controller"]["fabric"]
@@ -236,10 +231,13 @@ def test(exp_name, sim_param_path, i, rand):
 
 
     def dX(t, X, sim_name):
-        #print("t = ", t)
+        #print("\nt = ", t)
+        
         x_s, x_dot_s = [], []
         theta_s, omega_s = [], []
         v_s = []; xi_s = []
+        y_s = []  #制御点の位置．二重配列
+        y_dot_s = []
         for i in range(N):
             x_s.append(np.array([X[sdim*i:sdim*i+2]]).T)
             x_dot_s.append(np.array([X[sdim*i+3:sdim*i+5]]).T)
@@ -247,56 +245,21 @@ def test(exp_name, sim_param_path, i, rand):
             omega_s.append(X[sdim*i+5])
             v_s.append(X[sdim*i+6])
             xi_s.append(X[sdim*i+7])
-
-        for i in range(N):
-            trans_M = np.zeros((3, 3))
-            trans_F = np.zeros((3, 1))
-            root_M = np.zeros((2, 2))
-            root_F = np.zeros((2, 1))
-
-            if i == 0 and xg is not None:  #アトラクタ
-                head_x = x_s[i] + rotate(theta_s[i]) @ np.array([[pair_R, 0]]).T
-                head_x_dot = x_dot_s[i] + omega_s[i]*rotate_dot(theta_s[i]) @ np.array([[pair_R, 0]]).T
-                if sim_name == "rmp":
-                    M, F = attractor_rmp.calc_rmp(head_x, head_x_dot, xg)
-                elif sim_name == "fabric":
-                    M, F, _, _, _ = attractor_fab.calc_fabric(head_x, head_x_dot, xg)
-                else:
-                    assert False
+            for j in range(cpoint_num):
                 
-                root_M += M
-                root_F += F
+                y_, y_dot_ = calc_cpoint_state(
+                    x_s[-1], x_dot_s[-1], theta_s[-1], omega_s[-1], x_bar_s
+                )
+                y_s.append(y_)
+                y_dot_s.append(y_dot_)
 
-            if xo_s is not None:
-                for xo in xo_s:  #障害物回避
-                    if sim_name == "rmp":
-                        M, F = obs_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], xo)
-                    elif sim_name == "fabric":
-                        M, F, _, _, _, _, _ = obs_avoidamce_fab.calc_fabric(x_s[i], x_dot_s[i], xo, np.zeros(xo.shape))
-                    else:
-                        assert False
-                    root_M += M; root_F += F
-
-            if N != 1:
-                for j in range(N): #ロボット間の回避
-                    if i != j:
-                        if sim_name == "rmp":
-                            M, F = pair_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
-                        elif sim_name =="fabric":
-                            M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(x_s[i], x_dot_s[i], x_s[j], x_dot_s[j])
-                        else:
-                            assert False
-                        root_M += M; root_F += F
-                
-                for j in pres_pair[i]:  #フォーメーション維持
-                    if sim_name == "rmp":
-                        M, F = formation_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
-                    elif sim_name == "fabric":
-                        M, F = formation_fab.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
-                    else:
-                        assert False
-                    root_M += M; root_F += F
-
+        X_dot = np.zeros((sdim*N, 1))  #速度ベクトル
+        for i in range(N):  #ロボットごとに計算
+            #print("robot_name = ", i)
+            trans_M = np.zeros((2, 2))
+            trans_F = np.zeros((2, 1))
+            M = np.zeros((2, 2))
+            F = np.zeros((2, 1))
 
             J, T = turtle_bot(
                 x=x_s[i][0,0], y=x_s[i][1,0], theta=theta_s[i],
@@ -308,18 +271,72 @@ def test(exp_name, sim_param_path, i, rand):
             #     dx=x_dot_s[i][0,0], dy=x_dot_s[i][1,0], omega=omega_s[i],
             #     v=v_s[i], xi=xi_s[i], L=L
             # )
-            
-            J_trans = J_transform(pair_R, 0, theta_s[i])
 
-            trans_M = (J_trans @ J).T @ root_M @ (J_trans @ J)
-            trans_F = (J_trans @ J).T @ (root_F)
+
+            if i == 0 and xg is not None:  #アトラクタ
+                # head_x = x_s[i] + rotate(theta_s[i]) @ np.array([[pair_R, 0]]).T
+                # head_x_dot = x_dot_s[i] + omega_s[i]*rotate_dot(theta_s[i]) @ np.array([[pair_R, 0]]).T
+                head_x = y_s[i][0]
+                head_x_dot = y_dot_s[i][0]
+                if sim_name == "rmp":
+                    M, F = attractor_rmp.calc_rmp(head_x, head_x_dot, xg)
+                elif sim_name == "fabric":
+                    M, F, _, _, _ = attractor_fab.calc_fabric(head_x, head_x_dot, xg)
+                J_trans = J_transform(x_bar_s[0], theta_s[i])
+                trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                trans_F += (J_trans @ J).T @ F
+
+            # if xo_s is not None:
+            #     for xo in xo_s:  #障害物回避
+            #         if sim_name == "rmp":
+            #             M, F = obs_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], xo)
+            #         elif sim_name == "fabric":
+            #             M, F, _, _, _, _, _ = obs_avoidamce_fab.calc_fabric(x_s[i], x_dot_s[i], xo, np.zeros(xo.shape))
+            #         else:
+            #             assert False
+            #         root_M += M; root_F += F
+
+            # if N != 1:
+            #     for j in range(N): #ロボット間の回避
+            #         if i != j:
+            #             if sim_name == "rmp":
+            #                 M, F = pair_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+            #             elif sim_name =="fabric":
+            #                 M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(x_s[i], x_dot_s[i], x_s[j], x_dot_s[j])
+            #             else:
+            #                 assert False
+            #             root_M += M; root_F += F
+        
+            for p in pres_pair[i]:  #フォーメーション維持
+                cp_num, ib = p
+                xa = y_s[i][cp_num]
+                xa_dot = y_dot_s[i][cp_num]
+                xb = y_s[ib[0]][ib[1]]
+                if sim_name == "rmp":
+                    M, F = formation_rmp.calc_rmp(xa, xa_dot, xb)
+                elif sim_name == "fabric":
+                    M, F = formation_fab.calc_rmp(xa, xa_dot, xb)
+                
+                #print("pair_F =", F.T)
+                J_trans = J_transform(x_bar_s[cp_num], theta_s[i])
+                trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                trans_F += (J_trans @ J).T @ F
+
+
+            
+            # J_trans = J_transform(pair_R, 0, theta_s[i])
+
+            # trans_M = (J_trans @ J).T @ root_M @ (J_trans @ J)
+            # trans_F = (J_trans @ J).T @ (root_F)
 
             u_dot = LA.pinv(trans_M) @ trans_F
-            #print(u_dot)
+            
+            #print("trans_F = ", trans_F.T)
+            #print("du = ", u_dot.T)
             
             
             a = J @ u_dot + T
-            X_dot = np.zeros((sdim*N, 1))
+
             X_dot[sdim*i+0:sdim*i+2, :] = x_dot_s[i]
             X_dot[sdim*i+2, :] = omega_s[i]
             X_dot[sdim*i+3:sdim*i+6, :] = a
@@ -364,24 +381,44 @@ def test(exp_name, sim_param_path, i, rand):
             delimiter = ","
         )
 
+
         # 最後の場面のグラフ
+        y_s = []
+        y_s_list = []
+        for i in range(N):
+            x = np.array([[sol.y[sdim*i][-1], sol.y[sdim*i+1][-1]]]).T
+            theta = sol.y[sdim*i+2][-1]
+            x_dot = np.array([[sol.y[sdim*i+3][-1], sol.y[sdim*i+4][-1]]]).T
+            omega = sol.y[sdim*i+5][-1]
+            y_, _ = calc_cpoint_state(
+                x=x, x_dot=x_dot, theta=theta, omega=omega, x_bars=x_bar_s
+            )
+            y_s.append(np.concatenate(y_, axis=1))
+            y_s_list.append(y_)
+        
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for i in range(N):
             ax.plot(sol.y[sdim*i], sol.y[sdim*i+1], label="r{0}".format(i))
             c = patches.Circle(xy=(sol.y[sdim*i][-1], sol.y[sdim*i+1][-1]), radius=robot_r, ec='k', fill=False)
             ax.add_patch(c)
-            xs = [sol.y[sdim*i][-1] + pair_R*cos(sol.y[sdim*i+2][-1])]
-            ys = [sol.y[sdim*i+1][-1] + pair_R*sin(sol.y[sdim*i+2][-1])]
-            ax.scatter(xs, ys)
+            
+            # 制御点
+            ax.scatter(y_s[i][0,:], y_s[i][1,:])
+            # 頭
+            
 
         if N != 1:
             for j in range(N):
-                for k in pres_pair[j]:
-                    frame_x = [sol.y[sdim*k][-1], sol.y[sdim*j][-1]]
-                    frame_y = [sol.y[sdim*k+1][-1], sol.y[sdim*j+1][-1]]
+                for p in pres_pair[j]:
+                    cpnum, ib = p
+                    xa = y_s_list[j][cpnum]
+                    xb = y_s_list[ib[0]][ib[1]]
+                    frame_x = [xa[0,0], xb[0,0]]
+                    frame_y = [xa[1,0], xb[1,0]]
                     ax.plot(frame_x, frame_y, color="k")
 
+        # goal and obstacle
         if xg is not None:
             ax.scatter([xg[0,0]], [xg[1,0]], marker="*", color = "r", label="goal")
         # for xo in xo_s:
@@ -393,6 +430,9 @@ def test(exp_name, sim_param_path, i, rand):
         ax.grid();ax.set_aspect('equal'); ax.legend()
         fig.savefig(dir_base + "fig/" + data_label + "_" + sim_name + ".png")
         plt.clf(); plt.close()
+
+
+
 
         # 状態グラフ
         fig2, axes = plt.subplots(nrows=6, ncols=1, figsize=(6, 12))
@@ -428,6 +468,21 @@ def test(exp_name, sim_param_path, i, rand):
         mid_y = (max_y + min_y) * 0.5
         max_range = max(max_x-min_x, max_y-min_y) * 0.5
 
+
+        y_s = []
+        y_s_list = []
+        for i in range(N):
+            x = np.array([[sol.y[sdim*i][0], sol.y[sdim*i+1][0]]]).T
+            theta = sol.y[sdim*i+2][0]
+            x_dot = np.array([[sol.y[sdim*i+3][0], sol.y[sdim*i+4][0]]]).T
+            omega = sol.y[sdim*i+5][0]
+            y_, _ = calc_cpoint_state(
+                x=x, x_dot=x_dot, theta=theta, omega=omega, x_bars=x_bar_s
+            )
+            y_s.append(np.concatenate(y_, axis=1))
+            y_s_list.append(y_)
+
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
         time_template = 'time = %.2f [s]'
@@ -444,29 +499,46 @@ def test(exp_name, sim_param_path, i, rand):
         tra_s = []
         robot_c_s = []
         head_s = []
+        cpoint_s = []
         for j in range(N):
             tra, = ax.plot(sol.y[sdim*j][:0], sol.y[sdim*j+1][:0], label="r{0}".format(j))
             tra_s.append(tra)
             c = patches.Circle(xy=(sol.y[sdim*j][0], sol.y[sdim*j+1][0]), radius=pair_R, ec='k', fill=False)
             robot_c_s.append(c)
-            xs = [sol.y[sdim*j][0] + pair_R*cos(sol.y[sdim*j+2][0])]
-            ys = [sol.y[sdim*j+1][0] + pair_R*sin(sol.y[sdim*j+2][0])]
+            # xs = [sol.y[sdim*j][0] + pair_R*cos(sol.y[sdim*j+2][0])]
+            # ys = [sol.y[sdim*j+1][0] + pair_R*sin(sol.y[sdim*j+2][0])]
             
-            head = ax.scatter(xs, ys)
-            head_s.append(head)
+            # head = ax.scatter(xs, ys)
+            # head_s.append(head)
+            
+            # 制御点
+            scat = ax.scatter(y_s[i][0,:], y_s[i][1,:])
+            cpoint_s.append(scat)
         
         for c in robot_c_s:
             ax.add_patch(c)
 
+        # pair_s = {}
+        # if N != 1:
+        #     for j in range(N):
+        #         temp_pair = []
+        #         for k in pres_pair[j]:
+        #             frame_x = [sol.y[sdim*k][i], sol.y[sdim*j][i]]
+        #             frame_y = [sol.y[sdim*k+1][i], sol.y[sdim*j+1][i]]
+        #             t_, = ax.plot(frame_x, frame_y, color="k")
+        #             pair_s[(j, k)] = t_
+
         pair_s = {}
         if N != 1:
             for j in range(N):
-                temp_pair = []
-                for k in pres_pair[j]:
-                    frame_x = [sol.y[sdim*k][i], sol.y[sdim*j][i]]
-                    frame_y = [sol.y[sdim*k+1][i], sol.y[sdim*j+1][i]]
+                for p in pres_pair[j]:
+                    cpnum, ib = p
+                    xa = y_s_list[j][cpnum]
+                    xb = y_s_list[ib[0]][ib[1]]
+                    frame_x = [xa[0,0], xb[0,0]]
+                    frame_y = [xa[1,0], xb[1,0]]
                     t_, = ax.plot(frame_x, frame_y, color="k")
-                    pair_s[(j, k)] = t_
+                    pair_s[(j, cpnum, ib[0], ib[1])] = t_
 
         tx = ax.set_title(time_template % sol.t[0])
         ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
@@ -477,19 +549,51 @@ def test(exp_name, sim_param_path, i, rand):
         ax.legend()
         
         def update(i):
+            y_s = []
+            y_s_list = []
+            for j in range(N):
+                x = np.array([[sol.y[sdim*j][i], sol.y[sdim*j+1][i]]]).T
+                theta = sol.y[sdim*j+2][i]
+                x_dot = np.array([[sol.y[sdim*j+3][i], sol.y[sdim*j+4][i]]]).T
+                omega = sol.y[sdim*j+5][i]
+                y_, _ = calc_cpoint_state(
+                    x=x, x_dot=x_dot, theta=theta, omega=omega, x_bars=x_bar_s
+                )
+                y_s.append(np.concatenate(y_, axis=1))
+                y_s_list.append(y_)
+            
+            
             for j in range(N):
                 tra_s[j].set_data(sol.y[sdim*j][:i], sol.y[sdim*j+1][:i])
                 robot_c_s[j].set_center([sol.y[sdim*j][i], sol.y[sdim*j+1][i]])
                 xs = [sol.y[sdim*j][i] + pair_R*cos(sol.y[sdim*j+2][i])]
                 ys = [sol.y[sdim*j+1][i] + pair_R*sin(sol.y[sdim*j+2][i])]
-                head_s[j].set_offsets([xs[0], ys[0]])
+                #head_s[j].set_offsets([xs[0], ys[0]])
+                
+                d_ = []
+                for k in range(cpoint_num):
+                    d_.append((y_s_list[j][k][0,0], y_s_list[j][k][1,0]))
 
+                cpoint_s[j].set_offsets(d_)
+
+
+            # if N != 1:
+            #     for j in range(N):
+            #         for k in pres_pair[j]:
+            #             frame_x = [sol.y[sdim*k][i], sol.y[sdim*j][i]]
+            #             frame_y = [sol.y[sdim*k+1][i], sol.y[sdim*j+1][i]]
+            #             pair_s[(j, k)].set_data(frame_x, frame_y)
+            
             if N != 1:
                 for j in range(N):
-                    for k in pres_pair[j]:
-                        frame_x = [sol.y[sdim*k][i], sol.y[sdim*j][i]]
-                        frame_y = [sol.y[sdim*k+1][i], sol.y[sdim*j+1][i]]
-                        pair_s[(j, k)].set_data(frame_x, frame_y)
+                    for p in pres_pair[j]:
+                        cpnum, ib = p
+                        xa = y_s_list[j][cpnum]
+                        xb = y_s_list[ib[0]][ib[1]]
+                        frame_x = [xa[0,0], xb[0,0]]
+                        frame_y = [xa[1,0], xb[1,0]]
+                        pair_s[(j, cpnum, ib[0], ib[1])].set_data(frame_x, frame_y)
+            
             
             tx.set_text(time_template % sol.t[i])
 
@@ -511,8 +615,10 @@ def test(exp_name, sim_param_path, i, rand):
         ani.save(dir_base + "animation/" + data_label+ sim_name + "_"  + '.gif', writer="pillow")
         plt.clf(); plt.close()
 
+    return
 
-def runner(sim_path, n):
+
+def runner(sim_param, n):
     t0 = time.perf_counter()
     date_now = datetime.datetime.now()
     data_label = date_now.strftime('%Y-%m-%d--%H-%M-%S')
@@ -520,19 +626,22 @@ def runner(sim_path, n):
     os.makedirs(dir_base, exist_ok=True)
     
     itr = [
-        (data_label, sim_path, i, np.random.RandomState(np.random.randint(0, 10000000)))
+        (data_label, sim_param, i, np.random.RandomState(np.random.randint(0, 10000000)))
         for i in range(n)
     ]
     
+    # # 複数プロセス
+    # core = cpu_count()
+    # #core = 2
+    # with Pool(core) as p:
+    #     result = p.starmap(func=test, iterable=itr)
     
-    core = cpu_count()
-    #core = 2
-    with Pool(core) as p:
-        result = p.starmap(func=test, iterable=itr)
+    # デバッグ用
+    test(*itr[0])
     
     print("time = ", time.perf_counter() - t0)
 
 
 if __name__ == "__main__":
-    sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/car_1.yaml"
-    runner(sim_path, 1)
+    
+    runner(car_1.sim_param, 1)
