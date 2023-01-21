@@ -1,5 +1,5 @@
 model : car
-time_span : 30
+time_span : 5
 time_interval : 0.01
 N : 3
 pair :
@@ -8,6 +8,7 @@ pair :
     [0, 2],
     [1, 0]
   ]
+robot_r : &robot_r 0.1  #ロボットの半径
 initial_condition :
   # type : specigyde
   # value : [
@@ -35,7 +36,7 @@ controller :
       alpha : 10
       eta : 10
     pair_avoidance :
-      Ds : &pair_avoi_r 0.1
+      Ds : &pair_avoi_r 0.2
       alpha : 0.00001
       eta : 0.2
       epsilon : 0.00001
