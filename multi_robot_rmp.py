@@ -59,6 +59,8 @@ class PairwiseObstacleAvoidance:
 @njit
 def ParwiseDistancePreservation_a_rmp(x, x_dot, y, y_dot, d, c, alpha, eta):
     "距離維持rmpを計算"
+    
+    #print("dis = ", LA.norm(x-y))
     s = LA.norm(x-y) - d
     s_dot = (1/LA.norm(x-y) * (x-y).T @ (x_dot-y_dot))[0,0]
     J = 1 / LA.norm(x-y) * (x-y).T

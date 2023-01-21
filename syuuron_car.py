@@ -245,13 +245,12 @@ def test(exp_name, sim_param, i, rand):
             omega_s.append(X[sdim*i+5])
             v_s.append(X[sdim*i+6])
             xi_s.append(X[sdim*i+7])
-            for j in range(cpoint_num):
-                
-                y_, y_dot_ = calc_cpoint_state(
-                    x_s[-1], x_dot_s[-1], theta_s[-1], omega_s[-1], x_bar_s
-                )
-                y_s.append(y_)
-                y_dot_s.append(y_dot_)
+
+            y_, y_dot_ = calc_cpoint_state(
+                x_s[-1], x_dot_s[-1], theta_s[-1], omega_s[-1], x_bar_s
+            )
+            y_s.append(y_)
+            y_dot_s.append(y_dot_)
 
         X_dot = np.zeros((sdim*N, 1))  #速度ベクトル
         for i in range(N):  #ロボットごとに計算
@@ -307,20 +306,28 @@ def test(exp_name, sim_param, i, rand):
             #                 assert False
             #             root_M += M; root_F += F
         
-            for p in pres_pair[i]:  #フォーメーション維持
-                cp_num, ib = p
-                xa = y_s[i][cp_num]
-                xa_dot = y_dot_s[i][cp_num]
-                xb = y_s[ib[0]][ib[1]]
-                if sim_name == "rmp":
-                    M, F = formation_rmp.calc_rmp(xa, xa_dot, xb)
-                elif sim_name == "fabric":
-                    M, F = formation_fab.calc_rmp(xa, xa_dot, xb)
-                
-                #print("pair_F =", F.T)
-                J_trans = J_transform(x_bar_s[cp_num], theta_s[i])
-                trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
-                trans_F += (J_trans @ J).T @ F
+        
+            if len(pres_pair[i]) != 0:
+                for p in pres_pair[i]:  #フォーメーション維持
+                    #print("temp_pair = ", p)
+                    cp_num, ib = p
+                    # print("cp_num = ", cp_num)
+                    # print("ib = ", ib)
+                    xa = y_s[i][cp_num]
+                    xa_dot = y_dot_s[i][cp_num]
+                    xb = y_s[ib[0]][ib[1]]
+                    # print("xa = ", xa.T)
+                    # print("xb = ", xb.T)
+                    # print("y_s_all =", y_s)
+                    if sim_name == "rmp":
+                        M, F = formation_rmp.calc_rmp(xa, xa_dot, xb)
+                    elif sim_name == "fabric":
+                        M, F = formation_fab.calc_rmp(xa, xa_dot, xb)
+                    
+                    #print("pair_F =", F.T)
+                    J_trans = J_transform(x_bar_s[cp_num], theta_s[i])
+                    trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                    trans_F += (J_trans @ J).T @ F
 
 
             

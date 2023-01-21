@@ -6,21 +6,21 @@ OBS_AVOIDANCE_R = 0.1
 
 sim_param = {
     "model" : "car",
-    "time_span" : 10,
+    "time_span" : 60,
     "time_interval" : 0.01,
     "N" : 3,
     "pair" : [
         [
-            [2, [1, 0]],
-            [2, [2, 0]]
+            #[1, [1, 0]],
+            #[3, [2, 0]]
         ],# 0番目．リーッダー
         [
-            [0, [0, 2]],
+            [0, [0, 1]],
             #[3, [2, 1]]
         ],# 1番目．左
         [
-            [0, [0, 2]],
-            #[1, [1, 3]]
+            [0, [0, 3]],
+            [1, [1, 3]]
         ]# 2番目．右
     ],
     "robot_r" : ROOBOT_R,  #ロボットの半径
@@ -45,8 +45,8 @@ sim_param = {
             "formation_preservation" : {
                 "d" : FORMATION_PRESERVATION_R,
                 "c" : 1,
-                "alpha" : 0,
-                "eta" : 5,
+                "alpha" : 10,
+                "eta" : 50,
             },
             "pair_avoidance" : {
                 "Ds" : PAIR_AVOIDANCE_R,
@@ -76,9 +76,9 @@ sim_param = {
                 "m_u" : 2,
                 "m_l" : 0.1,
                 "alpha_m" : 0.75,
-                "k" : 0,
+                "k" : 10,
                 "alpha_psi" : 1,
-                "k_d" : 5,
+                "k_d" : 50,
             },
             "pair_avoidance" : {
                 "r" : PAIR_AVOIDANCE_R,
