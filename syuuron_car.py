@@ -295,16 +295,22 @@ def test(exp_name, sim_param, i, rand):
             #             assert False
             #         root_M += M; root_F += F
 
-            # if N != 1:
-            #     for j in range(N): #ロボット間の回避
-            #         if i != j:
-            #             if sim_name == "rmp":
-            #                 M, F = pair_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
-            #             elif sim_name =="fabric":
-            #                 M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(x_s[i], x_dot_s[i], x_s[j], x_dot_s[j])
-            #             else:
-            #                 assert False
-            #             root_M += M; root_F += F
+            if N != 1:
+                for k in range(cpoint_num):
+                    xa = y_s[i][k]
+                    xa_dot = y_dot_s[i][k]
+                    J_trans = J_transform(x_bar_s[k], theta_s[i])
+                    for j in range(N): #ロボット間の回避
+                        if i != j:
+                            for s in range(cpoint_num):
+                                xb = y_s[j][s]
+                                xb_dot = y_dot_s[j][s]
+                                if sim_name == "rmp":
+                                    M, F = pair_avoidance_rmp.calc_rmp(xa, xa_dot, xb)
+                                elif sim_name =="fabric":
+                                    M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(xa, xa_dot, xb, xb_dot)
+                                trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                                trans_F += (J_trans @ J).T @ F
         
         
             if len(pres_pair[i]) != 0:
@@ -388,6 +394,7 @@ def test(exp_name, sim_param, i, rand):
             delimiter = ","
         )
 
+        color_list = ['b', 'g', 'm', 'c', 'y', 'r']
 
         # 最後の場面のグラフ
         y_s = []
@@ -406,14 +413,14 @@ def test(exp_name, sim_param, i, rand):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for i in range(N):
-            ax.plot(sol.y[sdim*i], sol.y[sdim*i+1], label="r{0}".format(i))
+            ax.plot(sol.y[sdim*i], sol.y[sdim*i+1], label="r{0}".format(i), color=color_list[i])
             c = patches.Circle(xy=(sol.y[sdim*i][-1], sol.y[sdim*i+1][-1]), radius=robot_r, ec='k', fill=False)
             ax.add_patch(c)
             
             # 制御点
-            ax.scatter(y_s[i][0,:], y_s[i][1,:])
+            ax.scatter(y_s[i][0,1:], y_s[i][1,1:], color=color_list[i], marker=".")
             # 頭
-            
+            ax.scatter(y_s[i][0,0], y_s[i][1,0], color=color_list[i], marker="o")
 
         if N != 1:
             for j in range(N):
@@ -427,7 +434,11 @@ def test(exp_name, sim_param, i, rand):
 
         # goal and obstacle
         if xg is not None:
-            ax.scatter([xg[0,0]], [xg[1,0]], marker="*", color = "r", label="goal")
+            ax.scatter(
+                [xg[0,0]], [xg[1,0]],
+                marker="*", s=100, label="goal", color='#ff7f00',
+                alpha=1, linewidths=1.5, edgecolors='red'
+            )
         # for xo in xo_s:
         #     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
         #     ax.add_patch(c)
@@ -497,7 +508,11 @@ def test(exp_name, sim_param, i, rand):
         f_scale = 0.1
         
         if xg is not None:
-            ax.scatter([xg[0,0]], [xg[1,0]], marker="*", color = "r", label="goal")
+            ax.scatter(
+                [xg[0,0]], [xg[1,0]],
+                marker="*", s=100, label="goal", color='#ff7f00',
+                alpha=1, linewidths=1.5, edgecolors='red'
+            )
             
         # for xo in xo_s:
         #     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
@@ -507,8 +522,9 @@ def test(exp_name, sim_param, i, rand):
         robot_c_s = []
         head_s = []
         cpoint_s = []
+        head_s = []
         for j in range(N):
-            tra, = ax.plot(sol.y[sdim*j][:0], sol.y[sdim*j+1][:0], label="r{0}".format(j))
+            tra, = ax.plot(sol.y[sdim*j][:0], sol.y[sdim*j+1][:0], label="r{0}".format(j), color=color_list[j])
             tra_s.append(tra)
             c = patches.Circle(xy=(sol.y[sdim*j][0], sol.y[sdim*j+1][0]), radius=pair_R, ec='k', fill=False)
             robot_c_s.append(c)
@@ -519,8 +535,11 @@ def test(exp_name, sim_param, i, rand):
             # head_s.append(head)
             
             # 制御点
-            scat = ax.scatter(y_s[i][0,:], y_s[i][1,:])
+            scat = ax.scatter(y_s[i][0,1:], y_s[i][1,1:], color=color_list[j], marker=".")
             cpoint_s.append(scat)
+            
+            head = ax.scatter(y_s[i][0,0], y_s[i][1,0], color=color_list[j], marker="o")
+            head_s.append(head)
         
         for c in robot_c_s:
             ax.add_patch(c)
@@ -578,10 +597,11 @@ def test(exp_name, sim_param, i, rand):
                 #head_s[j].set_offsets([xs[0], ys[0]])
                 
                 d_ = []
-                for k in range(cpoint_num):
+                for k in range(1, cpoint_num):
                     d_.append((y_s_list[j][k][0,0], y_s_list[j][k][1,0]))
 
                 cpoint_s[j].set_offsets(d_)
+                head_s[j].set_offsets([(y_s_list[j][0][0,0], y_s_list[j][0][1,0])])
 
 
             # if N != 1:
@@ -637,18 +657,18 @@ def runner(sim_param, n):
         for i in range(n)
     ]
     
-    # # 複数プロセス
-    # core = cpu_count()
-    # #core = 2
-    # with Pool(core) as p:
-    #     result = p.starmap(func=test, iterable=itr)
+    # 複数プロセス
+    core = cpu_count()
+    #core = 2
+    with Pool(core) as p:
+        result = p.starmap(func=test, iterable=itr)
     
     # デバッグ用
-    test(*itr[0])
+    #test(*itr[0])
     
     print("time = ", time.perf_counter() - t0)
 
 
 if __name__ == "__main__":
     
-    runner(car_1.sim_param, 1)
+    runner(car_1.sim_param, 10)

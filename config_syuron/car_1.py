@@ -1,27 +1,27 @@
 """三角形を維持"""
 ROOBOT_R = 0.1
-FORMATION_PRESERVATION_R = 0.25
+FORMATION_PRESERVATION_R = 0.2
 PAIR_AVOIDANCE_R = 0.1
 OBS_AVOIDANCE_R = 0.1
 
 sim_param = {
     "model" : "car",
-    "time_span" : 60,
+    "time_span" : 100,
     "time_interval" : 0.01,
-    "N" : 3,
+    "N" : 2,
     "pair" : [
         [
-            #[1, [1, 0]],
+            [1, [1, 0]],
             #[3, [2, 0]]
-        ],# 0番目．リーッダー
+        ],# 0番目．リーダー
         [
             [0, [0, 1]],
             #[3, [2, 1]]
         ],# 1番目．左
-        [
-            [0, [0, 3]],
-            [1, [1, 3]]
-        ]# 2番目．右
+        # [
+        #     [0, [0, 3]],
+        #     #[1, [1, 3]]
+        # ]# 2番目．右
     ],
     "robot_r" : ROOBOT_R,  #ロボットの半径
     "robot_cpoints_num" : 4,
