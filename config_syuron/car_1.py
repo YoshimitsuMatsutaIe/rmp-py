@@ -1,27 +1,29 @@
 """三角形を維持"""
-ROOBOT_R = 0.1
+ROOBOT_R = 0.05
 FORMATION_PRESERVATION_R = 0.2
-PAIR_AVOIDANCE_R = 0.1
+PAIR_AVOIDANCE_R = 0.05
 OBS_AVOIDANCE_R = 0.1
 
 sim_param = {
     "model" : "car",
-    "time_span" : 100,
+    "time_span" : 60,
     "time_interval" : 0.01,
-    "N" : 2,
+    "N" : 4,
     "pair" : [
         [
-            [1, [1, 0]],
-            #[3, [2, 0]]
+            [2, [1, 0]],
         ],# 0番目．リーダー
         [
-            [0, [0, 1]],
-            #[3, [2, 1]]
+            [0, [0, 2]],
+            #[2, [2, 0]]
         ],# 1番目．左
-        # [
-        #     [0, [0, 3]],
-        #     #[1, [1, 3]]
-        # ]# 2番目．右
+        [
+            [0, [1, 2]],
+            #[1, [1, 3]]
+        ],# 2番目．右
+        [
+            [0, [2, 2]],
+        ]
     ],
     "robot_r" : ROOBOT_R,  #ロボットの半径
     "robot_cpoints_num" : 4,
@@ -45,7 +47,7 @@ sim_param = {
             "formation_preservation" : {
                 "d" : FORMATION_PRESERVATION_R,
                 "c" : 1,
-                "alpha" : 10,
+                "alpha" : 50,
                 "eta" : 50,
             },
             "pair_avoidance" : {
@@ -76,18 +78,18 @@ sim_param = {
                 "m_u" : 2,
                 "m_l" : 0.1,
                 "alpha_m" : 0.75,
-                "k" : 10,
+                "k" : 0.5,
                 "alpha_psi" : 1,
                 "k_d" : 50,
             },
             "pair_avoidance" : {
                 "r" : PAIR_AVOIDANCE_R,
-                "k_b" : 20,
+                "k_b" : 0.1,
                 "alpha_b" : 0.75,
             },
             "obstacle_avoidance" : {
                 "r" : OBS_AVOIDANCE_R,
-                "k_b" : 20,
+                "k_b" : 1,
                 "alpha_b" : 0.75,
             },
             "goal_attractor" :{

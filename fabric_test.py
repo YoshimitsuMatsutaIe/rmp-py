@@ -175,7 +175,7 @@ def avoidance_test():
     def dX(t, X):
         x = X[:2].reshape(-1, 1)
         x_dot = X[2:].reshape(-1, 1)
-        M, F, _, _, _, _, _ = obs.calc_fabric(x, x_dot, xo)
+        M, F, _, _, _, _, _ = obs.calc_fabric(x, x_dot, xo, np.zeros_like(xo))
         a = LA.pinv(M) @ F
         return np.ravel(np.concatenate([x_dot, a]))
 
@@ -189,7 +189,7 @@ def avoidance_test():
     for i in range(len(sol.t)):
         x = np.array([[sol.y[0][i], sol.y[1][i]]]).T
         x_dot = np.array([[sol.y[2][i], sol.y[3][i]]]).T
-        M, F, m, xi, pi, d, f = obs.calc_fabric(x, x_dot, xo)
+        M, F, m, xi, pi, d, f = obs.calc_fabric(x, x_dot, xo, np.zeros_like(xo))
         M_s.append(M)
         F_s.append(F)
         Le_s.append(0)

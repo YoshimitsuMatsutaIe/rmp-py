@@ -44,14 +44,14 @@ import config_syuron.car_1 as car_1
 #     xs.append(r * cos(2*pi/5 * i + pi/2))
 #     ys.append(r * sin(2*pi/5 * i + pi/2))
 
-#@njit("f8[:,:](f8)")
+@njit("f8[:,:](f8)")
 def rotate(theta):
     return np.array([
         [cos(theta), -sin(theta)],
         [sin(theta), cos(theta)]
     ])
 
-#@njit("f8[:,:](f8)")
+@njit("f8[:,:](f8)")
 def rotate_dot(theta):
     """theta微分"""
     return np.array([
@@ -196,7 +196,7 @@ def test(exp_name, sim_param, i, rand):
                     if i == j:
                         flag *= True
                     else:
-                        if np.sqrt((xx_s[i][0]-xx_s[j][0])**2 + (xx_s[i][1]-xx_s[j][1])**2) < pair_R:
+                        if np.sqrt((xx_s[i][0]-xx_s[j][0])**2 + (xx_s[i][1]-xx_s[j][1])**2) < pair_R*1.1:
                             flag *= False
             if flag == True:
                 #print("OK!")
@@ -296,21 +296,20 @@ def test(exp_name, sim_param, i, rand):
             #         root_M += M; root_F += F
 
             if N != 1:
-                for k in range(cpoint_num):
+                for k in range(cpoint_num): #ロボット間の回避
                     xa = y_s[i][k]
                     xa_dot = y_dot_s[i][k]
                     J_trans = J_transform(x_bar_s[k], theta_s[i])
-                    for j in range(N): #ロボット間の回避
+                    for j in range(N):
                         if i != j:
-                            for s in range(cpoint_num):
-                                xb = y_s[j][s]
-                                xb_dot = y_dot_s[j][s]
-                                if sim_name == "rmp":
-                                    M, F = pair_avoidance_rmp.calc_rmp(xa, xa_dot, xb)
-                                elif sim_name =="fabric":
-                                    M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(xa, xa_dot, xb, xb_dot)
-                                trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
-                                trans_F += (J_trans @ J).T @ F
+                            xb = x_s[j]
+                            xb_dot = x_dot_s[j]
+                            if sim_name == "rmp":
+                                M, F = pair_avoidance_rmp.calc_rmp(xa, xa_dot, xb)
+                            elif sim_name =="fabric":
+                                M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(xa, xa_dot, xb, xb_dot)
+                            trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                            trans_F += (J_trans @ J).T @ F
         
         
             if len(pres_pair[i]) != 0:
@@ -526,7 +525,7 @@ def test(exp_name, sim_param, i, rand):
         for j in range(N):
             tra, = ax.plot(sol.y[sdim*j][:0], sol.y[sdim*j+1][:0], label="r{0}".format(j), color=color_list[j])
             tra_s.append(tra)
-            c = patches.Circle(xy=(sol.y[sdim*j][0], sol.y[sdim*j+1][0]), radius=pair_R, ec='k', fill=False)
+            c = patches.Circle(xy=(sol.y[sdim*j][0], sol.y[sdim*j+1][0]), radius=robot_r, ec='k', fill=False)
             robot_c_s.append(c)
             # xs = [sol.y[sdim*j][0] + pair_R*cos(sol.y[sdim*j+2][0])]
             # ys = [sol.y[sdim*j+1][0] + pair_R*sin(sol.y[sdim*j+2][0])]
@@ -656,19 +655,22 @@ def runner(sim_param, n):
         (data_label, sim_param, i, np.random.RandomState(np.random.randint(0, 10000000)))
         for i in range(n)
     ]
+
+
+    if n == 1:  # デバッグ用
+        test(*itr[0])
+    else:
+        # 複数プロセス
+        core = cpu_count()
+        #core = 2
+        with Pool(core) as p:
+            result = p.starmap(func=test, iterable=itr)
     
-    # 複数プロセス
-    core = cpu_count()
-    #core = 2
-    with Pool(core) as p:
-        result = p.starmap(func=test, iterable=itr)
-    
-    # デバッグ用
-    #test(*itr[0])
     
     print("time = ", time.perf_counter() - t0)
+    print("done!!")
 
 
 if __name__ == "__main__":
     
-    runner(car_1.sim_param, 10)
+    runner(car_1.sim_param, 3)
