@@ -5,7 +5,7 @@ from numba import njit
 
 
 @njit
-def PairwiseObstacleAvoidance_rmp(x, x_dot, xo, Ds, alpha, eta, epsilon):
+def PairwiseObstacleAvoidance_rmp_func(x, x_dot, xo, Ds, alpha, eta, epsilon):
     xxo_norm = LA.norm(x - xo)
     s = xxo_norm / Ds - 1
     J = 1 / (Ds * xxo_norm) * (x-xo).T
@@ -51,13 +51,13 @@ class PairwiseObstacleAvoidance:
         self.epsilon = epsilon
 
     def calc_rmp(self, x, x_dot, xo):
-        return PairwiseObstacleAvoidance_rmp(
+        return PairwiseObstacleAvoidance_rmp_func(
             x, x_dot, xo, self.Ds, self.alpha, self.eta, self.epsilon
         )
 
 
 @njit
-def ParwiseDistancePreservation_a_rmp(x, x_dot, y, y_dot, d, c, alpha, eta):
+def ParwiseDistancePreservation_a_rmp_func(x, x_dot, y, y_dot, d, c, alpha, eta):
     "距離維持rmpを計算"
     
     #print("dis = ", LA.norm(x-y))
@@ -85,13 +85,13 @@ class ParwiseDistancePreservation_a:
         self.eta = eta #dampping gaio
     
     def calc_rmp(self, x, x_dot, y, y_dot=np.zeros((2,1))):
-        return ParwiseDistancePreservation_a_rmp(
+        return ParwiseDistancePreservation_a_rmp_func(
             x, x_dot, y, y_dot, self.d, self.c, self.alpha, self.eta
         )
 
 
 @njit
-def UnitaryGoalAttractor_a_rmp(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha, tol, eta):
+def UnitaryGoalAttractor_a_rmp_func(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha, tol, eta):
     z = x - xg
     z_dot = x_dot - xg_dot
     z_norm = LA.norm(z)
@@ -129,7 +129,53 @@ class UnitaryGoalAttractor_a:
         self.eta = eta #ダンピング
     
     def calc_rmp(self, x, x_dot, xg, xg_dot=np.zeros((2,1))):
-        return UnitaryGoalAttractor_a_rmp(
+        return UnitaryGoalAttractor_a_rmp_func(
             x, x_dot, xg, xg_dot, 
             self.gain, self.wu, self.wl, self.sigma, self.alpha, self.tol, self.eta
         )
+
+
+
+
+
+@njit
+def NeuralGoalAttractor_rmp_func(x, x_dot, xg, gain, damp, epsilon):
+    F = gain * (xg-x) / (LA.norm(xg-x) + epsilon) - damp*x_dot
+    M = np.eye(x.shape[0])
+    return M, F
+
+class NeuralGoalAttractor:
+    def __init__(self, gain, damp, epsilon):
+        self.gain = gain
+        self.damp = damp
+        self.epsilon = epsilon
+    
+    def calc_rmp(self, x, x_dot, xg, xg_dot=np.zeros((2,1))):
+        return NeuralGoalAttractor_rmp_func(x, x_dot, xg, self.gain, self.damp, self.epsilon)
+
+
+@njit
+def NeuralObstacleAvoidancermp_func(x, x_dot, xo, gain, damp, gamma):
+    u = (xo - x) / LA.norm(xo - x)
+    F = - gain / LA.norm(xo-x) * (damp * (u.T @ x_dot)[0,0] + gamma) * u
+    
+    s = LA.norm(xo - x)
+    w = 1 / (s + 0.2)
+    M = w * F @ F.T
+    
+    return M, F
+
+class NeuralObstacleAvoidance:
+    def __init__(self, gain, damp, gamma):
+        self.gain = gain
+        self.damp = damp
+        self.gamma = gamma
+    
+    def calc_rmp(self, x, x_dot, xo, xo_dot=np.zeros((2,1))):
+        return NeuralObstacleAvoidancermp_func(x, x_dot, xo, self.gain, self.damp, self.gamma)
+
+
+
+
+if __name__ == "__main__":
+    pass

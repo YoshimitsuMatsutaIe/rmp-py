@@ -61,7 +61,7 @@ def rotate_dot(theta):
 
 
 @njit
-def car_ex(x, y, theta, dx, dy, omega, v, xi, L):
+def transform_car(x, y, theta, dx, dy, omega, v, xi, L):
     beta = np.arctan(tan(xi) / 2)
 
     J =  np.array([
@@ -78,7 +78,7 @@ def car_ex(x, y, theta, dx, dy, omega, v, xi, L):
     return J, T
 
 @njit
-def turtle_bot(x, y, theta, dx, dy, omega, v, xi):
+def transform_turtlebot(x, y, theta, dx, dy, omega, v, xi):
     J = np.array([
         [cos(theta), 0.0],
         [sin(theta), 0.0],
@@ -90,7 +90,32 @@ def turtle_bot(x, y, theta, dx, dy, omega, v, xi):
         [0.0]
     ])
     
+    # J = np.array([
+    #     [cos(theta), -v*sin(theta)],
+    #     [sin(theta), v*cos(theta)],
+    #     [0.0, 1.0],
+    # ])
+    # T = np.zeros((3,1))
+    
     return J, T
+
+@njit
+def calc_x_dot_car(x, theta, v, xi, L):
+    beta = np.arctan(tan(xi) / 2)
+    return np.array([
+        [v * cos(theta)],
+        [v * sin(theta)],
+        [v / L * sin(2*beta)]
+    ])
+
+@njit
+def calc_x_dot_turtlebot(x, theta, v, xi):
+    return np.array([
+        [v * cos(theta)],
+        [v * sin(theta)],
+        [xi]
+    ])
+
 
 @njit("f8[:,:](f8[:,:], f8)")
 def J_transform(x_bar, theta):
@@ -137,11 +162,20 @@ def test(exp_name, sim_param, i, rand):
     # ]
     # xg = sim_param["goal"]
     # xo_s = sim_param["obstacle"]
-    xg = np.array([[0.5, 0.5]]).T
+    #xg = np.array([[0.5, 0.5]]).T
+    goal_s_ = sim_param["goal_s"]
+    goal_s = []
+    for g in goal_s_:
+        if len(g) == 0:
+            goal_s.append(None)
+        else:
+            goal_s.append(np.array([g]).T)
+    
     #xg = None
     xo_s = None
 
     N = sim_param["N"]
+    robot_model = sim_param["robot_model"]
     robot_r = sim_param["robot_r"]
     sdim = 8
     pres_pair = sim_param["pair"]
@@ -163,9 +197,13 @@ def test(exp_name, sim_param, i, rand):
     formation_fab = fabric.ParwiseDistancePreservation(**fab["formation_preservation"])
 
     # ロボット間の障害物回避
-    pair_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["pair_avoidance"])
+    #pair_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["pair_avoidance"])
     pair_avoidance_fab = fabric.ObstacleAvoidance(**fab["pair_avoidance"])
     pair_R = fab["pair_avoidance"]["r"]
+
+    pair_avoidance_rmp = multi_robot_rmp.NeuralObstacleAvoidance(
+        gain=1, damp=10, gamma=1
+    )
 
     # 障害物回避
     obs_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["obstacle_avoidance"])
@@ -173,8 +211,11 @@ def test(exp_name, sim_param, i, rand):
     obs_R = rmp["obstacle_avoidance"]["Ds"]
 
     # 目標アトラクタ
-    attractor_rmp = multi_robot_rmp.UnitaryGoalAttractor_a(**rmp["goal_attractor"])
+    #attractor_rmp = multi_robot_rmp.UnitaryGoalAttractor_a(**rmp["goal_attractor"])
     attractor_fab = fabric.GoalAttractor(**fab["goal_attractor"])
+    attractor_rmp = multi_robot_rmp.NeuralGoalAttractor(
+        gain=rmp["goal_attractor"]["gain"], damp=rmp["goal_attractor"]["eta"], epsilon=1e-5
+    )
 
     # 初期値選定
     if sim_param["initial_condition"]["type"] == "random":
@@ -260,27 +301,32 @@ def test(exp_name, sim_param, i, rand):
             M = np.zeros((2, 2))
             F = np.zeros((2, 1))
 
-            J, T = turtle_bot(
-                x=x_s[i][0,0], y=x_s[i][1,0], theta=theta_s[i],
-                dx=x_dot_s[i][0,0], dy=x_dot_s[i][1,0], omega=omega_s[i],
-                v=v_s[i], xi=xi_s[i]
-            )
-            # J, T = car_ex(
-            #     x=x_s[i][0,0], y=x_s[i][1,0], theta=theta_s[i],
-            #     dx=x_dot_s[i][0,0], dy=x_dot_s[i][1,0], omega=omega_s[i],
-            #     v=v_s[i], xi=xi_s[i], L=L
-            # )
 
+            J = np.zeros((3,2)); T = np.zeros((3,1))
+            if robot_model == "car":
+                J, T = transform_car(
+                    x=x_s[i][0,0], y=x_s[i][1,0], theta=theta_s[i],
+                    dx=x_dot_s[i][0,0], dy=x_dot_s[i][1,0], omega=omega_s[i],
+                    v=v_s[i], xi=xi_s[i], L=L
+                )
+            elif robot_model == "turtlebot":
+                J, T = transform_turtlebot(
+                    x=x_s[i][0,0], y=x_s[i][1,0], theta=theta_s[i],
+                    dx=x_dot_s[i][0,0], dy=x_dot_s[i][1,0], omega=omega_s[i],
+                    v=v_s[i], xi=xi_s[i]
+                )
+            else:
+                assert False
 
-            if i == 0 and xg is not None:  #アトラクタ
+            if goal_s[i] is not None:  #アトラクタ
                 # head_x = x_s[i] + rotate(theta_s[i]) @ np.array([[pair_R, 0]]).T
                 # head_x_dot = x_dot_s[i] + omega_s[i]*rotate_dot(theta_s[i]) @ np.array([[pair_R, 0]]).T
                 head_x = y_s[i][0]
                 head_x_dot = y_dot_s[i][0]
                 if sim_name == "rmp":
-                    M, F = attractor_rmp.calc_rmp(head_x, head_x_dot, xg)
+                    M, F = attractor_rmp.calc_rmp(head_x, head_x_dot, goal_s[i])
                 elif sim_name == "fabric":
-                    M, F, _, _, _ = attractor_fab.calc_fabric(head_x, head_x_dot, xg)
+                    M, F, _, _, _ = attractor_fab.calc_fabric(head_x, head_x_dot, goal_s[i])
                 J_trans = J_transform(x_bar_s[0], theta_s[i])
                 trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
                 trans_F += (J_trans @ J).T @ F
@@ -312,7 +358,7 @@ def test(exp_name, sim_param, i, rand):
                             trans_F += (J_trans @ J).T @ F
         
         
-            if len(pres_pair[i]) != 0:
+            if len(pres_pair[i]) != 0 or N != 1:
                 for p in pres_pair[i]:  #フォーメーション維持
                     #print("temp_pair = ", p)
                     cp_num, ib = p
@@ -347,10 +393,16 @@ def test(exp_name, sim_param, i, rand):
             #print("du = ", u_dot.T)
             
             
+            
+            
+            if robot_model == "car":
+                X_dot[sdim*i+0:sdim*i+3, :] = calc_x_dot_car(x_s[i], theta_s[i], v_s[i], xi_s[i], L)
+            elif robot_model == "turtlebot":
+                X_dot[sdim*i+0:sdim*i+3, :] = calc_x_dot_turtlebot(x_s[i], theta_s[i], v_s[i], xi_s[i])
+            else:
+                assert False
+            
             a = J @ u_dot + T
-
-            X_dot[sdim*i+0:sdim*i+2, :] = x_dot_s[i]
-            X_dot[sdim*i+2, :] = omega_s[i]
             X_dot[sdim*i+3:sdim*i+6, :] = a
             X_dot[sdim*i+6:sdim*i+8, :] = u_dot
             
@@ -358,7 +410,11 @@ def test(exp_name, sim_param, i, rand):
         return np.ravel(X_dot)
 
 
-    for sim_name in ["rmp", "fabric"]:
+
+    ## メインシミュレーション "#####################################################################
+    #for sim_name in ["rmp", "fabric"]:
+    for sim_name in ["rmp"]:
+    #for sim_name in ["fabric"]:
         t0 = time.perf_counter()
         sol = integrate.solve_ivp(
             fun=dX, 
@@ -395,7 +451,7 @@ def test(exp_name, sim_param, i, rand):
 
         color_list = ['b', 'g', 'm', 'c', 'y', 'r']
 
-        # 最後の場面のグラフ
+        ## 最後の場面のグラフ ####################################################################
         y_s = []
         y_s_list = []
         for i in range(N):
@@ -432,26 +488,26 @@ def test(exp_name, sim_param, i, rand):
                     ax.plot(frame_x, frame_y, color="k")
 
         # goal and obstacle
-        if xg is not None:
-            ax.scatter(
-                [xg[0,0]], [xg[1,0]],
-                marker="*", s=100, label="goal", color='#ff7f00',
-                alpha=1, linewidths=1.5, edgecolors='red'
-            )
+        for i, g in enumerate(goal_s):
+            if g is not None:
+                ax.scatter(
+                    [g[0,0]], [g[1,0]],
+                    marker="*", s=100, label="goal{0}".format(i), color=color_list[i],# color='#ff7f00',
+                    alpha=1, linewidths=0.2, edgecolors='red'
+                )
         # for xo in xo_s:
         #     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
         #     ax.add_patch(c)
 
         ax.set_title("t = {0}, and {1}".format(sol.t[-1], sol.success))
         ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
-        ax.grid();ax.set_aspect('equal'); ax.legend()
+        ax.grid();ax.set_aspect('equal')
+        ax.legend()
         fig.savefig(dir_base + "fig/" + data_label + "_" + sim_name + ".png")
         plt.clf(); plt.close()
 
 
-
-
-        # 状態グラフ
+        ## 状態グラフ ########################################################################
         fig2, axes = plt.subplots(nrows=6, ncols=1, figsize=(6, 12))
         for i in range(N):
             axes[0].plot(sol.t, sol.y[sdim*i], label="x{0}".format(i))
@@ -469,13 +525,14 @@ def test(exp_name, sim_param, i, rand):
         plt.clf(); plt.close()
 
 
-        ### アニメーション ###
+        ### アニメーション #####################################################################
         x_all, y_all = [], []
         for i in range(N):
             x_all.extend (sol.y[sdim*i])
             y_all.extend(sol.y[sdim*i+1])
-        if xg is not None:
-            x_all.append(xg[0,0]); y_all.append(xg[1,0])
+        for g in goal_s:
+            if g is not None:
+                x_all.append(g[0,0]); y_all.append(g[1,0])
 
         max_x = max(x_all)
         min_x = min(x_all)
@@ -506,12 +563,13 @@ def test(exp_name, sim_param, i, rand):
         scale = 10
         f_scale = 0.1
         
-        if xg is not None:
-            ax.scatter(
-                [xg[0,0]], [xg[1,0]],
-                marker="*", s=100, label="goal", color='#ff7f00',
-                alpha=1, linewidths=1.5, edgecolors='red'
-            )
+        for i, g in enumerate(goal_s):
+            if g is not None:
+                ax.scatter(
+                    [g[0,0]], [g[1,0]],
+                    marker="*", s=100, label="goal{0}".format(i), color=color_list[i],# color='#ff7f00',
+                    alpha=1, linewidths=0.2, edgecolors='red'
+                )
             
         # for xo in xo_s:
         #     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
@@ -644,20 +702,23 @@ def test(exp_name, sim_param, i, rand):
     return
 
 
-def runner(sim_param, n):
+def runner(sim_param,):
     t0 = time.perf_counter()
     date_now = datetime.datetime.now()
     data_label = date_now.strftime('%Y-%m-%d--%H-%M-%S')
     dir_base = "../syuron/formation_preservation_only/" + data_label
     os.makedirs(dir_base, exist_ok=True)
     
+    trial = sim_param["trial"]
+    
+    
     itr = [
         (data_label, sim_param, i, np.random.RandomState(np.random.randint(0, 10000000)))
-        for i in range(n)
+        for i in range(trial)
     ]
 
 
-    if n == 1:  # デバッグ用
+    if trial == 1:  # デバッグ用
         test(*itr[0])
     else:
         # 複数プロセス
@@ -673,4 +734,4 @@ def runner(sim_param, n):
 
 if __name__ == "__main__":
     
-    runner(car_1.sim_param, 3)
+    runner(car_1.sim_param)
