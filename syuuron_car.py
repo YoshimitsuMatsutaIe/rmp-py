@@ -45,7 +45,7 @@ import config_syuron.car_1 as car_1
 #     ys.append(r * sin(2*pi/5 * i + pi/2))
 
 #@njit
-def find_init_position(xu, xl, yu, yl, n, r, rand, exists=None) -> list[list[float]]:
+def find_random_position(xu, xl, yu, yl, n, r, rand, exists=None) -> list[list[float]]:
     """衝突の無い初期値を探す"""
     x_s = []
     new_x_s = []
@@ -55,19 +55,25 @@ def find_init_position(xu, xl, yu, yl, n, r, rand, exists=None) -> list[list[flo
         x_s.extend(exists)
     
     max_trial = 10000000
-    for _ in range(max_trial * n):
+    for i in range(max_trial * n):
         if len(new_x_s) == n:
             break
         else:
             tmp_x = [rand.uniform(xl, xu), rand.uniform(yl, yu)]
+            
+            #print("  tmp = ", tmp_x)
+            flag = True
             for x in x_s:
-                if sqrt((tmp_x[0]-x[0])**2 + (tmp_x[1]-x[1])**2) < r:  #ぶつかってる
+                d = sqrt((tmp_x[0]-x[0])**2 + (tmp_x[1]-x[1])**2)
+                if d < r:  #ぶつかってる
+                    flag = False
                     break
-                else:
-                    x_s.append(tmp_x)
-                    new_x_s.append(tmp_x)
+            if flag:
+                x_s.append(tmp_x)
+                new_x_s.append(tmp_x)
     
     assert len(new_x_s) == n, "初期値生成に失敗"
+    #print("finding initial position done!")
     return new_x_s
 
 
@@ -86,12 +92,9 @@ def rotate_dot(theta):
         [cos(theta), -sin(theta)]
     ])
 
-
-
 @njit
 def transform_car(x, y, theta, dx, dy, omega, v, xi, L):
     beta = np.arctan(tan(xi) / 2)
-
     J =  np.array([
         [cos(theta), 0.0],
         [sin(theta), 0.0],
@@ -102,7 +105,6 @@ def transform_car(x, y, theta, dx, dy, omega, v, xi, L):
         [v**2/L * cos(theta) * sin(2*beta)],
         [0.0]
     ])
-    
     return J, T
 
 @njit
@@ -182,27 +184,6 @@ def test(exp_name, sim_param, i, rand):
     with open(dir_base + "config/" + data_label + '.yaml', 'w') as f:
         yaml.dump(sim_param, f)
 
-    # xg = np.array([[4, 4]]).T
-    # xo_s = [
-    #     np.array([[1.0, 1.5]]).T,
-    #     np.array([[2.0, 0.5]]).T,
-    #     np.array([[2.5, 2.5]]).T,
-    # ]
-    # xg = sim_param["goal"]
-    # xo_s = sim_param["obstacle"]
-    #xg = np.array([[0.5, 0.5]]).T
-    goal_s_ = sim_param["goal_s"]
-    goal_s = []
-    for g in goal_s_:
-        if len(g) == 0:
-            goal_s.append(None)
-        else:
-            goal_s.append(np.array([g]).T)
-    
-    # obs_s = []
-    # if sim_param["obs_s"]["type"] == "random":
-
-
     N = sim_param["N"]
     robot_model = sim_param["robot_model"]
     robot_r = sim_param["robot_r"]
@@ -247,42 +228,19 @@ def test(exp_name, sim_param, i, rand):
     )
 
     # 初期値選定
-    if sim_param["initial_condition"]["type"] == "random":
-        xu = sim_param["initial_condition"]["value"]["x_max"]
-        xl = sim_param["initial_condition"]["value"]["x_min"]
-        yu = sim_param["initial_condition"]["value"]["y_max"]
-        yl = sim_param["initial_condition"]["value"]["y_min"]
-        # flag = True
-        # xx_s = []
-        # for _ in range(1000000):
-        #     xx_s = []
-        #     for i in range(N):
-        #         xx_s.append((rand.uniform(xl, xu), rand.uniform(yl, yu)))
-            
-        #     # 衝突チェック
-        #     flag = True
-        #     for i in range(N):
-        #         for j in range(N):
-        #             if i == j:
-        #                 flag *= True
-        #             else:
-        #                 if np.sqrt((xx_s[i][0]-xx_s[j][0])**2 + (xx_s[i][1]-xx_s[j][1])**2) < pair_R*1.1:
-        #                     flag *= False
-        #     if flag == True:
-        #         #print("OK!")
-        #         break
-        # if flag == False:
-        #     print("error 初期値に衝突有り!")
-        # X0_ = []
-        # for i in range(N):
-        #     X0_.extend([
-        #         xx_s[i][0], xx_s[i][1], rand.uniform(0, 2*pi),
-        #         0, 0, 0,
-        #         0, 0
-        #     ])
-        # X0 = np.array(X0_)
-        
-        xs_ = find_init_position(xu, xl, yu, yl, N, pair_R, rand)
+    init_type = sim_param["initial_condition"]["type"]
+    goal_type = sim_param["goal"]["type"]
+    obs_type = sim_param["obs"]["type"]
+    
+    xs_ = []
+    if init_type == "random":
+        xs_ = find_random_position(
+            xu=sim_param["initial_condition"]["value"]["x_max"],
+            xl=sim_param["initial_condition"]["value"]["x_min"],
+            yu=sim_param["initial_condition"]["value"]["y_max"],
+            yl=sim_param["initial_condition"]["value"]["y_min"],
+            n=N, r=2*pair_R, rand=rand
+        )
         X0_ = []
         for x in xs_:
             X0_.extend([
@@ -291,7 +249,6 @@ def test(exp_name, sim_param, i, rand):
                 0, 0
             ])
         X0 = np.array(X0_)
-        
     else:
         X0_ = []
         x0 = sim_param["initial_condition"]["value"]
@@ -301,7 +258,54 @@ def test(exp_name, sim_param, i, rand):
                 0, 0, 0,
                 0, 0
             ])
+            xs_.append([x0[2*i], x0[2*i+1]])
         X0 = np.array(X0_)
+
+
+    ## goal #################################################
+    goal_s = []
+    gs_ = []
+    if goal_type == "random":
+        gs_ = find_random_position(
+            xu=sim_param["goal"]["value"]["x_max"],
+            xl=sim_param["goal"]["value"]["x_min"],
+            yu=sim_param["goal"]["value"]["y_max"],
+            yl=sim_param["goal"]["value"]["y_min"],
+            n=N, r=obs_R, rand=rand, exists=xs_
+        )
+        
+        for g in gs_:
+            goal_s.append(np.array([g]).T)
+    elif goal_type == "fixed":
+        gs_ = sim_param["goal"]["value"]
+        for g in gs_:
+            if len(g) == 0:
+                goal_s.append(None)
+            else:
+                goal_s.append(np.array([g]).T)
+    xs_.extend(gs_)
+
+
+    ## obstacle ################################################
+    obs_s = []
+    os_ = []
+    if obs_type == "random":
+        os_ = find_random_position(
+            xu=sim_param["obs"]["value"]["x_max"],
+            xl=sim_param["obs"]["value"]["x_min"],
+            yu=sim_param["obs"]["value"]["y_max"],
+            yl=sim_param["obs"]["value"]["y_min"],
+            n=sim_param["obs"]["value"]["n"],
+            r=obs_R, rand=rand, exists=xs_
+        )
+        
+        for o in os_:
+            obs_s.append(np.array([o]).T)
+    elif obs_type == "fixed":
+        os_ = sim_param["obs"]["value"]
+        for o in os_:
+            goal_s.append(np.array([o]).T)
+
 
     time_interval = sim_param["time_interval"]
     time_span = sim_param["time_span"]
@@ -335,12 +339,10 @@ def test(exp_name, sim_param, i, rand):
 
         X_dot = np.zeros((sdim*N, 1))  #速度ベクトル
         for i in range(N):  #ロボットごとに計算
-            #print("robot_name = ", i)
             trans_M = np.zeros((2, 2))
             trans_F = np.zeros((2, 1))
             M = np.zeros((2, 2))
             F = np.zeros((2, 1))
-
 
             J = np.zeros((3,2)); T = np.zeros((3,1))
             if robot_model == "car":
@@ -355,8 +357,10 @@ def test(exp_name, sim_param, i, rand):
                     dx=x_dot_s[i][0,0], dy=x_dot_s[i][1,0], omega=omega_s[i],
                     v=v_s[i], xi=xi_s[i]
                 )
-            else:
-                assert False
+            
+            JJ_s = []
+            for k in range(cpoint_num):
+                JJ_s.append(J_transform(x_bar_s[k], theta_s[i]) @ J)
 
             if goal_s[i] is not None:  #アトラクタ
                 # head_x = x_s[i] + rotate(theta_s[i]) @ np.array([[pair_R, 0]]).T
@@ -367,25 +371,34 @@ def test(exp_name, sim_param, i, rand):
                     M, F = attractor_rmp.calc_rmp(head_x, head_x_dot, goal_s[i])
                 elif sim_name == "fabric":
                     M, F, _, _, _ = attractor_fab.calc_fabric(head_x, head_x_dot, goal_s[i])
-                J_trans = J_transform(x_bar_s[0], theta_s[i])
-                trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
-                trans_F += (J_trans @ J).T @ F
+                # J_trans = J_transform(x_bar_s[0], theta_s[i])
+                # trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                # trans_F += (J_trans @ J).T @ F
 
-            # if xo_s is not None:
-            #     for xo in xo_s:  #障害物回避
-            #         if sim_name == "rmp":
-            #             M, F = obs_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], xo)
-            #         elif sim_name == "fabric":
-            #             M, F, _, _, _, _, _ = obs_avoidamce_fab.calc_fabric(x_s[i], x_dot_s[i], xo, np.zeros(xo.shape))
-            #         else:
-            #             assert False
-            #         root_M += M; root_F += F
+                trans_M += (JJ_s[0]).T @ M @ (JJ_s[0])
+                trans_F += (JJ_s[0]).T @ F
+
+            if len(obs_s) != 0:
+                for xo in obs_s:  #障害物回避
+                    for k in range(cpoint_num): #ロボット間の回避
+                        xa = y_s[i][k]
+                        xa_dot = y_dot_s[i][k]
+                        #J_trans = J_transform(x_bar_s[k], theta_s[i])
+                        if sim_name == "rmp":
+                            M, F = obs_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], xo)
+                        elif sim_name == "fabric":
+                            M, F, _, _, _, _, _ = obs_avoidamce_fab.calc_fabric(x_s[i], x_dot_s[i], xo, np.zeros(xo.shape))
+                        # trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                        # trans_F += (J_trans @ J).T @ F
+
+                        trans_M += (JJ_s[k]).T @ M @ (JJ_s[k])
+                        trans_F += (JJ_s[k]).T @ F
 
             if N != 1:
                 for k in range(cpoint_num): #ロボット間の回避
                     xa = y_s[i][k]
                     xa_dot = y_dot_s[i][k]
-                    J_trans = J_transform(x_bar_s[k], theta_s[i])
+                    #J_trans = J_transform(x_bar_s[k], theta_s[i])
                     for j in range(N):
                         if i != j:
                             xb = x_s[j]
@@ -394,9 +407,11 @@ def test(exp_name, sim_param, i, rand):
                                 M, F = pair_avoidance_rmp.calc_rmp(xa, xa_dot, xb)
                             elif sim_name =="fabric":
                                 M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(xa, xa_dot, xb, xb_dot)
-                            trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
-                            trans_F += (J_trans @ J).T @ F
-        
+                            # trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                            # trans_F += (J_trans @ J).T @ F
+
+                            trans_M += (JJ_s[k]).T @ M @ (JJ_s[k])
+                            trans_F += (JJ_s[k]).T @ F
         
             if len(pres_pair[i]) != 0 or N != 1:
                 for p in pres_pair[i]:  #フォーメーション維持
@@ -416,24 +431,18 @@ def test(exp_name, sim_param, i, rand):
                         M, F = formation_fab.calc_rmp(xa, xa_dot, xb)
                     
                     #print("pair_F =", F.T)
-                    J_trans = J_transform(x_bar_s[cp_num], theta_s[i])
-                    trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
-                    trans_F += (J_trans @ J).T @ F
+                    # J_trans = J_transform(x_bar_s[cp_num], theta_s[i])
+                    # trans_M += (J_trans @ J).T @ M @ (J_trans @ J)
+                    # trans_F += (J_trans @ J).T @ F
 
-
-            
-            # J_trans = J_transform(pair_R, 0, theta_s[i])
-
-            # trans_M = (J_trans @ J).T @ root_M @ (J_trans @ J)
-            # trans_F = (J_trans @ J).T @ (root_F)
+                    trans_M += (JJ_s[cp_num]).T @ M @ (JJ_s[cp_num])
+                    trans_F += (JJ_s[cp_num]).T @ F
 
             u_dot = LA.pinv(trans_M) @ trans_F
             
             #print("trans_F = ", trans_F.T)
             #print("du = ", u_dot.T)
-            
-            
-            
+
             
             if robot_model == "car":
                 X_dot[sdim*i+0:sdim*i+3, :] = calc_x_dot_car(x_s[i], theta_s[i], v_s[i], xi_s[i], L)
@@ -453,8 +462,8 @@ def test(exp_name, sim_param, i, rand):
 
     ## メインシミュレーション "#####################################################################
     #for sim_name in ["rmp", "fabric"]:
-    for sim_name in ["rmp"]:
-    #for sim_name in ["fabric"]:
+    #for sim_name in ["rmp"]:
+    for sim_name in ["fabric"]:
         t0 = time.perf_counter()
         sol = integrate.solve_ivp(
             fun=dX, 
@@ -505,6 +514,27 @@ def test(exp_name, sim_param, i, rand):
             y_s.append(np.concatenate(y_, axis=1))
             y_s_list.append(y_)
         
+        
+        x_all, y_all = [], []
+        for i in range(N):
+            x_all.extend (sol.y[sdim*i])
+            y_all.extend(sol.y[sdim*i+1])
+        for g in goal_s:
+            if g is not None:
+                x_all.append(g[0,0]); y_all.append(g[1,0])
+        if len(obs_s) != 0:
+            for o in obs_s:
+                x_all.append(o[0,0]); y_all.append(o[1,0])
+
+        max_x = max(x_all)
+        min_x = min(x_all)
+        max_y = max(y_all)
+        min_y = min(y_all)
+        mid_x = (max_x + min_x) * 0.5
+        mid_y = (max_y + min_y) * 0.5
+        max_range = max(max_x-min_x, max_y-min_y) * 0.5
+        
+        
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for i in range(N):
@@ -535,13 +565,16 @@ def test(exp_name, sim_param, i, rand):
                     marker="*", s=100, label="goal{0}".format(i), color=color_list[i],# color='#ff7f00',
                     alpha=1, linewidths=0.2, edgecolors='red'
                 )
-        # for xo in xo_s:
-        #     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
-        #     ax.add_patch(c)
+        if len(obs_s) != 0:
+            for o in obs_s:
+                c = patches.Circle(xy=(o[0,0], o[1,0]), radius=obs_R, ec='k', fill=False)
+                ax.add_patch(c)
 
         ax.set_title("t = {0}, and {1}".format(sol.t[-1], sol.success))
         ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
         ax.grid();ax.set_aspect('equal')
+        ax.set_xlim(mid_x-max_range, mid_x+max_range)
+        ax.set_ylim(mid_y-max_range, mid_y+max_range)
         ax.legend()
         fig.savefig(dir_base + "fig/" + data_label + "_" + sim_name + ".png")
         plt.clf(); plt.close()
@@ -566,22 +599,6 @@ def test(exp_name, sim_param, i, rand):
 
 
         ### アニメーション #####################################################################
-        x_all, y_all = [], []
-        for i in range(N):
-            x_all.extend (sol.y[sdim*i])
-            y_all.extend(sol.y[sdim*i+1])
-        for g in goal_s:
-            if g is not None:
-                x_all.append(g[0,0]); y_all.append(g[1,0])
-
-        max_x = max(x_all)
-        min_x = min(x_all)
-        max_y = max(y_all)
-        min_y = min(y_all)
-        mid_x = (max_x + min_x) * 0.5
-        mid_y = (max_y + min_y) * 0.5
-        max_range = max(max_x-min_x, max_y-min_y) * 0.5
-
 
         y_s = []
         y_s_list = []
@@ -610,10 +627,11 @@ def test(exp_name, sim_param, i, rand):
                     marker="*", s=100, label="goal{0}".format(i), color=color_list[i],# color='#ff7f00',
                     alpha=1, linewidths=0.2, edgecolors='red'
                 )
-            
-        # for xo in xo_s:
-        #     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=obs_R, ec='k', fill=False)
-        #     ax.add_patch(c)
+
+        if len(obs_s) != 0:
+            for o in obs_s:
+                c = patches.Circle(xy=(o[0,0], o[1,0]), radius=obs_R, ec='k', fill=False)
+                ax.add_patch(c)
 
         tra_s = []
         robot_c_s = []
@@ -717,18 +735,13 @@ def test(exp_name, sim_param, i, rand):
                         frame_x = [xa[0,0], xb[0,0]]
                         frame_y = [xa[1,0], xb[1,0]]
                         pair_s[(j, cpnum, ib[0], ib[1])].set_data(frame_x, frame_y)
-            
-            
             tx.set_text(time_template % sol.t[i])
-
-
 
         epoch_max = 80
         if len(sol.t) < epoch_max:
             step = 1
         else:
             step = len(sol.t) // epoch_max
-
 
         ani = anm.FuncAnimation(
             fig = fig,
@@ -740,7 +753,6 @@ def test(exp_name, sim_param, i, rand):
         plt.clf(); plt.close()
 
     return
-
 
 def runner(sim_param,):
     t0 = time.perf_counter()

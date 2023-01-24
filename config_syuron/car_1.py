@@ -1,14 +1,20 @@
 """三角形を維持"""
 ROOBOT_R = 0.05
 FORMATION_PRESERVATION_R = 0.2
-PAIR_AVOIDANCE_R = 0.08
+PAIR_AVOIDANCE_R = 0.2
 OBS_AVOIDANCE_R = 0.1
 
+
+X_MAX = 0.5
+X_MIN = -0.5
+Y_MAX = 0.5
+Y_MIN = -0.5
+
 sim_param = {
-    "trial" : 1,  #実験回数
+    "trial" : 10,  #実験回数
     #"robot_model" : "car",
     "robot_model" : "turtlebot",
-    "time_span" : 3,
+    "time_span" : 60,
     "time_interval" : 0.05,
     # "N" : 4,
     # "pair" : [
@@ -56,10 +62,10 @@ sim_param = {
     "initial_condition" : {
         "type" : "random",
         "value" : {
-            "x_max" : -0.5,
-            "x_min" : 0.5,
-            "y_max" : -0.5,
-            "y_min" : 0.5,
+            "x_max" : X_MAX,
+            "x_min" : X_MIN,
+            "y_max" : Y_MAX,
+            "y_min" : Y_MIN,
         },
         "velocity" : {
             "type" : "fixed",
@@ -68,12 +74,23 @@ sim_param = {
     },
     #"goal_s" : [[0.5, 0.5], [], [], [],], #ゴールのみ
     
-    "goal_s" : [[-0.15, -0.15], [-0.15, 0.15], [0.15, -0.15], [0.15, 0.15]],
+    "goal" : {
+        "type" : "fixed",
+        "value" : [
+            [-0.15, -0.15],
+            [-0.15, 0.15],
+            [0.15, -0.15],
+            [0.15, 0.15]],
+    },
     
-    "obs_s" : {
+    "obs" : {
         "type" : "random",
-        "data" : {
+        "value" : {
             "n" : 3,
+            "x_max" : X_MAX,
+            "x_min" : X_MIN,
+            "y_max" : Y_MAX,
+            "y_min" : Y_MIN,
             }
     },
     
