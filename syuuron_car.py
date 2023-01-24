@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as anm
 import matplotlib.patches as patches
 from scipy import integrate
-from math import exp, pi, cos, sin, tan
+from math import exp, pi, cos, sin, tan, sqrt
 from typing import Union, Tuple
 from numba import njit
 import datetime
@@ -44,6 +44,33 @@ import config_syuron.car_1 as car_1
 #     xs.append(r * cos(2*pi/5 * i + pi/2))
 #     ys.append(r * sin(2*pi/5 * i + pi/2))
 
+#@njit
+def find_init_position(xu, xl, yu, yl, n, r, rand, exists=None) -> list[list[float]]:
+    """衝突の無い初期値を探す"""
+    x_s = []
+    new_x_s = []
+    if exists is None:
+        x_s.append([rand.uniform(xl, xu), rand.uniform(yl, yu)])
+    else:
+        x_s.extend(exists)
+    
+    max_trial = 10000000
+    for _ in range(max_trial * n):
+        if len(new_x_s) == n:
+            break
+        else:
+            tmp_x = [rand.uniform(xl, xu), rand.uniform(yl, yu)]
+            for x in x_s:
+                if sqrt((tmp_x[0]-x[0])**2 + (tmp_x[1]-x[1])**2) < r:  #ぶつかってる
+                    break
+                else:
+                    x_s.append(tmp_x)
+                    new_x_s.append(tmp_x)
+    
+    assert len(new_x_s) == n, "初期値生成に失敗"
+    return new_x_s
+
+
 @njit("f8[:,:](f8)")
 def rotate(theta):
     return np.array([
@@ -58,6 +85,7 @@ def rotate_dot(theta):
         [-sin(theta), -cos(theta)],
         [cos(theta), -sin(theta)]
     ])
+
 
 
 @njit
@@ -171,8 +199,9 @@ def test(exp_name, sim_param, i, rand):
         else:
             goal_s.append(np.array([g]).T)
     
-    #xg = None
-    xo_s = None
+    # obs_s = []
+    # if sim_param["obs_s"]["type"] == "random":
+
 
     N = sim_param["N"]
     robot_model = sim_param["robot_model"]
@@ -223,35 +252,46 @@ def test(exp_name, sim_param, i, rand):
         xl = sim_param["initial_condition"]["value"]["x_min"]
         yu = sim_param["initial_condition"]["value"]["y_max"]
         yl = sim_param["initial_condition"]["value"]["y_min"]
-        flag = True
-        xx_s = []
-        for _ in range(1000000):
-            xx_s = []
-            for i in range(N):
-                xx_s.append((rand.uniform(xl, xu), rand.uniform(yl, yu)))
+        # flag = True
+        # xx_s = []
+        # for _ in range(1000000):
+        #     xx_s = []
+        #     for i in range(N):
+        #         xx_s.append((rand.uniform(xl, xu), rand.uniform(yl, yu)))
             
-            # 衝突チェック
-            flag = True
-            for i in range(N):
-                for j in range(N):
-                    if i == j:
-                        flag *= True
-                    else:
-                        if np.sqrt((xx_s[i][0]-xx_s[j][0])**2 + (xx_s[i][1]-xx_s[j][1])**2) < pair_R*1.1:
-                            flag *= False
-            if flag == True:
-                #print("OK!")
-                break
-        if flag == False:
-            print("error 初期値に衝突有り!")
+        #     # 衝突チェック
+        #     flag = True
+        #     for i in range(N):
+        #         for j in range(N):
+        #             if i == j:
+        #                 flag *= True
+        #             else:
+        #                 if np.sqrt((xx_s[i][0]-xx_s[j][0])**2 + (xx_s[i][1]-xx_s[j][1])**2) < pair_R*1.1:
+        #                     flag *= False
+        #     if flag == True:
+        #         #print("OK!")
+        #         break
+        # if flag == False:
+        #     print("error 初期値に衝突有り!")
+        # X0_ = []
+        # for i in range(N):
+        #     X0_.extend([
+        #         xx_s[i][0], xx_s[i][1], rand.uniform(0, 2*pi),
+        #         0, 0, 0,
+        #         0, 0
+        #     ])
+        # X0 = np.array(X0_)
+        
+        xs_ = find_init_position(xu, xl, yu, yl, N, pair_R, rand)
         X0_ = []
-        for i in range(N):
+        for x in xs_:
             X0_.extend([
-                xx_s[i][0], xx_s[i][1], rand.uniform(0, 2*pi),
+                x[0], x[1], rand.uniform(0, 2*pi),
                 0, 0, 0,
                 0, 0
             ])
         X0 = np.array(X0_)
+        
     else:
         X0_ = []
         x0 = sim_param["initial_condition"]["value"]

@@ -8,7 +8,7 @@ sim_param = {
     "trial" : 1,  #実験回数
     #"robot_model" : "car",
     "robot_model" : "turtlebot",
-    "time_span" : 300,
+    "time_span" : 3,
     "time_interval" : 0.05,
     # "N" : 4,
     # "pair" : [
@@ -70,7 +70,13 @@ sim_param = {
     
     "goal_s" : [[-0.15, -0.15], [-0.15, 0.15], [0.15, -0.15], [0.15, 0.15]],
     
-    "obstacle_s" : [],
+    "obs_s" : {
+        "type" : "random",
+        "data" : {
+            "n" : 3,
+            }
+    },
+    
     "controller" :{
         "rmp" : {
             "formation_preservation" : {
