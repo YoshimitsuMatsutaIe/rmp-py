@@ -169,9 +169,9 @@ def calc_cpoint_state(x, x_dot, theta, omega, x_bars):
     return y_s, y_dot_s
 
 
-def test(exp_name, sim_param, i, rand):
+def test(exp_name, sim_param, index, rand):
     
-    data_label = str(i)
+    data_label = str(index)
     dir_base = "../syuron/formation_preservation_only/" + exp_name + "/"
     os.makedirs(dir_base, exist_ok=True)
     os.makedirs(dir_base + "csv", exist_ok=True)
@@ -207,13 +207,13 @@ def test(exp_name, sim_param, i, rand):
     formation_fab = fabric.ParwiseDistancePreservation(**fab["formation_preservation"])
 
     # ロボット間の障害物回避
-    #pair_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["pair_avoidance"])
+    pair_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["pair_avoidance"])
     pair_avoidance_fab = fabric.ObstacleAvoidance(**fab["pair_avoidance"])
     pair_R = fab["pair_avoidance"]["r"]
 
-    pair_avoidance_rmp = multi_robot_rmp.NeuralObstacleAvoidance(
-        gain=1, damp=10, gamma=1
-    )
+    # pair_avoidance_rmp = multi_robot_rmp.NeuralObstacleAvoidance(
+    #     gain=1, damp=10, gamma=1
+    # )
 
     # 障害物回避
     obs_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["obstacle_avoidance"])
@@ -221,11 +221,11 @@ def test(exp_name, sim_param, i, rand):
     obs_R = rmp["obstacle_avoidance"]["Ds"]
 
     # 目標アトラクタ
-    #attractor_rmp = multi_robot_rmp.UnitaryGoalAttractor_a(**rmp["goal_attractor"])
+    attractor_rmp = multi_robot_rmp.UnitaryGoalAttractor_a(**rmp["goal_attractor"])
     attractor_fab = fabric.GoalAttractor(**fab["goal_attractor"])
-    attractor_rmp = multi_robot_rmp.NeuralGoalAttractor(
-        gain=rmp["goal_attractor"]["gain"], damp=rmp["goal_attractor"]["eta"], epsilon=1e-5
-    )
+    # attractor_rmp = multi_robot_rmp.NeuralGoalAttractor(
+    #     gain=rmp["goal_attractor"]["gain"], damp=rmp["goal_attractor"]["eta"], epsilon=1e-5
+    # )
 
     # 初期値選定
     init_type = sim_param["initial_condition"]["type"]
@@ -249,7 +249,7 @@ def test(exp_name, sim_param, i, rand):
                 0, 0
             ])
         X0 = np.array(X0_)
-    else:
+    elif init_type == "fixed":
         X0_ = []
         x0 = sim_param["initial_condition"]["value"]
         for i in range(N):
@@ -260,7 +260,8 @@ def test(exp_name, sim_param, i, rand):
             ])
             xs_.append([x0[2*i], x0[2*i+1]])
         X0 = np.array(X0_)
-
+    else:
+        assert False
 
     ## goal #################################################
     goal_s = []
@@ -283,9 +284,10 @@ def test(exp_name, sim_param, i, rand):
                 goal_s.append(None)
             else:
                 goal_s.append(np.array([g]).T)
+    else:
+        assert False
     xs_.extend(gs_)
-
-
+    
     ## obstacle ################################################
     obs_s = []
     os_ = []
@@ -304,8 +306,9 @@ def test(exp_name, sim_param, i, rand):
     elif obs_type == "fixed":
         os_ = sim_param["obs"]["value"]
         for o in os_:
-            goal_s.append(np.array([o]).T)
-
+            obs_s.append(np.array([o]).T)
+    else:
+        assert False
 
     time_interval = sim_param["time_interval"]
     time_span = sim_param["time_span"]
@@ -650,10 +653,10 @@ def test(exp_name, sim_param, i, rand):
             # head_s.append(head)
             
             # 制御点
-            scat = ax.scatter(y_s[i][0,1:], y_s[i][1,1:], color=color_list[j], marker=".")
+            scat = ax.scatter(y_s[j][0,1:], y_s[j][1,1:], color=color_list[j], marker=".")
             cpoint_s.append(scat)
             
-            head = ax.scatter(y_s[i][0,0], y_s[i][1,0], color=color_list[j], marker="o")
+            head = ax.scatter(y_s[j][0,0], y_s[j][1,0], color=color_list[j], marker="o")
             head_s.append(head)
         
         for c in robot_c_s:
@@ -752,6 +755,7 @@ def test(exp_name, sim_param, i, rand):
         ani.save(dir_base + "animation/" + data_label+ sim_name + "_"  + '.gif', writer="pillow")
         plt.clf(); plt.close()
 
+        print("simulation {0} done!".format(index))
     return
 
 def runner(sim_param,):

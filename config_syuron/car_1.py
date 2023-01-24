@@ -1,8 +1,8 @@
 """三角形を維持"""
 ROOBOT_R = 0.05
 FORMATION_PRESERVATION_R = 0.2
-PAIR_AVOIDANCE_R = 0.2
-OBS_AVOIDANCE_R = 0.1
+PAIR_AVOIDANCE_R = 0.1
+OBS_AVOIDANCE_R = ROOBOT_R*2
 
 
 X_MAX = 0.5
@@ -11,9 +11,9 @@ Y_MAX = 0.5
 Y_MIN = -0.5
 
 sim_param = {
-    "trial" : 10,  #実験回数
+    "trial" : 1,  #実験回数
     #"robot_model" : "car",
-    "robot_model" : "turtlebot",
+    "robot_model" : "car",
     "time_span" : 60,
     "time_interval" : 0.05,
     # "N" : 4,
@@ -54,45 +54,81 @@ sim_param = {
     #     ]
     # ],  # 四角形
     
-    "N" : 4,
-    "pair" : [[], [], [], []], #ペアなし
+    # "N" : 4,
+    # "pair" : [[], [], [], []], #ペアなし
     
-    "robot_r" : ROOBOT_R,  #ロボットの半径
-    "robot_cpoints_num" : 4,
+    # "N" : 3,
+    # "pair" : [[], [], []], #ペアなし
+    
+    #"N" : 2,
+    #"pair" : [[], []],
+    
+    "N" : 1,
+    "pair" : [[]],
     "initial_condition" : {
-        "type" : "random",
-        "value" : {
-            "x_max" : X_MAX,
-            "x_min" : X_MIN,
-            "y_max" : Y_MAX,
-            "y_min" : Y_MIN,
-        },
-        "velocity" : {
-            "type" : "fixed",
-            "value" : "zero",
-        }
+        "type" : "fixed",
+        "value" : [0.0, 0.1, 0, 0, 0, 0],
     },
-    #"goal_s" : [[0.5, 0.5], [], [], [],], #ゴールのみ
-    
     "goal" : {
         "type" : "fixed",
         "value" : [
-            [-0.15, -0.15],
-            [-0.15, 0.15],
-            [0.15, -0.15],
-            [0.15, 0.15]],
+            [0.5, 0.0]
+        ]
+    },
+    "obs" : {
+        "type" : "fixed",
+        "value" : [
+            [0.2, 0.0],
+        ]
     },
     
-    "obs" : {
-        "type" : "random",
-        "value" : {
-            "n" : 3,
-            "x_max" : X_MAX,
-            "x_min" : X_MIN,
-            "y_max" : Y_MAX,
-            "y_min" : Y_MIN,
-            }
-    },
+    
+    
+    "robot_r" : ROOBOT_R,  #ロボットの半径
+    "robot_cpoints_num" : 4,
+    # "initial_condition" : {
+    #     "type" : "random",
+    #     "value" : {
+    #         "x_max" : X_MAX,
+    #         "x_min" : X_MIN,
+    #         "y_max" : Y_MAX,
+    #         "y_min" : Y_MIN,
+    #     },
+    #     "velocity" : {
+    #         "type" : "fixed",
+    #         "value" : "zero",
+    #     }
+    # },
+
+    # "goal" : {
+    #     "type" : "random",
+    #     "value" : {
+    #         "x_max" : X_MAX,
+    #         "x_min" : X_MIN,
+    #         "y_max" : Y_MAX,
+    #         "y_min" : Y_MIN,
+    #     }
+    # },
+    
+    # "goal" : {
+    #     "type" : "fixed",
+    #     "value" : [
+    #         [-0.15, -0.15],
+    #         [-0.15, 0.15],
+    #         [0.15, -0.15],
+    #         [0.15, 0.15]],
+    # },
+    
+    # "obs" : {
+    #     "type" : "random",
+    #     "value" : {
+    #         "n" : 4,
+    #         "x_max" : X_MAX,
+    #         "x_min" : X_MIN,
+    #         "y_max" : Y_MAX,
+    #         "y_min" : Y_MIN,
+    #         }
+    # },
     
     "controller" :{
         "rmp" : {
@@ -141,14 +177,14 @@ sim_param = {
             },
             "obstacle_avoidance" : {
                 "r" : OBS_AVOIDANCE_R,
-                "k_b" : 1,
+                "k_b" : 100,
                 "alpha_b" : 0.75,
             },
             "goal_attractor" :{
                 "m_u" : 2,
                 "m_l" : 0.2,
                 "alpha_m" : 0.75,
-                "k" : 15,
+                "k" : 1,
                 "alpha_psi" : 1,
                 "k_d" : 50
             }
