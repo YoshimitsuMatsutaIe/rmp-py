@@ -45,10 +45,10 @@ from multiprocessing import Pool, cpu_count
 
 
 
-def test(exp_name, sim_param_path, i, rand):
+def test(exp_name, sim_param_path, index, rand):
     """ロボット5台でテスト"""
     
-    data_label = str(i)
+    data_label = str(index)
     dir_base = "../syuron/formation_preservation_only/" + exp_name + "/"
     os.makedirs(dir_base, exist_ok=True)
     os.makedirs(dir_base + "csv", exist_ok=True)
@@ -394,6 +394,9 @@ def test(exp_name, sim_param_path, i, rand):
         ani.save(dir_base + "animation/" + data_label+ sim_name + "_"  + '.gif', writer="pillow")
 
         #print("ani_time = ", time.perf_counter() - t0)
+        
+    
+    print("simulation {0} done!".format(index))
 
 
 def runner(sim_path, n):
