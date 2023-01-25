@@ -317,6 +317,5 @@ def avoidance_test():
 
 if __name__ == "__main__":
     
-    #attractor_test()
-    
-    avoidance_test()
+    attractor_test()
+    #avoidance_test()

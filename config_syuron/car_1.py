@@ -177,7 +177,7 @@ sim_param = {
             },
             "obstacle_avoidance" : {
                 "r" : OBS_AVOIDANCE_R,
-                "k_b" : 100,
+                "k_b" : 1,
                 "alpha_b" : 0.75,
             },
             "goal_attractor" :{
