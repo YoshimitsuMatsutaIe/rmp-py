@@ -1,4 +1,6 @@
 """三角形を維持"""
+import math
+from math import pi
 ROOBOT_R = 0.05
 FORMATION_PRESERVATION_R = 0.2
 PAIR_AVOIDANCE_R = 0.1
@@ -12,10 +14,10 @@ Y_MIN = -0.5
 
 sim_param = {
     "trial" : 1,  #実験回数
+    "robot_model" : "turtlebot",
     #"robot_model" : "car",
-    "robot_model" : "car",
-    "time_span" : 60,
-    "time_interval" : 0.05,
+    "time_span" : 3,
+    "time_interval" : 0.01,
     # "N" : 4,
     # "pair" : [
     #     [
@@ -67,7 +69,7 @@ sim_param = {
     "pair" : [[]],
     "initial_condition" : {
         "type" : "fixed",
-        "value" : [0.0, 0.1, 0, 0, 0, 0],
+        "value" : [0.0, 0.0, pi/2, 0, 0, 0],
     },
     "goal" : {
         "type" : "fixed",
@@ -75,13 +77,16 @@ sim_param = {
             [0.5, 0.0]
         ]
     },
-    "obs" : {
-        "type" : "fixed",
-        "value" : [
-            [0.2, 0.0],
-        ]
-    },
+    # "obs" : {
+    #     "type" : "fixed",
+    #     "value" : [
+    #         [0.2, 0.3],
+    #     ]
+    # },
     
+    "obs" : {
+        "type" : "none"
+    },
     
     
     "robot_r" : ROOBOT_R,  #ロボットの半径
@@ -184,7 +189,7 @@ sim_param = {
                 "m_u" : 2,
                 "m_l" : 0.2,
                 "alpha_m" : 0.75,
-                "k" : 1,
+                "k" : 100,
                 "alpha_psi" : 1,
                 "k_d" : 50
             }

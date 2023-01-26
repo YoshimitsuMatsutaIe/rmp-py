@@ -307,6 +307,8 @@ def test(exp_name, sim_param, index, rand):
         os_ = sim_param["obs"]["value"]
         for o in os_:
             obs_s.append(np.array([o]).T)
+    elif obs_type == "none":
+        pass
     else:
         assert False
 
@@ -619,7 +621,7 @@ def test(exp_name, sim_param, index, rand):
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        time_template = 'time = %.2f [s]'
+        time_template = 'time = %.2f [s]' + ", " + robot_model
         scale = 10
         f_scale = 0.1
         
@@ -753,6 +755,8 @@ def test(exp_name, sim_param, index, rand):
             interval=60
         )
         ani.save(dir_base + "animation/" + data_label+ sim_name + "_"  + '.gif', writer="pillow")
+        ani.save(dir_base + "animation/" + data_label+ sim_name + "_"  + '.mp4', writer="ffmpeg")
+        
         plt.clf(); plt.close()
 
         print("simulation {0} done!".format(index))
