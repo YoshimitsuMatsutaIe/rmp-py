@@ -2,7 +2,7 @@ import numpy as np
 from numpy import linalg as LA
 import sympy as sy
 from numba import njit
-
+from math import sqrt, cos, sin, tan, pi
 
 class GoalAttractor:
     def __init__(self, m_u, m_l, alpha_m, k, alpha_psi, k_d):
@@ -144,7 +144,75 @@ class ParwiseDistancePreservation:
 
 
 
+@njit(cache=True)
+def angle_taskmap(angle, q1, q2, q3, q1_dot, q2_dot, q3_dot):
+    q_x = q1[0,0]; q_y = q1[1,0]
+    s_x = q2[0,0]; s_y = q2[1,0]
+    t_x = q3[0,0]; t_y = q3[1,0]
+    q_x_dot = q1_dot[0,0]; q_y_dot = q1_dot[1,0]
+    s_x_dot = q2_dot[0,0]; s_y_dot = q2_dot[1,0]
+    t_x_dot = q3_dot[0,0]; t_y_dot = q3_dot[1,0]
+    
+    g = cos(angle)
+    
+    x = g - ((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2))
+    J = np.array([[-(-q_x + s_x)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_x + t_x)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (4*q_x - 2*s_x - 2*t_x)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)), -(-q_y + s_y)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_y + t_y)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (4*q_y - 2*s_y - 2*t_y)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2))]])
+    x_dot = -(-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - ((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2))
+    J_dot = np.array([[-(-q_x + s_x)*(-3*(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - 3*(-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(5/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_x + s_x)*(-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_x + s_x)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_x + t_x)*(-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_x + t_x)*(-3*(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - 3*(-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(5/2)) - (-q_x + t_x)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_x_dot + s_x_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_x_dot + t_x_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*(4*q_x - 2*s_x - 2*t_x)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*(4*q_x - 2*s_x - 2*t_x)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (4*q_x_dot - 2*s_x_dot - 2*t_x_dot)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)), -(-q_y + s_y)*(-3*(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - 3*(-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(5/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_y + s_y)*(-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_y + s_y)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_y + t_y)*(-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_y + t_y)*(-3*(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - 3*(-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(5/2)) - (-q_y + t_y)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_y_dot + s_y_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_y_dot + t_y_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*(4*q_y - 2*s_y - 2*t_y)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*(4*q_y - 2*s_y - 2*t_y)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (4*q_y_dot - 2*s_y_dot - 2*t_y_dot)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2))]])
+
+    return x, x_dot, J, J_dot
+
+
+def AnglePreservation_rmp(x, x_dot, y, y_dot, z, z_dot, g, m_u, m_l, alpha_m, k, alpha_psi, k_d):
+    s, s_dot, J, J_dot = angle_taskmap(g, x, y, z, x_dot, y_dot, z_dot)
+    m =  (m_u - m_l) * np.exp(-(alpha_m * s)**2) + m_l
+    xi = -2 * (m_u - m_l) * alpha_m**2 * s**3 * np.exp(-alpha_m*s**2)
+    grad_psi = k * (1 - np.exp(-2 * alpha_psi * s)) / (1 + np.exp(-2 * alpha_psi * s))
+    
+    f =  -m * grad_psi - xi - k_d*s_dot
+    
+    
+    M = m * J.T @ J
+    F = J.T * (f + m * (J_dot @ x_dot)[0,0])
+    
+    return M, F
+
+
+class AnglePreservation:
+    """角度を維持"""
+    def __init__(self, m_u, m_l, alpha_m, k, alpha_psi, k_d):
+        self.m_u = m_u
+        self.m_l = m_l
+        self.alpha_m = alpha_m
+        self.k = k
+        self.alpha_psi = alpha_psi
+        self.k_d = k_d
+    
+    def calc_rmp(self, x, x_dot, y, y_dot, z, z_dot, angle):
+        return AnglePreservation_rmp(
+            x, x_dot, y, y_dot, z, z_dot,
+            angle,
+            self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d
+        )
+
+
+
 
 if __name__ == "__main__":
     
-    obs = ObstacleAvoidance(1, 1, 1)
+    #obs = ObstacleAvoidance(1, 1, 1)
+    
+    q1 = np.random.rand(2, 1)
+    q2 = np.random.rand(2, 1)
+    q3 = np.random.rand(2, 1)
+    q1_dot = np.random.rand(2, 1)
+    q2_dot = np.random.rand(2, 1)
+    q3_dot = np.random.rand(2, 1)
+    
+    x, x_dot, J, J_dot = angle_taskmap(
+        cos(pi/2), q1, q2, q3, q1_dot, q2_dot, q3_dot
+    )
+    print(x)
+    print(x_dot)
+    print(J)
+    print(J_dot)

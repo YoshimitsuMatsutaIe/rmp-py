@@ -1,0 +1,103 @@
+trial : 1  #実験回数
+time_span : 60
+time_interval : 0.01
+robot_num : &robot_num 5
+collision_r : &collision_r 0.1
+robot_r : &robot_r 0.05
+# pair :
+#   [
+#     [1, 4],
+#     [0, 2],
+#     [1, 3],
+#     [2, 4],
+#     [0, 3]
+#   ]
+pair : [[], [], [], [], []]
+initial_condition :
+  position:
+    type : random
+    value :
+      x_max : &x_max 0.5
+      x_min : &x_min -0.5
+      y_max : &y_max 0.5
+      y_min : &y_min -0.5
+  velocity :
+    type : zero
+goal :
+  type : random
+  value :
+    n : *robot_num
+    x_max : *x_max
+    x_min : *x_min
+    y_max : *y_max
+    y_min : *y_min
+# goal :
+#   type : fixed
+#   value :
+#     [
+#       [0, 0], [], [], [], []
+#     ]
+obstacle :
+  type : random
+  value :
+    n : 5
+    x_max : *x_max
+    x_min : *x_min
+    y_max : *y_max
+    y_min : *y_min
+controller : 
+  rmp :
+    formation_preservation :
+      d : 0.1
+      c : 1
+      alpha : 5
+      eta : 100
+    pair_avoidance :
+      Ds : &collision_pair_r 0.1
+      alpha : 0.00001
+      eta : 0.2
+      epsilon : 0.00001
+    obstacle_avoidance:
+      Ds : &collision_obs_r 0.15
+      alpha : 0.00001
+      eta : 0.2
+      epsilon : 0.00001
+    goal_attractor:
+      wu : 10
+      wl : 0.1
+      gain : 150
+      sigma : 1
+      alpha : 1
+      tol : 0.001
+      eta : 50
+  fabric :
+    formation_preservation :
+      d : 0.1
+      m_u : 2
+      m_l : 0.1
+      alpha_m : 0.75
+      k : 5
+      alpha_psi : 1
+      k_d : 100
+    angle_preservation:
+      m_u : 2
+      m_l : 0.1
+      alpha_m : 0.75
+      k : 5
+      alpha_psi : 1
+      k_d : 100
+    pair_avoidance :
+      r : *collision_pair_r
+      k_b : 20
+      alpha_b : 0.75
+    obstacle_avoidance:
+      r : *collision_obs_r
+      k_b : 20
+      alpha_b : 0.75
+    goal_attractor:
+      m_u : 2
+      m_l : 0.2
+      alpha_m : 0.75
+      k : 150
+      alpha_psi : 1
+      k_d : 50
