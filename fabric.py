@@ -5,30 +5,43 @@ from numba import njit
 from math import sqrt, cos, sin, tan, pi
 
 class GoalAttractor:
-    def __init__(self, m_u, m_l, alpha_m, k, alpha_psi, k_d):
+    def __init__(self, m_u, m_l, alpha_m, k, alpha_psi, k_d, dim=2):
         self.m_u = m_u
         self.m_l = m_l
         self.alpha_m = alpha_m
         self.k = k
         self.alpha_psi = alpha_psi
         self.k_d = k_d
+        self.dim = dim
         self.set_func()
     
+    
+    def norm(self, x):
+        z = 0
+        for i in range(self.dim):
+            z += x[i,0]**2
+        return z**(1/2)
+    
     def set_func(self,):
-        x = sy.MatrixSymbol('x', 2, 1)
-        x_dot = sy.MatrixSymbol('x_dot', 2, 1)
-        x_norm = sy.sqrt(x[0,0]**2 + x[1,0]**2)
+        x = sy.MatrixSymbol('x', self.dim, 1)
+        x_dot = sy.MatrixSymbol('x_dot', self.dim, 1)
+        x_norm = self.norm(x)
         m_u, m_l, alpha_m, k, alpha_psi = sy.symbols('m_U, m_l, alpha_m, k, alpha_psi')
 
-        G = (m_u - m_l) * sy.exp(-(alpha_m * x_norm)**2) * sy.eye(2) + m_l * sy.eye(2)
+        G = (m_u - m_l) * sy.exp(-(alpha_m * x_norm)**2) * sy.eye(self.dim) + m_l * sy.eye(self.dim)
         psi_1 = k * (x_norm + 1/alpha_psi * sy.ln(1 + sy.exp(-2 * alpha_psi * x_norm)))
 
         L = (x_dot.T * G * x_dot)[0,0]
         M = G
 
-        xi = sy.Matrix([[sy.diff(L, x_dot[0,0]), sy.diff(L, x_dot[1,0])]]).T.jacobian(x) * x_dot \
-            - sy.Matrix([[sy.diff(L, x[0,0])], [sy.diff(L, x[1,0])],])
-        grad_psi_1 = sy.Matrix([[sy.diff(psi_1, x[0,0]), sy.diff(psi_1, x[1,0])]]).T
+        if self.dim == 2:
+            xi = sy.Matrix([[sy.diff(L, x_dot[0,0]), sy.diff(L, x_dot[1,0])]]).T.jacobian(x) * x_dot \
+                - sy.Matrix([[sy.diff(L, x[0,0])], [sy.diff(L, x[1,0])],])
+            grad_psi_1 = sy.Matrix([[sy.diff(psi_1, x[0,0]), sy.diff(psi_1, x[1,0])]]).T
+        else:
+            xi = sy.Matrix([[sy.diff(L, x_dot[0,0]), sy.diff(L, x_dot[1,0]), sy.diff(L, x_dot[2,0])]]).T.jacobian(x) * x_dot \
+                - sy.Matrix([[sy.diff(L, x[0,0])], [sy.diff(L, x[1,0])], [sy.diff(L, x[2,0])]])
+            grad_psi_1 = sy.Matrix([[sy.diff(psi_1, x[0,0]), sy.diff(psi_1, x[1,0]), sy.diff(psi_1, x[2,0])]]).T
         pi = -M * grad_psi_1
 
         self.func_M = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), M, "numpy")
@@ -136,7 +149,9 @@ class ParwiseDistancePreservation:
         self.alpha_psi = alpha_psi
         self.k_d = k_d
     
-    def calc_rmp(self, x, x_dot, y, y_dot=np.zeros((2,1))):
+    def calc_rmp(self, x, x_dot, y, y_dot=None):
+        if y_dot is None:
+            y_dot = np.zeros(y.shape)
         return ParwiseDistancePreservation_rmp(
             x, x_dot, y, y_dot,
             self.d, self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d

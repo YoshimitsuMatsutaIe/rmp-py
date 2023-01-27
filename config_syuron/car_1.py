@@ -6,6 +6,7 @@ FORMATION_PRESERVATION_R = 0.2
 PAIR_AVOIDANCE_R = 0.1
 OBS_AVOIDANCE_R = ROOBOT_R*2
 
+ROBOT_NUM = 3
 
 X_MAX = 0.5
 X_MIN = -0.5
@@ -16,9 +17,12 @@ sim_param = {
     "trial" : 1,  #実験回数
     "robot_model" : "turtlebot",
     #"robot_model" : "car",
-    "time_span" : 3,
+    "time_span" : 120,
     "time_interval" : 0.01,
-    # "N" : 4,
+    "N" : ROBOT_NUM,
+    
+    "pair" : [[] for _ in range(ROBOT_NUM)],
+    
     # "pair" : [
     #     [
     #         [2, [1, 0]],
@@ -36,7 +40,6 @@ sim_param = {
     #     ]
     # ],  # ケツに追従
     
-    # "N" : 4,
     # "pair" : [
     #     [
     #         [1, [1, 0]],
@@ -59,24 +62,36 @@ sim_param = {
     # "N" : 4,
     # "pair" : [[], [], [], []], #ペアなし
     
-    # "N" : 3,
-    # "pair" : [[], [], []], #ペアなし
+    # "pair" : [
+    #     [
+    #         [2, [1, 0]],
+    #         [2, [2, 0]]
+    #     ],# 0番目．リーダー
+    #     [
+    #         [0, [0, 2]],
+    #         [3, [2, 1]]
+    #     ],# 1番目．左
+    #     [
+    #         [0, [0, 2]],
+    #         [1, [1, 3]]
+    #     ],# 2番目．右
+    # ], #三角形
     
     #"N" : 2,
     #"pair" : [[], []],
     
-    "N" : 1,
-    "pair" : [[]],
+    # "N" : 1,
+    # "pair" : [[]],
     "initial_condition" : {
         "type" : "fixed",
-        "value" : [0.0, 0.0, pi/2, 0, 0, 0],
+        "value" : [0.5, 0.0, pi/2, 0, 0, 0],
     },
-    "goal" : {
-        "type" : "fixed",
-        "value" : [
-            [0.5, 0.0]
-        ]
-    },
+    # "goal" : {
+    #     "type" : "fixed",
+    #     "value" : [
+    #         [0.5, 0.0]
+    #     ]
+    # },
     # "obs" : {
     #     "type" : "fixed",
     #     "value" : [
@@ -91,6 +106,7 @@ sim_param = {
     
     "robot_r" : ROOBOT_R,  #ロボットの半径
     "robot_cpoints_num" : 4,
+    
     # "initial_condition" : {
     #     "type" : "random",
     #     "value" : {
@@ -117,11 +133,24 @@ sim_param = {
     
     # "goal" : {
     #     "type" : "fixed",
+    #     "value" : [[] for _ in range(ROBOT_NUM)],
+    # },
+    
+    "goal" : {
+        "type" : "fixed",
+        "value" : [
+            [0, 0],
+        ]
+    },
+    
+    # "goal" : {
+    #     "type" : "fixed",
     #     "value" : [
     #         [-0.15, -0.15],
     #         [-0.15, 0.15],
     #         [0.15, -0.15],
-    #         [0.15, 0.15]],
+    #         [0.15, 0.15]
+    #     ],
     # },
     
     # "obs" : {

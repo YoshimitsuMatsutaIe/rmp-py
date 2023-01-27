@@ -3,6 +3,50 @@ from numpy import linalg as LA
 import sympy as sy
 from numba import njit
 
+@njit
+def UnitaryGoalAttractor_a_rmp_func(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha, tol, eta):
+    z = x - xg
+    z_dot = x_dot - xg_dot
+    z_norm = LA.norm(z)
+    z_dot_norm = LA.norm(z_dot)
+    
+    beta = np.exp(- z_norm**2 / 2 / (sigma**2))
+    w = (wu - wl) * beta + wl
+    s = (1 - np.exp(-2 * alpha * z_norm)) / (1 + np.exp(-2 * alpha * z_norm))
+
+    M = w * np.eye(2)
+    
+    if z_norm > tol:
+        grad_Phi = s / z_norm * w * gain * z
+    else:
+        grad_Phi = np.zeros((2,1))
+    
+    Bx_dot = eta * w * z_dot
+    grad_w = - beta * (wu - wl) / sigma**2 * z
+
+    xi = -0.5 * (z_dot_norm**2 * grad_w - 2 *
+        np.dot(np.dot(z_dot, z_dot.T), grad_w))
+    
+    F = -grad_Phi - Bx_dot - xi
+    return M, F
+
+
+class UnitaryGoalAttractor_a:
+    def __init__(self, gain, wu, wl, sigma, alpha, tol, eta):
+        self.gain = gain
+        self.wu = wu
+        self.wl = wl
+        self.sigma = sigma
+        self.alpha = alpha
+        self.tol = tol
+        self.eta = eta #ダンピング
+    
+    def calc_rmp(self, x, x_dot, xg, xg_dot=np.zeros((2,1))):
+        return UnitaryGoalAttractor_a_rmp_func(
+            x, x_dot, xg, xg_dot, 
+            self.gain, self.wu, self.wl, self.sigma, self.alpha, self.tol, self.eta
+        )
+
 
 @njit
 def PairwiseObstacleAvoidance_rmp_func(x, x_dot, xo, Ds, alpha, eta, epsilon):
@@ -88,54 +132,6 @@ class ParwiseDistancePreservation_a:
         return ParwiseDistancePreservation_a_rmp_func(
             x, x_dot, y, y_dot, self.d, self.c, self.alpha, self.eta
         )
-
-
-@njit
-def UnitaryGoalAttractor_a_rmp_func(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha, tol, eta):
-    z = x - xg
-    z_dot = x_dot - xg_dot
-    z_norm = LA.norm(z)
-    z_dot_norm = LA.norm(z_dot)
-    
-    beta = np.exp(- z_norm**2 / 2 / (sigma**2))
-    w = (wu - wl) * beta + wl
-    s = (1 - np.exp(-2 * alpha * z_norm)) / (1 + np.exp(-2 * alpha * z_norm))
-
-    M = w * np.eye(2)
-    
-    if z_norm > tol:
-        grad_Phi = s / z_norm * w * gain * z
-    else:
-        grad_Phi = np.zeros((2,1))
-    
-    Bx_dot = eta * w * z_dot
-    grad_w = - beta * (wu - wl) / sigma**2 * z
-
-    xi = -0.5 * (z_dot_norm**2 * grad_w - 2 *
-        np.dot(np.dot(z_dot, z_dot.T), grad_w))
-    
-    F = -grad_Phi - Bx_dot - xi
-    return M, F
-
-
-class UnitaryGoalAttractor_a:
-    def __init__(self, gain, wu, wl, sigma, alpha, tol, eta):
-        self.gain = gain
-        self.wu = wu
-        self.wl = wl
-        self.sigma = sigma
-        self.alpha = alpha
-        self.tol = tol
-        self.eta = eta #ダンピング
-    
-    def calc_rmp(self, x, x_dot, xg, xg_dot=np.zeros((2,1))):
-        return UnitaryGoalAttractor_a_rmp_func(
-            x, x_dot, xg, xg_dot, 
-            self.gain, self.wu, self.wl, self.sigma, self.alpha, self.tol, self.eta
-        )
-
-
-
 
 
 @njit

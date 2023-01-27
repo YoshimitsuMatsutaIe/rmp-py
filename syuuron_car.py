@@ -115,17 +115,10 @@ def transform_turtlebot(x, y, theta, dx, dy, omega, v, xi):
         [0.0, 1.0]
     ])
     T = np.array([
-        [-v * sin(theta) * omega],
-        [v * cos(theta) * omega],
+        [-v * sin(theta) * xi],
+        [v * cos(theta) * xi],
         [0.0]
     ])
-    
-    # J = np.array([
-    #     [cos(theta), -v*sin(theta)],
-    #     [sin(theta), v*cos(theta)],
-    #     [0.0, 1.0],
-    # ])
-    # T = np.zeros((3,1))
     
     return J, T
 
@@ -170,7 +163,7 @@ def calc_cpoint_state(x, x_dot, theta, omega, x_bars):
 
 
 def test(exp_name, sim_param, index, rand):
-    
+    print("exp {0} start...".format(index))
     data_label = str(index)
     dir_base = "../syuron/formation_preservation_only/" + exp_name + "/"
     os.makedirs(dir_base, exist_ok=True)
