@@ -1,8 +1,8 @@
 trial : 1  #実験回数
-time_span : 30
+time_span : 60
 time_interval : 0.01
-task_dim : 2
-robot_num : &robot_num 6
+task_dim : &task_dim 3
+robot_num : &robot_num 3
 collision_r : &collision_r 0.1
 robot_r : &robot_r 0.05
 # pair :
@@ -13,7 +13,7 @@ robot_r : &robot_r 0.05
 #     [2, 4],
 #     [0, 3]
 #   ]
-pair : [[], [], [], [], [], []]
+pair : [[1, 2], [0, 2], [1, 0]]
 initial_condition :
   position:
     type : random
@@ -22,35 +22,41 @@ initial_condition :
       x_min : &x_min -0.5
       y_max : &y_max 0.5
       y_min : &y_min -0.5
+      z_max : &z_max 0.5
+      z_min : &z_min -0.5
   velocity :
     type : zero
-goal :
-  type : random
-  value :
-    n : *robot_num
-    x_max : *x_max
-    x_min : *x_min
-    y_max : *y_max
-    y_min : *y_min
 # goal :
-#   type : fixed
-#   value :
-#     [
-#       [0, 0], [], [], [], []
-#     ]
-
-# obstacle :
 #   type : random
 #   value :
-#     n : 5
+#     n : *robot_num
 #     x_max : *x_max
 #     x_min : *x_min
 #     y_max : *y_max
 #     y_min : *y_min
-
-obstacle : 
+#     z_max : *z_max
+#     z_min : *z_min
+goal :
   type : fixed
-  value : []
+  value :
+    [
+      [0, 0, 0], [], []
+    ]
+
+obstacle :
+  type : random
+  value :
+    n : 8
+    x_max : *x_max
+    x_min : *x_min
+    y_max : *y_max
+    y_min : *y_min
+    z_max : *z_max
+    z_min : *z_min
+
+# obstacle : 
+#   type : fixed
+#   value : []
 
 controller : 
   rmp :
@@ -108,4 +114,4 @@ controller :
       k : 20
       alpha_psi : 1
       k_d : 100
-      dim : 2
+      dim : *task_dim

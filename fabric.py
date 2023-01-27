@@ -23,6 +23,7 @@ class GoalAttractor:
         return z**(1/2)
     
     def set_func(self,):
+        #print("goal!")
         x = sy.MatrixSymbol('x', self.dim, 1)
         x_dot = sy.MatrixSymbol('x_dot', self.dim, 1)
         x_norm = self.norm(x)
@@ -47,6 +48,8 @@ class GoalAttractor:
         self.func_M = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), M, "numpy")
         self.func_xi = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), xi, "numpy")
         self.func_pi = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), pi, "numpy")
+        #print("done!")
+        return
 
     def calc_fabric(self, x, x_dot, xg):
         #print(x)

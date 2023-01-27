@@ -63,6 +63,7 @@ def find_random_position(xu, xl, yu, yl, zu, zl, n, r, rand, exists=None) -> lis
                 tmp_x = [rand.uniform(xl, xu), rand.uniform(yl, yu), rand.uniform(zl, zu)]
             flag = True
             for x in x_s:
+                #print(x)
                 if len(x) == 0:
                     continue
                 if zu is None:
@@ -85,26 +86,10 @@ def test(dir_base, sim_param, index, rand):
     """ロボット5台でテスト"""
     
     data_label = str(index)
-
-    # xg = np.array([[4, 4]]).T
-    # xo_s = [
-    #     np.array([[1.0, 1.5]]).T,
-    #     np.array([[2.0, 0.5]]).T,
-    #     np.array([[2.5, 2.5]]).T,
-    # ]
-    # xg = sim_param["goal"]
-    # xo_s = sim_param["obstacle"]
-
     robot_num = sim_param["robot_num"]
     pres_pair = sim_param["pair"]
 
-    # pres_pair = [
-    #     [1, 4],
-    #     [0, 2],
-    #     [1, 3],
-    #     [2, 4],
-    #     [0, 3]
-    # ]  # 五角形
+
 
     # pres_pair = [
     #     [1, 2],
@@ -114,31 +99,6 @@ def test(dir_base, sim_param, index, rand):
     #     [2]
     # ]  #鶴翼の陣
 
-    # pres_pair = [
-    #     [1],
-    #     [0, 2],
-    #     [1, 3],
-    #     [2, 4],
-    #     [3]
-    # ]  #鶴翼の陣
-
-
-    # X0 = np.array([
-    #     1, 1, 0, 0,
-    #     0, 1, 0, 0,
-    #     0, 0, 0, 0,
-    #     1, -1, 0, 0,
-    #     1, 0, 0, 0
-    # ])
-
-
-    # X0 = np.array([
-    #     xs[0], ys[0], 0, 0,
-    #     xs[1], ys[1], 0, 0,
-    #     xs[2], ys[2], 0, 0,
-    #     xs[3], ys[3], 0, 0,
-    #     xs[4], ys[4], 0, 0
-    # ]) + (np.random.rand(20) - 0.5)*0.9
 
     ### 環境構築 ###
     TASK_DIM = sim_param["task_dim"]
@@ -157,21 +117,21 @@ def test(dir_base, sim_param, index, rand):
         _xg_s = find_random_position(
             xu=goal_v["x_max"], xl=goal_v["x_min"], yu=goal_v["y_max"], yl=goal_v["y_min"],
             zu=goal_v["z_max"] if TASK_DIM==3 else None,
-            zl=goal_v["z_max"] if TASK_DIM==3 else None,
+            zl=goal_v["z_min"] if TASK_DIM==3 else None,
             n=goal_v["n"], r=2*collision_r, rand=rand
         )
         _exist.extend(_xg_s)
         _xo_s = find_random_position(
             xu=obs_v["x_max"], xl=obs_v["x_min"], yu=obs_v["y_max"], yl=obs_v["y_min"],
             zu=obs_v["z_max"] if TASK_DIM==3 else None,
-            zl=obs_v["z_max"] if TASK_DIM==3 else None,
+            zl=obs_v["z_min"] if TASK_DIM==3 else None,
             n=obs_v["n"], r=2*collision_r, rand=rand, exists=_exist
         )
         _exist.extend(_xo_s)
         _x0_s = find_random_position(
             xu=init_p_v["x_max"], xl=init_p_v["x_min"], yu=init_p_v["y_max"], yl=init_p_v["y_min"],
             zu=init_p_v["z_max"] if TASK_DIM==3 else None,
-            zl=init_p_v["z_max"] if TASK_DIM==3 else None,
+            zl=init_p_v["z_min"] if TASK_DIM==3 else None,
             n=robot_num, r=2*collision_r, rand=rand, exists=_exist
         )
     
@@ -181,14 +141,14 @@ def test(dir_base, sim_param, index, rand):
         _xo_s = find_random_position(
             xu=obs_v["x_max"], xl=obs_v["x_min"], yu=obs_v["y_max"], yl=obs_v["y_min"],
             zu=obs_v["z_max"] if TASK_DIM==3 else None,
-            zl=obs_v["z_max"] if TASK_DIM==3 else None,
+            zl=obs_v["z_min"] if TASK_DIM==3 else None,
             n=obs_v["n"], r=2*collision_r, rand=rand, exists=_exist
         )
         _exist.extend(_xo_s)
         _x0_s = find_random_position(
             xu=init_p_v["x_max"], xl=init_p_v["x_min"], yu=init_p_v["y_max"], yl=init_p_v["y_min"],
             zu=init_p_v["z_max"] if TASK_DIM==3 else None,
-            zl=init_p_v["z_max"] if TASK_DIM==3 else None,
+            zl=init_p_v["z_min"] if TASK_DIM==3 else None,
             n=robot_num, r=2*collision_r,
             rand=rand, exists=_exist
         )
@@ -206,7 +166,7 @@ def test(dir_base, sim_param, index, rand):
         _x0_s = find_random_position(
             xu=init_p_v["x_max"], xl=init_p_v["x_min"], yu=init_p_v["y_max"], yl=init_p_v["y_min"],
             zu=init_p_v["z_max"] if TASK_DIM==3 else None,
-            zl=init_p_v["z_max"] if TASK_DIM==3 else None,
+            zl=init_p_v["z_min"] if TASK_DIM==3 else None,
             n=robot_num, r=2*collision_r, rand=rand, exists=_exist
         )
     
@@ -216,14 +176,14 @@ def test(dir_base, sim_param, index, rand):
         _xg_s = find_random_position(
             xu=goal_v["x_max"], xl=goal_v["x_min"], yu=goal_v["y_max"], yl=goal_v["y_min"],
             zu=goal_v["z_max"] if TASK_DIM==3 else None,
-            zl=goal_v["z_max"] if TASK_DIM==3 else None,
+            zl=goal_v["z_min"] if TASK_DIM==3 else None,
             n=goal_v["n"], r=2*collision_r, rand=rand
         )
         _exist.extend(_xg_s)
         _xo_s = find_random_position(
             xu=obs_v["x_max"], xl=obs_v["x_min"], yu=obs_v["y_max"], yl=obs_v["y_min"],
             zu=obs_v["z_max"] if TASK_DIM==3 else None,
-            zl=obs_v["z_max"] if TASK_DIM==3 else None,
+            zl=obs_v["z_min"] if TASK_DIM==3 else None,
             n=obs_v["n"], r=2*collision_r, rand=rand, exists=_exist
         )
     
@@ -235,7 +195,7 @@ def test(dir_base, sim_param, index, rand):
         _x0_s = find_random_position(
             xu=init_p_v["x_max"], xl=init_p_v["x_min"], yu=init_p_v["y_max"], yl=init_p_v["y_min"],
             zu=init_p_v["z_max"] if TASK_DIM==3 else None,
-            zl=init_p_v["z_max"] if TASK_DIM==3 else None,
+            zl=init_p_v["z_min"] if TASK_DIM==3 else None,
             n=robot_num, r=2*collision_r, rand=rand, exists=_exist
         )
 
@@ -247,7 +207,7 @@ def test(dir_base, sim_param, index, rand):
         _xg_s = find_random_position(
             xu=goal_v["x_max"], xl=goal_v["x_min"], yu=goal_v["y_max"], yl=goal_v["y_min"],
             zu=goal_v["z_max"] if TASK_DIM==3 else None,
-            zl=goal_v["z_max"] if TASK_DIM==3 else None,
+            zl=goal_v["z_min"] if TASK_DIM==3 else None,
             n=goal_v["n"], r=2*collision_r, rand=rand
         )
     
@@ -259,7 +219,7 @@ def test(dir_base, sim_param, index, rand):
         _xo_s = find_random_position(
             xu=obs_v["x_max"], xl=obs_v["x_min"], yu=obs_v["y_max"], yl=obs_v["y_min"],
             zu=obs_v["z_max"] if TASK_DIM==3 else None,
-            zl=obs_v["z_max"] if TASK_DIM==3 else None,
+            zl=obs_v["z_min"] if TASK_DIM==3 else None,
             n=obs_v["n"], r=2*collision_r, rand=rand, exists=_exist
         )
     
@@ -401,13 +361,15 @@ def test(dir_base, sim_param, index, rand):
     
     def dX(t, X, sim_name):
         #print("t = ", t)
-        X_dot = np.zeros((4*robot_num, 1))
+        X_dot = np.zeros((2*TASK_DIM*robot_num, 1))
         x_s, x_dot_s = [], []
         for i in range(robot_num):
             x_s.append(np.array([X[2*TASK_DIM*i:2*TASK_DIM*i+TASK_DIM]]).T)
             x_dot_s.append(np.array([X[2*TASK_DIM*i+TASK_DIM:2*TASK_DIM*i+2*TASK_DIM]]).T)
 
+        #print(xg_s)
         for i in range(robot_num):
+            #print("i = ", i)
             root_M = np.zeros((TASK_DIM, TASK_DIM))
             root_F = np.zeros((TASK_DIM, 1))
             M = np.zeros((TASK_DIM, TASK_DIM))
@@ -417,6 +379,7 @@ def test(dir_base, sim_param, index, rand):
                 if sim_name == "rmp":
                     M, F = attractor_rmp.calc_rmp(x_s[i], x_dot_s[i], xg_s[i])
                 elif sim_name == "fabric":
+                    #print(xg_s[i])
                     M, F, _, _, _ = attractor_fab.calc_fabric(x_s[i], x_dot_s[i], xg_s[i])
                 #print("Fat = ", F.T)
                 root_M += M; root_F += F
@@ -426,7 +389,9 @@ def test(dir_base, sim_param, index, rand):
                     if sim_name == "rmp":
                         M, F = pair_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
                     elif sim_name =="fabric":
-                        M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(x_s[i], x_dot_s[i], x_s[j], x_dot_s[j])
+                        M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(
+                            x_s[i], x_dot_s[i], x_s[j], x_dot_s[j]
+                        )
                     root_M += M; root_F += F
 
             if xo_s is not None:
@@ -434,7 +399,9 @@ def test(dir_base, sim_param, index, rand):
                     if sim_name == "rmp":
                         M, F = obs_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], xo)
                     elif sim_name == "fabric":
-                        M, F, _, _, _, _, _ = obs_avoidamce_fab.calc_fabric(x_s[i], x_dot_s[i], xo, np.zeros(xo.shape))
+                        M, F, _, _, _, _, _ = obs_avoidamce_fab.calc_fabric(
+                            x_s[i], x_dot_s[i], xo, np.zeros(xo.shape)
+                        )
                     root_M += M; root_F += F
 
             for j in pres_pair[i]:  #フォーメーション維持（距離）
@@ -457,8 +424,8 @@ def test(dir_base, sim_param, index, rand):
             
         return np.ravel(X_dot)
 
-    #for sim_name in ["fabric"]:
-    for sim_name in ["rmp", "fabric"]:
+    for sim_name in ["fabric"]:
+    #for sim_name in ["rmp", "fabric"]:
         #t0 = time.perf_counter()
         sol = integrate.solve_ivp(
             fun=dX, 
@@ -552,7 +519,7 @@ def test(dir_base, sim_param, index, rand):
         else:
             step = len(sol.t) // epoch_max
 
-    
+        ## グラフ ##########################################################################
         if TASK_DIM == 2:
             fig = plt.figure()
             ax = fig.add_subplot(111)
@@ -658,8 +625,15 @@ def test(dir_base, sim_param, index, rand):
             ani.save("{0}/fig/animation/MP4/{1}-{2}.mp4".format(dir_base, sim_name, index), writer="ffmpeg")
             plt.clf(); plt.close()
         
-        else:
-            fig = plt.figure()
+        else:  ## 3次元 ###################################################################
+            #obs ball 1
+            u = np.linspace(0, 2*pi, 30)
+            v = np.linspace(0, pi, 30)
+            ball_x_o = collision_r * np.outer(np.cos(u), np.sin(v))
+            ball_y_o = collision_r * np.outer(np.sin(u), np.sin(v))
+            ball_z_o = collision_r * np.outer(np.ones(np.size(u)), np.cos(v))
+            
+            fig = plt.figure(figsize=(10,10))
             ax = fig.add_subplot(projection="3d")
             for i in range(robot_num):
                 ax.plot(
@@ -681,11 +655,13 @@ def test(dir_base, sim_param, index, rand):
                         marker="*", color=color_list[i], label="g{0}".format(i)
                     )
             
-            # if len(xo_s) != 0:
-                # for xo in xo_s:
-                #     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=collision_r, ec='k', fill=False)
-                #     ax.add_patch(c)
-                
+            if len(xo_s) != 0:
+                for xo in xo_s:
+                    _x = ball_x_o + xo[0,0]
+                    _y = ball_y_o + xo[1,0]
+                    _z = ball_z_o + xo[2,0]
+                    ax.plot_surface(_x, _y, _z, color="C7",alpha=0.3,rcount=100, ccount=100, antialiased=False,)
+            
             ax.scatter(_xo_con[:, 0], _xo_con[:, 1], _xo_con[:, 2], marker="+", color="k", label="obs")
 
             ax.set_title("t = {0}, and {1}".format(sol.t[-1], sol.success))
@@ -699,7 +675,9 @@ def test(dir_base, sim_param, index, rand):
 
 
             ## アニメ ############################################################################
-            fig = plt.figure()
+
+            
+            fig = plt.figure(figsize=(10,10))
             ax = fig.add_subplot(projection="3d")
 
             for i, g in enumerate(xg_s):
@@ -709,19 +687,24 @@ def test(dir_base, sim_param, index, rand):
                         marker="*", color=color_list[i], label="g{0}".format(i)
                     )
             
-            # if len(xo_s) != 0:
-            #     for xo in xo_s:
-            #         c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=collision_r, ec='k', fill=False)
-            #         ax.add_patch(c)
+            if len(xo_s) != 0:
+                for xo in xo_s:
+                    _x = ball_x_o + xo[0,0]
+                    _y = ball_y_o + xo[1,0]
+                    _z = ball_z_o + xo[2,0]
+                    ax.plot_surface(_x, _y, _z, color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,)
             ax.scatter(_xo_con[:, 0], _xo_con[:, 1], _xo_con[:, 2], marker="+", color="k", label="obs")
 
-
+            ball_x_r = robot_r * np.outer(np.cos(u), np.sin(v))
+            ball_y_r = robot_r * np.outer(np.sin(u), np.sin(v))
+            ball_z_r = robot_r * np.outer(np.ones(np.size(u)), np.cos(v))
             robot_s = []
             traj_s = []
             for j in range(robot_num):
-                # c = patches.Circle(xy=(sol.y[4*j][0], sol.y[4*j+1][0]), radius=robot_r, ec='k', fill=False)
-                # ax.add_patch(c)
-                # robot_s.append(c)
+                # _x = ball_x_r + sol.y[2*TASK_DIM*j+0][0]
+                # _y = ball_y_r + sol.y[2*TASK_DIM*j+1][0]
+                # _z = ball_z_r + sol.y[2*TASK_DIM*j+2][0]
+                # robot_s.append(ax.plot_surface(_x, _y, _z, color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,))
                 
                 p, = ax.plot(
                     sol.y[2*TASK_DIM*j][:0], sol.y[2*TASK_DIM*j+1][:0], sol.y[2*TASK_DIM*j+2][:0], 
@@ -743,9 +726,7 @@ def test(dir_base, sim_param, index, rand):
             ax.set_xlim(mid_x-max_range, mid_x+max_range)
             ax.set_ylim(mid_y-max_range, mid_y+max_range)
             ax.set_zlim(mid_z-max_range, mid_z+max_range)
-            ax.grid()
-            ax.set_aspect('equal')
-            ax.legend()
+            ax.grid(); ax.set_aspect('equal'); ax.legend()
             time_template = 'time = %.2f [s]'
 
             scale = 10
@@ -753,7 +734,12 @@ def test(dir_base, sim_param, index, rand):
 
             def update_3d(i):
                 for j in range(robot_num):
-                    #robot_s[j].set_center([sol.y[4*j][i], sol.y[4*j+1][i]])
+                    #robot_s[j].remove()
+                    _x = ball_x_r + sol.y[2*TASK_DIM*j+0][0]
+                    _y = ball_y_r + sol.y[2*TASK_DIM*j+1][0]
+                    _z = ball_z_r + sol.y[2*TASK_DIM*j+2][0]
+                    #robot_s[j] = ax.plot_surface(_x, _y, _z, color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,)
+
                     traj_s[j].set_data(sol.y[2*TASK_DIM*j][:i], sol.y[2*TASK_DIM*j+1][:i])
                     traj_s[j].set_3d_properties(sol.y[2*TASK_DIM*j+2][:i])
 
@@ -764,13 +750,12 @@ def test(dir_base, sim_param, index, rand):
                         frame_y = [sol.y[2*TASK_DIM*k+1][i], sol.y[2*TASK_DIM*j+1][i]]
                         frame_z = [sol.y[2*TASK_DIM*k+2][i], sol.y[2*TASK_DIM*j+2][i]]
                         pair_s[l].set_data(frame_x, frame_y)
-                        pair_s[l].set_3d_properties(sol.y[2*TASK_DIM*j+2][i])
+                        pair_s[l].set_3d_properties(frame_z)
                         l += 1
 
                 ax.set_title(time_template % sol.t[i])
                 return
             
-            #t0 = time.perf_counter()
             ani = anm.FuncAnimation(
                 fig = fig,
                 func = update_3d,
@@ -780,11 +765,8 @@ def test(dir_base, sim_param, index, rand):
             
             ani.save("{0}/fig/animation/GIF/{1}-{2}.gif".format(dir_base, sim_name, index), writer="pillow")
             ani.save("{0}/fig/animation/MP4/{1}-{2}.mp4".format(dir_base, sim_name, index), writer="ffmpeg")
+            plt.show()
             plt.clf(); plt.close()
-
-
-        #print("ani_time = ", time.perf_counter() - t0)
-        
     
     print("simulation {0} done!".format(index))
 
@@ -826,5 +808,5 @@ def runner(sim_path, n):
 
 
 if __name__ == "__main__":
-    sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/point_1.yaml"
+    sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/point_3d.yaml"
     runner(sim_path, 1)
