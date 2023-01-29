@@ -626,7 +626,7 @@ def test(dir_base, sim_param, index, rand):
             plt.clf(); plt.close()
         
         else:  ## 3次元 ###################################################################
-            #obs ball 1
+            #obs ball に使う数列
             u = np.linspace(0, 2*pi, 30)
             v = np.linspace(0, pi, 30)
             ball_x_o = collision_r * np.outer(np.cos(u), np.sin(v))
@@ -638,6 +638,10 @@ def test(dir_base, sim_param, index, rand):
             for i in range(robot_num):
                 ax.plot(
                     sol.y[2*TASK_DIM*i], sol.y[2*TASK_DIM*i+1], sol.y[2*TASK_DIM*i+2], 
+                    label="r{0}".format(i), color=color_list[i]
+                )
+                ax.scatter(
+                    [sol.y[2*TASK_DIM*i][-1]], [sol.y[2*TASK_DIM*i+1][-1]], [sol.y[2*TASK_DIM*i+2][-1]], 
                     label="r{0}".format(i), color=color_list[i]
                 )
 
@@ -706,6 +710,12 @@ def test(dir_base, sim_param, index, rand):
                 # _z = ball_z_r + sol.y[2*TASK_DIM*j+2][0]
                 # robot_s.append(ax.plot_surface(_x, _y, _z, color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,))
                 
+                scat = ax.scatter(
+                    [sol.y[2*TASK_DIM*j][0]], [sol.y[2*TASK_DIM*j+1][0]], [sol.y[2*TASK_DIM*j+2][0]], 
+                    label="r{0}".format(j), color=color_list[j]
+                )
+                robot_s.append(scat)
+                
                 p, = ax.plot(
                     sol.y[2*TASK_DIM*j][:0], sol.y[2*TASK_DIM*j+1][:0], sol.y[2*TASK_DIM*j+2][:0], 
                     label="r{0}".format(j), color=color_list[j]
@@ -742,6 +752,9 @@ def test(dir_base, sim_param, index, rand):
 
                     traj_s[j].set_data(sol.y[2*TASK_DIM*j][:i], sol.y[2*TASK_DIM*j+1][:i])
                     traj_s[j].set_3d_properties(sol.y[2*TASK_DIM*j+2][:i])
+                    
+                    #print((sol.y[2*TASK_DIM*j][i], sol.y[2*TASK_DIM*j+1][i], sol.y[2*TASK_DIM*j+2][i]))
+                    #robot_s[j]._offsets3d = (sol.y[2*TASK_DIM*j][i], sol.y[2*TASK_DIM*j+1][i], sol.y[2*TASK_DIM*j+2][i])
 
                 l = 0
                 for j in range(robot_num):
