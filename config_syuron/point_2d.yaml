@@ -1,5 +1,5 @@
 trial : 1  #実験回数
-time_span : 30
+time_span : 15
 time_interval : 0.01
 task_dim : 2
 robot_num : &robot_num 6
@@ -39,18 +39,18 @@ goal :
 #       [0, 0], [], [], [], []
 #     ]
 
-# obstacle :
-#   type : random
-#   value :
-#     n : 5
-#     x_max : *x_max
-#     x_min : *x_min
-#     y_max : *y_max
-#     y_min : *y_min
+obstacle :
+  type : random
+  value :
+    n : 5
+    x_max : *x_max
+    x_min : *x_min
+    y_max : *y_max
+    y_min : *y_min
 
-obstacle : 
-  type : fixed
-  value : []
+# obstacle : 
+#   type : fixed
+#   value : []
 
 controller : 
   rmp :
@@ -93,14 +93,24 @@ controller :
       k : 5
       alpha_psi : 1
       k_d : 100
+    # pair_avoidance :
+    #   r : *collision_pair_r
+    #   k_b : 20
+    #   alpha_b : 0.75
+    # obstacle_avoidance:
+    #   r : *collision_obs_r
+    #   k_b : 29
+    #   alpha_b : 1
     pair_avoidance :
       r : *collision_pair_r
-      k_b : 20
-      alpha_b : 0.75
+      ag : 100
+      ap : 100
+      k : 20
     obstacle_avoidance:
       r : *collision_obs_r
-      k_b : 29
-      alpha_b : 1
+      ag : 100
+      ap : 100
+      k : 20
     goal_attractor:
       m_u : 2
       m_l : 0.2

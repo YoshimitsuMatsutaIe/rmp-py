@@ -342,11 +342,11 @@ def test(dir_base, sim_param, index, rand):
 
     # ロボット間の障害物回避
     pair_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["pair_avoidance"])
-    pair_avoidance_fab = fabric.ObstacleAvoidance(**fab["pair_avoidance"])
+    pair_avoidance_fab = fabric.ObstacleAvoidance2(**fab["pair_avoidance"])
 
     # 障害物回避
     obs_avoidance_rmp = multi_robot_rmp.PairwiseObstacleAvoidance(**rmp["obstacle_avoidance"])
-    obs_avoidamce_fab = fabric.ObstacleAvoidance(**fab["pair_avoidance"])
+    obs_avoidamce_fab = fabric.ObstacleAvoidance2(**fab["obstacle_avoidance"])
     #obs_R = rmp["obstacle_avoidance"]["Ds"]
 
     # 目標アトラクタ
@@ -540,8 +540,7 @@ def test(dir_base, sim_param, index, rand):
                 for xo in xo_s:
                     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=collision_r, ec='k', fill=False)
                     ax.add_patch(c)
-                
-            ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
+                ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
 
             ax.set_title("t = {0}, and {1}".format(sol.t[-1], sol.success))
             ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
@@ -564,7 +563,7 @@ def test(dir_base, sim_param, index, rand):
                 for xo in xo_s:
                     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=collision_r, ec='k', fill=False)
                     ax.add_patch(c)
-            ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
+                ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
 
 
             robot_s = []
@@ -821,5 +820,5 @@ def runner(sim_path, n):
 
 
 if __name__ == "__main__":
-    sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/point_3d.yaml"
-    runner(sim_path, 1)
+    sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/point_2d.yaml"
+    runner(sim_path, 3)

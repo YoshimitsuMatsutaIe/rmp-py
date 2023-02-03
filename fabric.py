@@ -118,6 +118,34 @@ class ObstacleAvoidance:
         return ObstacleAvoidance_rmp(x, x_dot, xo, xo_dot, self.r, self.k_b, self.alpha_b)
 
 
+@njit
+def ObstacleAvoidance2_rmp(x, x_dot, xo, xo_dot, r, ag, ap, k):
+    s, s_dot, J, J_dot = task_map2(r, x, x_dot, xo, xo_dot)
+    m = ag * np.exp(-ag*s) * sgn(s_dot)
+    xi = -1/2 * s_dot**2 * ag**2 * np.exp(-ag*s) * sgn(s_dot)
+    pi = k * ag * ap**2 * np.exp(-(ag+ap)*s) * sgn(s_dot)
+    damp = 0. * s_dot
+    
+    f = pi - xi - damp
+    
+    M = m * J.T @ J
+    F = J.T * (f + m * (J_dot @ x_dot)[0,0])
+    
+    return M, F, m, xi, pi, damp, f
+
+
+class ObstacleAvoidance2:
+    """proposed"""
+    def __init__(self, r, ag, ap, k):
+        self.r = r
+        self.k = k
+        self.ag = ag
+        self.ap = ap
+    
+    def calc_fabric(self, x, x_dot, xo, xo_dot):
+        return ObstacleAvoidance2_rmp(x, x_dot, xo, xo_dot, self.r, self.ag, self.ap, self.k)
+
+
 
 @njit
 def ParwiseDistancePreservation_rmp(x, x_dot, y, y_dot, d, m_u, m_l, alpha_m, k, alpha_psi, k_d):
@@ -212,6 +240,18 @@ class AnglePreservation:
             angle,
             self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d
         )
+
+
+
+
+
+
+
+def SpaceLimitAvoidance_rmp(x, x_dot, x_min, x_max, ):
+    
+    
+    return 
+
 
 
 
