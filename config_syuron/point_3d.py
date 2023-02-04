@@ -16,7 +16,7 @@ Y_MAX = 0.5; Y_MIN = -0.5
 Z_MAX = 0.5; Z_MIN = -0.5
 
 sim_param = {
-    "trial" : 1,  #実験回数
+    "trial" : 100,  #実験回数
     "time_span" : 15,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,

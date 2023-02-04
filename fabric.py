@@ -2,7 +2,7 @@ import numpy as np
 from numpy import linalg as LA
 import sympy as sy
 from numba import njit
-from math import sqrt, cos, sin, tan, pi
+from math import sqrt, cos, sin, tan, pi, exp
 import fabric_goal_attractor
 
 class GoalAttractor:
@@ -205,7 +205,7 @@ class ParwiseDistancePreservation:
 
 
 
-@njit(cache=True)
+#@njit(cache=True)
 def angle_taskmap(angle, q1, q2, q3, q1_dot, q2_dot, q3_dot):
     q_x = q1[0,0]; q_y = q1[1,0]
     s_x = q2[0,0]; s_y = q2[1,0]
@@ -221,9 +221,13 @@ def angle_taskmap(angle, q1, q2, q3, q1_dot, q2_dot, q3_dot):
     x_dot = -(-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - ((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2))
     J_dot = np.array([[-(-q_x + s_x)*(-3*(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - 3*(-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(5/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_x + s_x)*(-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_x + s_x)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_x + t_x)*(-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_x + t_x)*(-3*(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - 3*(-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(5/2)) - (-q_x + t_x)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_x_dot + s_x_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_x_dot + t_x_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*(4*q_x - 2*s_x - 2*t_x)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*(4*q_x - 2*s_x - 2*t_x)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (4*q_x_dot - 2*s_x_dot - 2*t_x_dot)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)), -(-q_y + s_y)*(-3*(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - 3*(-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(5/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_y + s_y)*(-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_y + s_y)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_y + t_y)*(-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_y + t_y)*(-3*(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - 3*(-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(5/2)) - (-q_y + t_y)*((-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot) + (-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot) + (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot) + (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot) - (s_x - t_x)*(2*s_x_dot - 2*t_x_dot) - (s_y - t_y)*(2*s_y_dot - 2*t_y_dot))/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-q_y_dot + s_y_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-q_y_dot + t_y_dot)*((-q_x + s_x)**2 + (-q_x + t_x)**2 + (-q_y + s_y)**2 + (-q_y + t_y)**2 - (s_x - t_x)**2 - (s_y - t_y)**2)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (-(-q_x + s_x)*(-2*q_x_dot + 2*s_x_dot)/2 - (-q_y + s_y)*(-2*q_y_dot + 2*s_y_dot)/2)*(4*q_y - 2*s_y - 2*t_y)/(2*((-q_x + s_x)**2 + (-q_y + s_y)**2)**(3/2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2)) - (-(-q_x + t_x)*(-2*q_x_dot + 2*t_x_dot)/2 - (-q_y + t_y)*(-2*q_y_dot + 2*t_y_dot)/2)*(4*q_y - 2*s_y - 2*t_y)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*((-q_x + t_x)**2 + (-q_y + t_y)**2)**(3/2)) - (4*q_y_dot - 2*s_y_dot - 2*t_y_dot)/(2*sqrt((-q_x + s_x)**2 + (-q_y + s_y)**2)*sqrt((-q_x + t_x)**2 + (-q_y + t_y)**2))]])
 
+    print("x = {0}, x_dot = {1}".format(x, x_dot))
+    print("J = ", J)
+    #print("")
     return x, x_dot, J, J_dot
 
 
+#@njit(cache=True)
 def AnglePreservation_func(x, x_dot, y, y_dot, z, z_dot, g, m_u, m_l, alpha_m, k, alpha_psi, k_d):
     s, s_dot, J, J_dot = angle_taskmap(g, x, y, z, x_dot, y_dot, z_dot)
     m =  (m_u - m_l) * np.exp(-(alpha_m * s)**2) + m_l
@@ -234,8 +238,9 @@ def AnglePreservation_func(x, x_dot, y, y_dot, z, z_dot, g, m_u, m_l, alpha_m, k
     
     
     M = m * J.T @ J
-    F = J.T * (f + m * (J_dot @ x_dot)[0,0])
-    
+    #F = J.T * (f + m * (J_dot @ x_dot)[0,0])
+    F = J.T * f
+    print("F = ", F.T)
     return M, F
 
 
@@ -258,16 +263,45 @@ class AnglePreservation:
 
 
 
-
-
-
-
-def SpaceLimitAvoidance_rmp(x, x_dot, x_min, x_max, ):
+@njit(cache=True)
+def SpaceLimitAvoidance_func(q, q_dot, q_min, q_max, r, sigma, a, k):
     
+    dim = q.shape[0]
+    xi = np.zeros((dim, 1))
+    grad = np.zeros((dim, 1))
+    M = np.zeros((dim, dim))
+    for i in range(dim):
+        x = q[i,0]; x_dot = q_dot[i,0]
+        xl = q_min[i,0]; xu = q_max[i,0]
+        su = sgn(-x_dot); sl = sgn(x_dot)
+        xi[i,0] = x_dot**2*(a**2*sl*(1 - exp(sigma*(-r + x - xl)))*exp(-a*(x - xl)) + a**2*su*(exp(sigma*(r + x - xu)) + 1)*exp(a*(x - xu)) + a*sigma*sl*exp(-a*(x - xl))*exp(sigma*(-r + x - xl)) + a*sigma*su*exp(a*(x - xu))*exp(sigma*(r + x - xu)))
+        
+        bu = a * exp(a*(x - xu)) * (1 + exp(-sigma*(x-(xu-r)))**(-1)) *  su
+        bl = -a * exp(-a*(x - xl)) * (1 - exp(-sigma*(x-(xl+r)))**(-1)) * sl
+        g = bu + bl
+        M[i,i] = g
+        
+        grad[i,0] = k * ((x-xu)**(-3) + (x-xl)**(-3))
     
-    return 
+    pi = -M @ grad
+    F = pi - xi
+    return M, F
 
 
+class SpaceLimitAvoidance:
+    def __init__(self, q_min, q_max, r, sigma, a, k):
+        self.q_min = q_min
+        self.q_max = q_max
+        self.r = r
+        self.sigma = sigma
+        self.a = a
+        self.k = k
+
+    def calc_rmp(self, x, x_dot):
+        return SpaceLimitAvoidance_func(
+            x, x_dot, 
+            self.q_min, self.q_max, self.r, self.sigma, self.a, self.k
+        )
 
 
 
