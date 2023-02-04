@@ -9,18 +9,20 @@ import matplotlib.animation as anm
 import matplotlib.patches as patches
 from scipy import integrate
 from math import exp, pi, cos, sin, tan, sqrt
-from typing import Union, Tuple
+#from typing import Union, Tuple
 from numba import njit
 import datetime
 import os
 import yaml
 import shutil
 
-import mappings
-import rmp_node
+# import mappings
+# import rmp_node
 from rmp_leaf import LeafBase
 import fabric
 import multi_robot_rmp
+import config_syuron.point_2d as p2d
+import config_syuron.point_3d as p3d
 from multiprocessing import Pool, cpu_count
 
 # def print_progress(t, time_span, flag):
@@ -663,9 +665,15 @@ def test(dir_base, sim_param, index, rand):
                     _x = ball_x_o + xo[0,0]
                     _y = ball_y_o + xo[1,0]
                     _z = ball_z_o + xo[2,0]
-                    ax.plot_surface(_x, _y, _z, color="C7",alpha=0.3,rcount=100, ccount=100, antialiased=False,)
+                    ax.plot_surface(
+                        _x, _y, _z,
+                        color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,
+                    )
             
-            ax.scatter(_xo_con[:, 0], _xo_con[:, 1], _xo_con[:, 2], marker="+", color="k", label="obs")
+            ax.scatter(
+                _xo_con[:, 0], _xo_con[:, 1], _xo_con[:, 2],
+                marker="+", color="k", label="obs"
+            )
 
             ax.set_title("t = {0}, and {1}".format(sol.t[-1], sol.success))
             ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]"); ax.set_zlabel("Z [m]")
@@ -695,8 +703,14 @@ def test(dir_base, sim_param, index, rand):
                     _x = ball_x_o + xo[0,0]
                     _y = ball_y_o + xo[1,0]
                     _z = ball_z_o + xo[2,0]
-                    ax.plot_surface(_x, _y, _z, color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,)
-            ax.scatter(_xo_con[:, 0], _xo_con[:, 1], _xo_con[:, 2], marker="+", color="k", label="obs")
+                    ax.plot_surface(
+                        _x, _y, _z, color="C7", 
+                        alpha=0.3,rcount=100, ccount=100, antialiased=False,
+                    )
+            ax.scatter(
+                _xo_con[:, 0], _xo_con[:, 1], _xo_con[:, 2], 
+                marker="+", color="k", label="obs"
+            )
 
             ball_x_r = robot_r * np.outer(np.cos(u), np.sin(v))
             ball_y_r = robot_r * np.outer(np.sin(u), np.sin(v))
@@ -783,7 +797,7 @@ def test(dir_base, sim_param, index, rand):
     print("simulation {0} done!".format(index))
 
 
-def runner(sim_path, n):
+def runner(sim_path, sim_param):
     date_now = datetime.datetime.now()
     today_label = date_now.strftime('%Y-%m-%d')
     os.makedirs("../syuron/point/" + today_label, exist_ok=True)
@@ -800,19 +814,22 @@ def runner(sim_path, n):
     os.makedirs(dir_base + "/message", exist_ok=True)
     os.makedirs(dir_base + "/condition", exist_ok=True)
 
-    with open(sim_path, "r") as f:
-        sim_param = yaml.safe_load(f)
+    if sim_path is not None:
+        assert sim_param is not None
+        with open(sim_path, "r") as f:
+            sim_param = yaml.safe_load(f)
     
     with open(dir_base + "/config/config.yaml", 'w') as f:
         yaml.dump(sim_param, f)
     
+    trial = sim_param["trial"]  # 並列実行数
     
-    if n == 1:
-        test(dir_base, sim_param, n, np.random.RandomState(np.random.randint(0, 10000000)))
+    if trial == 1:
+        test(dir_base, sim_param, trial, np.random.RandomState(np.random.randint(0, 10000000)))
     else:
         itr = [
             (dir_base, sim_param, i, np.random.RandomState(np.random.randint(0, 10000000)))
-            for i in range(n)
+            for i in range(trial)
         ]
         core = cpu_count()
         with Pool(core) as p:
@@ -821,4 +838,8 @@ def runner(sim_path, n):
 
 if __name__ == "__main__":
     sim_path = "/home/matsuta_conda/src/rmp-py/config_syuron/point_2d.yaml"
-    runner(sim_path, 3)
+    #runner(sim_path)
+    
+    runner(sim_path=None, sim_param=p2d.sim_param)
+    #runner(sim_path=None, sim_param=p3d.sim_param)
+    

@@ -3,6 +3,7 @@ from numpy import linalg as LA
 import sympy as sy
 from numba import njit
 from math import sqrt, cos, sin, tan, pi
+import fabric_goal_attractor
 
 class GoalAttractor:
     def __init__(self, m_u, m_l, alpha_m, k, alpha_psi, k_d, dim=2):
@@ -23,32 +24,46 @@ class GoalAttractor:
         return z**(1/2)
     
     def set_func(self,):
-        #print("goal!")
-        x = sy.MatrixSymbol('x', self.dim, 1)
-        x_dot = sy.MatrixSymbol('x_dot', self.dim, 1)
-        x_norm = self.norm(x)
-        m_u, m_l, alpha_m, k, alpha_psi = sy.symbols('m_U, m_l, alpha_m, k, alpha_psi')
+        # #print("goal!")
+        # x = sy.MatrixSymbol('x', self.dim, 1)
+        # x_dot = sy.MatrixSymbol('x_dot', self.dim, 1)
+        # x_norm = self.norm(x)
+        # m_u, m_l, alpha_m, k, alpha_psi = sy.symbols('m_U, m_l, alpha_m, k, alpha_psi')
 
-        G = (m_u - m_l) * sy.exp(-(alpha_m * x_norm)**2) * sy.eye(self.dim) + m_l * sy.eye(self.dim)
-        psi_1 = k * (x_norm + 1/alpha_psi * sy.ln(1 + sy.exp(-2 * alpha_psi * x_norm)))
+        # G = (m_u - m_l) * sy.exp(-(alpha_m * x_norm)**2) * sy.eye(self.dim) + m_l * sy.eye(self.dim)
+        # psi_1 = k * (x_norm + 1/alpha_psi * sy.ln(1 + sy.exp(-2 * alpha_psi * x_norm)))
 
-        L = (x_dot.T * G * x_dot)[0,0]
-        M = G
+        # L = (x_dot.T * G * x_dot)[0,0]
+        # M = G
 
-        if self.dim == 2:
-            xi = sy.Matrix([[sy.diff(L, x_dot[0,0]), sy.diff(L, x_dot[1,0])]]).T.jacobian(x) * x_dot \
-                - sy.Matrix([[sy.diff(L, x[0,0])], [sy.diff(L, x[1,0])],])
-            grad_psi_1 = sy.Matrix([[sy.diff(psi_1, x[0,0]), sy.diff(psi_1, x[1,0])]]).T
+        # if self.dim == 2:
+        #     xi = sy.Matrix([[sy.diff(L, x_dot[0,0]), sy.diff(L, x_dot[1,0])]]).T.jacobian(x) * x_dot \
+        #         - sy.Matrix([[sy.diff(L, x[0,0])], [sy.diff(L, x[1,0])],])
+        #     grad_psi_1 = sy.Matrix([[sy.diff(psi_1, x[0,0]), sy.diff(psi_1, x[1,0])]]).T
+        # else:
+        #     xi = sy.Matrix([[sy.diff(L, x_dot[0,0]), sy.diff(L, x_dot[1,0]), sy.diff(L, x_dot[2,0])]]).T.jacobian(x) * x_dot \
+        #         - sy.Matrix([[sy.diff(L, x[0,0])], [sy.diff(L, x[1,0])], [sy.diff(L, x[2,0])]])
+        #     grad_psi_1 = sy.Matrix([[sy.diff(psi_1, x[0,0]), sy.diff(psi_1, x[1,0]), sy.diff(psi_1, x[2,0])]]).T
+        # pi = -M * grad_psi_1
+
+        # self.func_M = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), M, "numpy")
+        # self.func_xi = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), xi, "numpy")
+        # self.func_pi = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), pi, "numpy")
+        # #print("done!")
+        if self.dim == 1:
+            self.func_M = fabric_goal_attractor.M_1
+            self.func_xi = fabric_goal_attractor.xi_1
+            self.func_pi = fabric_goal_attractor.pi_1
+        elif self.dim == 2:
+            self.func_M = fabric_goal_attractor.M_2
+            self.func_xi = fabric_goal_attractor.xi_2
+            self.func_pi = fabric_goal_attractor.pi_2
+        elif self.dim == 3:
+            self.func_M = fabric_goal_attractor.M_3
+            self.func_xi = fabric_goal_attractor.xi_3
+            self.func_pi = fabric_goal_attractor.pi_3
         else:
-            xi = sy.Matrix([[sy.diff(L, x_dot[0,0]), sy.diff(L, x_dot[1,0]), sy.diff(L, x_dot[2,0])]]).T.jacobian(x) * x_dot \
-                - sy.Matrix([[sy.diff(L, x[0,0])], [sy.diff(L, x[1,0])], [sy.diff(L, x[2,0])]])
-            grad_psi_1 = sy.Matrix([[sy.diff(psi_1, x[0,0]), sy.diff(psi_1, x[1,0]), sy.diff(psi_1, x[2,0])]]).T
-        pi = -M * grad_psi_1
-
-        self.func_M = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), M, "numpy")
-        self.func_xi = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), xi, "numpy")
-        self.func_pi = sy.lambdify((x, x_dot, m_u, m_l, alpha_m, k, alpha_psi), pi, "numpy")
-        #print("done!")
+            assert False
         return
 
     def calc_fabric(self, x, x_dot, xg):
@@ -65,7 +80,7 @@ class GoalAttractor:
 
 
 
-@njit
+@njit(cache=True)
 def sgn(x_dot):
     if x_dot < 0:
         return 1
@@ -73,7 +88,7 @@ def sgn(x_dot):
         return 0
 
 
-@njit
+@njit(cache=True)
 def task_map2(r, x, x_dot, xo, xo_dot):
     """円形障害物回避"""
     xxo_norm = LA.norm(x - xo)
@@ -86,8 +101,8 @@ def task_map2(r, x, x_dot, xo, xo_dot):
     return s, s_dot, J, J_dot
 
 
-@njit
-def ObstacleAvoidance_rmp(x, x_dot, xo, xo_dot, r, k_b, alpha_b):
+@njit(cache=True)
+def ObstacleAvoidance_func(x, x_dot, xo, xo_dot, r, k_b, alpha_b):
     
     # xxo_norm = LA.norm(x - xo)
     # s = xxo_norm / r - 1
@@ -115,11 +130,11 @@ class ObstacleAvoidance:
         self.alpha_b = alpha_b
     
     def calc_fabric(self, x, x_dot, xo, xo_dot):
-        return ObstacleAvoidance_rmp(x, x_dot, xo, xo_dot, self.r, self.k_b, self.alpha_b)
+        return ObstacleAvoidance_func(x, x_dot, xo, xo_dot, self.r, self.k_b, self.alpha_b)
 
 
-@njit
-def ObstacleAvoidance2_rmp(x, x_dot, xo, xo_dot, r, ag, ap, k):
+@njit(cache=True)
+def ObstacleAvoidance2_func(x, x_dot, xo, xo_dot, r, ag, ap, k):
     s, s_dot, J, J_dot = task_map2(r, x, x_dot, xo, xo_dot)
     m = ag * np.exp(-ag*s) * sgn(s_dot)
     xi = -1/2 * s_dot**2 * ag**2 * np.exp(-ag*s) * sgn(s_dot)
@@ -143,12 +158,12 @@ class ObstacleAvoidance2:
         self.ap = ap
     
     def calc_fabric(self, x, x_dot, xo, xo_dot):
-        return ObstacleAvoidance2_rmp(x, x_dot, xo, xo_dot, self.r, self.ag, self.ap, self.k)
+        return ObstacleAvoidance2_func(x, x_dot, xo, xo_dot, self.r, self.ag, self.ap, self.k)
 
 
 
-@njit
-def ParwiseDistancePreservation_rmp(x, x_dot, y, y_dot, d, m_u, m_l, alpha_m, k, alpha_psi, k_d):
+@njit(cache=True)
+def ParwiseDistancePreservation_func(x, x_dot, y, y_dot, d, m_u, m_l, alpha_m, k, alpha_psi, k_d):
     s = LA.norm(x-y) - d
     s_dot = (1/LA.norm(x-y) * (x-y).T @ (x_dot-y_dot))[0,0]
     J = 1 / LA.norm(x-y) * (x-y).T
@@ -183,7 +198,7 @@ class ParwiseDistancePreservation:
     def calc_rmp(self, x, x_dot, y, y_dot=None):
         if y_dot is None:
             y_dot = np.zeros(y.shape)
-        return ParwiseDistancePreservation_rmp(
+        return ParwiseDistancePreservation_func(
             x, x_dot, y, y_dot,
             self.d, self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d
         )
@@ -209,7 +224,7 @@ def angle_taskmap(angle, q1, q2, q3, q1_dot, q2_dot, q3_dot):
     return x, x_dot, J, J_dot
 
 
-def AnglePreservation_rmp(x, x_dot, y, y_dot, z, z_dot, g, m_u, m_l, alpha_m, k, alpha_psi, k_d):
+def AnglePreservation_func(x, x_dot, y, y_dot, z, z_dot, g, m_u, m_l, alpha_m, k, alpha_psi, k_d):
     s, s_dot, J, J_dot = angle_taskmap(g, x, y, z, x_dot, y_dot, z_dot)
     m =  (m_u - m_l) * np.exp(-(alpha_m * s)**2) + m_l
     xi = -2 * (m_u - m_l) * alpha_m**2 * s**3 * np.exp(-alpha_m*s**2)
@@ -235,7 +250,7 @@ class AnglePreservation:
         self.k_d = k_d
     
     def calc_rmp(self, x, x_dot, y, y_dot, z, z_dot, angle):
-        return AnglePreservation_rmp(
+        return AnglePreservation_func(
             x, x_dot, y, y_dot, z, z_dot,
             angle,
             self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d
