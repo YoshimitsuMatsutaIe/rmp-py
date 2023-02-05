@@ -350,17 +350,32 @@ def test(dir_base, sim_param, index, rand):
     tspan = (0, time_span)
     teval = np.arange(0, time_span, time_interval)
 
+    v_ = 0.01
+    o0_ = np.array([[-0.4, 0.0]]).T
+    xo_s = [
+            o0_ + np.array([[v_*0, 0.]]).T
+        ]
+    _xo_con = np.concatenate(xo_s, axis=1).T
     
     def dX(t, X, sim_name):
-        #print("t = ", t)
+        print("t = ", t)
         X_dot = np.zeros((2*TASK_DIM*robot_num, 1))
         x_s, x_dot_s = [], []
         for i in range(robot_num):
             x_s.append(np.array([X[2*TASK_DIM*i:2*TASK_DIM*i+TASK_DIM]]).T)
             x_dot_s.append(np.array([X[2*TASK_DIM*i+TASK_DIM:2*TASK_DIM*i+2*TASK_DIM]]).T)
 
+        v_ = 0.01
+        o0_ = np.array([[-0.4, 0.0]]).T
+        xo_s = [
+                o0_ + np.array([[v_*t, 0.]]).T
+            ]
+        print(xo_s[0].T)
+
         #print(xg_s)
         for i in range(robot_num):
+
+            
             #print("i = ", i)
             root_M = np.zeros((TASK_DIM, TASK_DIM))
             root_F = np.zeros((TASK_DIM, 1))
@@ -394,9 +409,11 @@ def test(dir_base, sim_param, index, rand):
                         M, F, _, _, _, _, _ = obs_avoidamce_fab.calc_fabric(
                             x_s[i], x_dot_s[i], xo, np.zeros(xo.shape)
                         )
+                        print(F)
                     root_M += M; root_F += F
 
             for j in pres_pair[i]:  #フォーメーション維持（距離）
+                #print(j)
                 if sim_name == "rmp":
                     M, F = distance_pres_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
                 elif sim_name == "fabric":
@@ -404,6 +421,7 @@ def test(dir_base, sim_param, index, rand):
                 root_M += M; root_F += F
             
             for ap in pres_angle_pair[i]:  #フォーメーション維持（角度）
+                #print(ap)
                 j, k, theta = ap
                 if sim_name == "rmp":
                     M, F = np.zeros((TASK_DIM, TASK_DIM)), np.zeros((TASK_DIM, 1))
@@ -492,6 +510,7 @@ def test(dir_base, sim_param, index, rand):
                     z_all.append(g[2,0])
         
         if len(xo_s) != 0:
+            print("障害物あり")
             for o in xo_s:
                 x_all.append(o[0,0]); y_all.append(o[1,0])
                 if TASK_DIM == 3:
@@ -556,10 +575,13 @@ def test(dir_base, sim_param, index, rand):
                     ax.scatter([g[0,0]], [g[1,0]], marker="*", color=color_list[i], label="g{0}".format(i))
             
             if len(xo_s) != 0:
+                o_s = ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
+                o_c_s = []
                 for xo in xo_s:
                     c = patches.Circle(xy=(xo[0,0], xo[1,0]), radius=collision_r, ec='k', fill=False)
+                    o_c_s.append(c)
                     ax.add_patch(c)
-                ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
+                
 
 
             robot_s = []
@@ -604,6 +626,10 @@ def test(dir_base, sim_param, index, rand):
                         frame_y = [sol.y[4*k+1][i], sol.y[4*j+1][i]]
                         pair_s[l].set_data(frame_x, frame_y)
                         l += 1
+
+                o_ = o0_ + np.array([[v_* i * time_interval, 0.]]).T
+                o_s.set_offsets([(o_[0,0], o_[1,0])])
+                o_c_s[0].set_center([o_[0,0], o_[1,0]])
 
                 ax.set_title(time_template % sol.t[i])
                 return
@@ -701,7 +727,7 @@ def test(dir_base, sim_param, index, rand):
                         _x, _y, _z, color="C7", 
                         alpha=0.3,rcount=100, ccount=100, antialiased=False,
                     )
-            ax.scatter(
+            o_s = ax.scatter(
                 _xo_con[:, 0], _xo_con[:, 1], _xo_con[:, 2], 
                 marker="+", color="k", label="obs"
             )
@@ -772,6 +798,8 @@ def test(dir_base, sim_param, index, rand):
                         pair_s[l].set_data(frame_x, frame_y)
                         pair_s[l].set_3d_properties(frame_z)
                         l += 1
+
+
 
                 ax.set_title(time_template % sol.t[i])
                 return

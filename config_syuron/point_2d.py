@@ -1,5 +1,7 @@
 import math
-from math import pi
+from math import pi, cos, sin, sqrt
+import numpy as np
+
 
 COLLISION_R = 0.1
 ROBOT_R = 0.05
@@ -16,28 +18,43 @@ X_MIN = -0.5
 Y_MAX = 0.5
 Y_MIN = -0.5
 
+# 五角形の計算
+def pentagon():
+    r = FORMATION_PRESERVATION_R/2/cos(54/180*pi)
+    xs = []
+    for i in [0, 1, 2, 3, 4]:
+        x = [
+            r*cos(2*pi/5*i + pi/2),# + np.random.rand()*0.5,
+            r*sin(2*pi/5*i + pi/2),# + np.random.rand()*0.5
+        ]
+        xs.append(x)
+    
+    return xs
+
+
+
 sim_param = {
     "trial" : 1,  #実験回数
-    "time_span" : 60,
+    "time_span" : 25,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
     "robot_num" : ROBOT_NUM,
     "collision_r" : COLLISION_R,
     "robot_r" : ROBOT_R,
+    "pair" : [
+        [1, 4],
+        [0, 2],
+        [1, 3],
+        [2, 4],
+        [0, 3]
+    ], #五角形
     # "pair" : [
     #     [1, 4],
-    #     [0, 2],
+    #     [0, 2, 4],
     #     [1, 3],
     #     [2, 4],
     #     [0, 3]
     # ],
-    "pair" : [
-        [1, 4],
-        [0, 2, 4],
-        [1, 3],
-        [2, 4],
-        [0, 3]
-    ],
     # "pair" : [
     #     [1, 2],
     #     [0, 2, 3],
@@ -85,13 +102,15 @@ sim_param = {
     
     "initial_condition" : {
         "position" : {
-            "type" : "random",
-            "value" : {
-                "x_max" : X_MAX,
-                "x_min" : X_MIN,
-                "y_max" : Y_MAX,
-                "y_min" : Y_MIN,
-            }
+            # "type" : "random",
+            # "value" : {
+            #     "x_max" : X_MAX,
+            #     "x_min" : X_MIN,
+            #     "y_max" : Y_MAX,
+            #     "y_min" : Y_MIN,
+            # }
+            "type" : "fixed",
+            "value" : pentagon()
         },
         "velocity" : {
             "type" : "zero"
@@ -110,26 +129,26 @@ sim_param = {
     "goal" : {
         "type" : "fixed",
         "value" : [
-            [0, 0], [], [], [], []
+            [], [], [], [], []
         ]
         # "value" : [
         #     [], [], [], [], []
         # ]
     },
-    # "obstacle" : {
-    #     "type" : "random",
-    #     "value" : {
-    #         "n" : 5,
-    #         "x_max" : X_MAX,
-    #         "x_min" : X_MIN,
-    #         "y_max" : Y_MAX,
-    #         "y_min" : Y_MIN
-    #     }
-    # },
     "obstacle" : {
-        "type" : "fixed",
-        "value" : []
+        "type" : "random",
+        "value" : {
+            "n" : 0,
+            "x_max" : X_MAX * 0.8,
+            "x_min" : X_MIN * 0.8,
+            "y_max" : Y_MAX * 0.8,
+            "y_min" : Y_MIN * 0.8
+        }
     },
+    # "obstacle" : {
+    #     "type" : "fixed",
+    #     "value" : []
+    # },
     "controller" : {
         "rmp" : {
             "formation_preservation" : {
@@ -166,7 +185,7 @@ sim_param = {
                 "m_u" : 2,
                 "m_l" : 0.1,
                 "alpha_m" : 0.75,
-                "k" : 5,
+                "k" : 1,
                 "alpha_psi" : 1,
                 "k_d" : 100,
             },
@@ -176,7 +195,7 @@ sim_param = {
                 "alpha_m" : 0.75,
                 "k" : 0.5,
                 "alpha_psi" : 1,
-                "k_d" : 0,
+                "k_d" : 100,
             },
             # pair_avoidance :
             #   r : *collision_pair_r
@@ -194,9 +213,9 @@ sim_param = {
             },
             "obstacle_avoidance" : {
                 "r" : OBS_AVOIDANCE_R,
-                "ag" : 100,
-                "ap" : 100,
-                "k" : 20,
+                "ag" : 10,
+                "ap" : 10,
+                "k" : 200,
             },
             "goal_attractor" : {
                 "m_u" : 2,
