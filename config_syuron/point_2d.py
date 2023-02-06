@@ -20,7 +20,7 @@ Y_MIN = -0.5
 
 # 五角形の計算
 def pentagon():
-    r = FORMATION_PRESERVATION_R/2/cos(54/180*pi)
+    r = FORMATION_PRESERVATION_R/2/cos(54/180*pi)*1.2
     xs = []
     for i in [0, 1, 2, 3, 4]:
         x = [
@@ -34,8 +34,8 @@ def pentagon():
 
 
 sim_param = {
-    "trial" : 1,  #実験回数
-    "time_span" : 25,
+    "trial" : 10,  #実験回数
+    "time_span" : 20,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
     "robot_num" : ROBOT_NUM,
@@ -43,10 +43,10 @@ sim_param = {
     "robot_r" : ROBOT_R,
     "pair" : [
         [1, 4],
-        [0, 2],
+        [0, 2, 4, 3],
         [1, 3],
-        [2, 4],
-        [0, 3]
+        [2, 4, 1],
+        [0, 3, 1]
     ], #五角形
     # "pair" : [
     #     [1, 4],
@@ -129,7 +129,7 @@ sim_param = {
     "goal" : {
         "type" : "fixed",
         "value" : [
-            [], [], [], [], []
+            [1, 1], [], [], [], []
         ]
         # "value" : [
         #     [], [], [], [], []
@@ -138,11 +138,11 @@ sim_param = {
     "obstacle" : {
         "type" : "random",
         "value" : {
-            "n" : 0,
-            "x_max" : X_MAX * 0.8,
-            "x_min" : X_MIN * 0.8,
-            "y_max" : Y_MAX * 0.8,
-            "y_min" : Y_MIN * 0.8
+            "n" : 5,
+            # "x_max" : X_MAX, "x_min" : X_MIN,
+            # "y_max" : Y_MAX, "y_min" : Y_MIN
+            "x_max" : 0.8, "x_min" : 0,
+            "y_max" : 0.8, "y_min" : 0
         }
     },
     # "obstacle" : {
@@ -182,12 +182,12 @@ sim_param = {
         "fabric" : {
             "formation_preservation" : {
                 "d" : FORMATION_PRESERVATION_R,
-                "m_u" : 2,
+                "m_u" : 10,
                 "m_l" : 0.1,
                 "alpha_m" : 0.75,
-                "k" : 1,
+                "k" : 5,
                 "alpha_psi" : 1,
-                "k_d" : 100,
+                "k_d" : 10,
             },
             "angle_preservation" : {
                 "m_u" : 2,
@@ -201,10 +201,11 @@ sim_param = {
             #   r : *collision_pair_r
             #   k_b : 20
             #   alpha_b : 0.75
-            # obstacle_avoidance:
-            #   r : *collision_obs_r
-            #   k_b : 29
-            #   alpha_b : 1
+            # "obstacle_avoidance" : {
+            #     "r" : OBS_AVOIDANCE_R*1.5,
+            #     "k_b" : 20,
+            #     "alpha_b" : 1
+            # },
             "pair_avoidance" : {
                 "r" : PAIR_AVOIDANCE_R,
                 "ag" : 100,
@@ -213,9 +214,9 @@ sim_param = {
             },
             "obstacle_avoidance" : {
                 "r" : OBS_AVOIDANCE_R,
-                "ag" : 10,
-                "ap" : 10,
-                "k" : 200,
+                "ag" : 100,
+                "ap" : 100,
+                "k" : 20,
             },
             "goal_attractor" : {
                 "m_u" : 2,
