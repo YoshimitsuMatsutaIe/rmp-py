@@ -418,17 +418,17 @@ def test(dir_base, sim_param, index, rand):
                     M, F = distance_pres_fab.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
                 root_M += M; root_F += F
             
-            for ap in pres_angle_pair[i]:  #フォーメーション維持（角度）
-                #print(ap)
-                j, k, theta = ap
-                if sim_name == "rmp":
-                    M, F = np.zeros((TASK_DIM, TASK_DIM)), np.zeros((TASK_DIM, 1))
-                elif sim_name == "fabric":
-                    M, F = angle_pres_fab.calc_rmp(
-                        x_s[i], x_dot_s[i],
-                        x_s[j], x_dot_s[j], x_s[k], x_dot_s[k], theta
-                    )
-                root_M += M; root_F += F
+            # for ap in pres_angle_pair[i]:  #フォーメーション維持（角度）
+            #     #print(ap)
+            #     j, k, theta = ap
+            #     if sim_name == "rmp":
+            #         M, F = np.zeros((TASK_DIM, TASK_DIM)), np.zeros((TASK_DIM, 1))
+            #     elif sim_name == "fabric":
+            #         M, F = angle_pres_fab.calc_rmp(
+            #             x_s[i], x_dot_s[i],
+            #             x_s[j], x_dot_s[j], x_s[k], x_dot_s[k], theta
+            #         )
+            #     root_M += M; root_F += F
 
             a = LA.pinv(root_M) @ root_F
             X_dot[2*TASK_DIM*i+0:2*TASK_DIM*i+TASK_DIM, :] = x_dot_s[i]
@@ -436,8 +436,8 @@ def test(dir_base, sim_param, index, rand):
             
         return np.ravel(X_dot)
 
-    for sim_name in ["fabric"]:
-    #for sim_name in ["rmp", "fabric"]:
+    #for sim_name in ["fabric"]:
+    for sim_name in ["rmp", "fabric"]:
         #t0 = time.perf_counter()
         sol = integrate.solve_ivp(
             fun=dX, 

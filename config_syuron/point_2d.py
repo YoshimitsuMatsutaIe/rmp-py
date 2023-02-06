@@ -154,7 +154,7 @@ sim_param = {
             "formation_preservation" : {
                 "d" : FORMATION_PRESERVATION_R,
                 "c" : 1,
-                "alpha" : 5,
+                "alpha" : 50,
                 "eta" : 100,
             },
             "pair_avoidance" : {
