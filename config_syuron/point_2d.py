@@ -38,21 +38,41 @@ def pentagon():
     
     return xs
 
+PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
     "trial" : 10,  #実験回数
-    "time_span" : 15,
+    "time_span" : 30,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
     "robot_num" : ROBOT_NUM,
     "collision_r" : COLLISION_R,
     "robot_r" : ROBOT_R,
     "pair" : [
-        [1, 4],
-        [0, 2, 4, 3],
-        [1, 3],
-        [2, 4, 1],
-        [0, 3, 1]
+        [
+            [1, FORMATION_PRESERVATION_R],
+            [4, PENTA_R]
+        ],
+        [
+            [0, FORMATION_PRESERVATION_R],
+            [2, FORMATION_PRESERVATION_R],
+            [4, PENTA_R],
+            [3, PENTA_R]
+        ],
+        [
+            [1, FORMATION_PRESERVATION_R],
+            [3, FORMATION_PRESERVATION_R]
+        ],
+        [
+            [2, FORMATION_PRESERVATION_R],
+            [4, FORMATION_PRESERVATION_R],
+            [1, PENTA_R]
+        ],
+        [
+            [0, FORMATION_PRESERVATION_R],
+            [3, FORMATION_PRESERVATION_R],
+            [1, PENTA_R]
+        ]
     ], #五角形
     # "pair" : [
     #     [1, 4],
@@ -158,7 +178,7 @@ sim_param = {
     "controller" : {
         "rmp" : {
             "formation_preservation" : {
-                "d" : FORMATION_PRESERVATION_R,
+                #"d" : FORMATION_PRESERVATION_R,
                 "c" : 1,
                 "alpha" : 50,
                 "eta" : 100,
@@ -187,7 +207,7 @@ sim_param = {
         },
         "fabric" : {
             "formation_preservation" : {
-                "d" : FORMATION_PRESERVATION_R,
+                #"d" : FORMATION_PRESERVATION_R,
                 "m_u" : 10,
                 "m_l" : 0.1,
                 "alpha_m" : 0.75,

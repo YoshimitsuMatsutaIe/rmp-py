@@ -186,8 +186,7 @@ def ParwiseDistancePreservation_func(x, x_dot, y, y_dot, d, m_u, m_l, alpha_m, k
 
 class ParwiseDistancePreservation:
     """新規性 距離維持"""
-    def __init__(self, d, m_u, m_l, alpha_m, k, alpha_psi, k_d):
-        self.d = d
+    def __init__(self, m_u, m_l, alpha_m, k, alpha_psi, k_d):
         self.m_u = m_u
         self.m_l = m_l
         self.alpha_m = alpha_m
@@ -195,12 +194,12 @@ class ParwiseDistancePreservation:
         self.alpha_psi = alpha_psi
         self.k_d = k_d
     
-    def calc_rmp(self, x, x_dot, y, y_dot=None):
+    def calc_rmp(self, d, x, x_dot, y, y_dot=None):
         if y_dot is None:
             y_dot = np.zeros(y.shape)
         return ParwiseDistancePreservation_func(
             x, x_dot, y, y_dot,
-            self.d, self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d
+            d, self.m_u, self.m_l, self.alpha_m, self.k, self.alpha_psi, self.k_d
         )
 
 

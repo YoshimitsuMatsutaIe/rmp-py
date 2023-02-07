@@ -415,7 +415,7 @@ def test(dir_base, sim_param, index, rand):
     ### フォーメーション（位置）維持 ###
     distance_pres_rmp = multi_robot_rmp.ParwiseDistancePreservation_a(**rmp["formation_preservation"])
     distance_pres_fab = fabric.ParwiseDistancePreservation(**fab["formation_preservation"])
-    FORMATION_PRESERVARION_R = fab["formation_preservation"]["d"]
+    FORMATION_PRESERVARION_R = 0.2
     
     # ### フォーメーション（角度） ###
     # angle_pres_fab = fabric.AnglePreservation(**fab["angle_preservation"])
@@ -478,8 +478,9 @@ def test(dir_base, sim_param, index, rand):
                     M, F = obs_avoidance_rmp.calc_rmp(x_s[i], x_dot_s[i], xo)
                     root_M += M; root_F += F
 
-            for j in pres_pair[i]:  #フォーメーション維持（距離）
-                M, F = distance_pres_rmp.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+            for p in pres_pair[i]:  #フォーメーション維持（距離）
+                j, d = p
+                M, F = distance_pres_rmp.calc_rmp(d, x_s[i], x_dot_s[i], x_s[j])
                 root_M += M; root_F += F
             
             root_M_all[TASK_DIM*i:TASK_DIM*(i+1), TASK_DIM*i:TASK_DIM*(i+1)] = root_M
@@ -532,9 +533,10 @@ def test(dir_base, sim_param, index, rand):
                     #print(F)
                     root_M += M; root_F += F
 
-            for j in pres_pair[i]:  #フォーメーション維持（距離）
+            for p in pres_pair[i]:  #フォーメーション維持（距離）
                 #print(j)
-                M, F = distance_pres_fab.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+                j, d = p
+                M, F = distance_pres_fab.calc_rmp(d, x_s[i], x_dot_s[i], x_s[j])
                 root_M += M; root_F += F
             
             root_M_all[TASK_DIM*i:TASK_DIM*(i+1), TASK_DIM*i:TASK_DIM*(i+1)] = root_M
@@ -552,7 +554,7 @@ def test(dir_base, sim_param, index, rand):
     def dX_fab_pair(t, X, sim_name):
         """リーダーは0のみ．他はリーダーに追従"""
         #print(X.shape)
-        print("t = ", t)
+        #print("t = ", t)
         ROBOT_NUM2 = 2*ROBOT_NUM - 1
         X_dot = np.zeros((2*TASK_DIM*(ROBOT_NUM2), 1))
         x_s, x_dot_s = [], []
@@ -571,7 +573,7 @@ def test(dir_base, sim_param, index, rand):
             root_M = np.zeros((TASK_DIM, TASK_DIM)); root_F = np.zeros((TASK_DIM, 1))
             M = np.zeros((TASK_DIM, TASK_DIM)); F = np.zeros((TASK_DIM, 1))
 
-            if i == 0:
+            if i == 0:  # リーダー
                 M, F, _, _, _ = attractor_fab.calc_fabric(x_s[0], x_dot_s[0], xg_s[0])
                 #print("Fat = ", F.T)
                 root_M += M; root_F += F
@@ -595,6 +597,10 @@ def test(dir_base, sim_param, index, rand):
                 for j in range(ROBOT_NUM, ROBOT_NUM2): #ロボット間の回避
                     if i != j:
                         M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(
+                            x_s[i], x_dot_s[i], x_s[0], x_dot_s[0]
+                        )
+                        root_M += M; root_F += F
+                        M, F, _, _, _, _, _ = pair_avoidance_fab.calc_fabric(
                             x_s[i], x_dot_s[i], x_s[j], x_dot_s[j]
                         )
                         root_M += M; root_F += F
@@ -608,16 +614,18 @@ def test(dir_base, sim_param, index, rand):
                     root_M += M; root_F += F
 
             if i == 0:
-                for j in pres_pair[0]:  #フォーメーション維持（距離）
-                    #print(j)
-                    M, F = distance_pres_fab.calc_rmp(x_s[i], x_dot_s[i], x_s[j+ROBOT_NUM-1])
-                    root_M += M; root_F += F
+                # for j in pres_pair[0]:  #フォーメーション維持（距離）
+                #     #print(j)
+                #     M, F = distance_pres_fab.calc_rmp(x_s[i], x_dot_s[i], x_s[j+ROBOT_NUM-1])
+                #     root_M += M; root_F += F
+                pass
             elif i < ROBOT_NUM:
                 pass
             else:
-                for j in pres_pair[i-(ROBOT_NUM-1)]:  #フォーメーション維持（距離）
+                for p in pres_pair[i-(ROBOT_NUM-1)]:  #フォーメーション維持（距離）
                     #print(j)
-                    M, F = distance_pres_fab.calc_rmp(x_s[i], x_dot_s[i], x_s[j])
+                    j, d = p
+                    M, F = distance_pres_fab.calc_rmp(d, x_s[i], x_dot_s[i], x_s[j])
                     root_M += M; root_F += F
             
             
@@ -627,7 +635,7 @@ def test(dir_base, sim_param, index, rand):
             X_dot[2*TASK_DIM*i+0:2*TASK_DIM*i+TASK_DIM, :] = x_dot_s[i]
         
         a_all = LA.pinv(root_M_all) @ root_F_all
-        for i in range(ROBOT_NUM):
+        for i in range(ROBOT_NUM2):
             X_dot[2*TASK_DIM*i+TASK_DIM:2*TASK_DIM*i+2*TASK_DIM, :] = a_all[TASK_DIM*i:TASK_DIM*(i+1), :]
         
         return np.ravel(X_dot)
@@ -707,12 +715,12 @@ def test(dir_base, sim_param, index, rand):
             axes[2].plot(sol.t, sol.y[2*i+2], label="dx{0}".format(i))
             axes[3].plot(sol.t, sol.y[2*i+3], label="dy{0}".format(i))
         
-        if len(sol.y) != ROBOT_NUM:
+        if len(sol.y) != ROBOT_NUM:  # 仮想ロボットあり
             for i in range(ROBOT_NUM, 2*ROBOT_NUM-1):
-                axes[0].plot(sol.t, sol.y[2*i], label="x{0}".format(i))
-                axes[1].plot(sol.t, sol.y[2*i+1], label="y{0}".format(i))
-                axes[2].plot(sol.t, sol.y[2*i+2], label="dx{0}".format(i))
-                axes[3].plot(sol.t, sol.y[2*i+3], label="dy{0}".format(i))
+                axes[0].plot(sol.t, sol.y[2*i], label="xg{0}".format(i-(ROBOT_NUM-1)))
+                axes[1].plot(sol.t, sol.y[2*i+1], label="yg{0}".format(i-(ROBOT_NUM-1)))
+                axes[2].plot(sol.t, sol.y[2*i+2], label="dxg{0}".format(i-(ROBOT_NUM-1)))
+                axes[3].plot(sol.t, sol.y[2*i+3], label="dyg{0}".format(i-(ROBOT_NUM-1)))
             
         for ax in axes.ravel():
             ax.legend()
@@ -768,7 +776,8 @@ def test(dir_base, sim_param, index, rand):
                 ax.plot(sol.y[4*i], sol.y[4*i+1], label="r{0}".format(i), color=color_list[i])
 
             for j in range(ROBOT_NUM):
-                for k in pres_pair[j]:
+                for p in pres_pair[j]:
+                    k, _ = p
                     frame_x = [sol.y[4*k][-1], sol.y[4*j][-1]]
                     frame_y = [sol.y[4*k+1][-1], sol.y[4*j+1][-1]]
                     ax.plot(frame_x, frame_y, color="k")
@@ -822,7 +831,8 @@ def test(dir_base, sim_param, index, rand):
 
             pair_s = []
             for j in range(ROBOT_NUM):
-                for k in pres_pair[j]:
+                for p in pres_pair[j]:
+                    k, _ = p
                     frame_x = [sol.y[4*k][0], sol.y[4*j][0]]
                     frame_y = [sol.y[4*k+1][0], sol.y[4*j+1][0]]
                     p, = ax.plot(frame_x, frame_y, color="k")
@@ -847,7 +857,8 @@ def test(dir_base, sim_param, index, rand):
 
                 l = 0
                 for j in range(ROBOT_NUM):
-                    for k in pres_pair[j]:
+                    for p in pres_pair[j]:
+                        k, _ = p
                         frame_x = [sol.y[4*k][i], sol.y[4*j][i]]
                         frame_y = [sol.y[4*k+1][i], sol.y[4*j+1][i]]
                         pair_s[l].set_data(frame_x, frame_y)

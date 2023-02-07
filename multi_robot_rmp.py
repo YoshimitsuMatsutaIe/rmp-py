@@ -3,7 +3,7 @@ from numpy import linalg as LA
 import sympy as sy
 from numba import njit
 
-@njit
+@njit(cache=True)
 def UnitaryGoalAttractor_a_rmp_func(x, x_dot, xg, xg_dot, gain, wu, wl, sigma, alpha, tol, eta):
     z = x - xg
     z_dot = x_dot - xg_dot
@@ -48,7 +48,7 @@ class UnitaryGoalAttractor_a:
         )
 
 
-@njit
+@njit(cache=True)
 def PairwiseObstacleAvoidance_rmp_func(x, x_dot, xo, Ds, alpha, eta, epsilon):
     xxo_norm = LA.norm(x - xo)
     s = xxo_norm / Ds - 1
@@ -100,7 +100,7 @@ class PairwiseObstacleAvoidance:
         )
 
 
-@njit
+@njit(cache=True)
 def ParwiseDistancePreservation_a_rmp_func(x, x_dot, y, y_dot, d, c, alpha, eta):
     "距離維持rmpを計算"
     
@@ -122,19 +122,19 @@ def ParwiseDistancePreservation_a_rmp_func(x, x_dot, y, y_dot, d, c, alpha, eta)
 
 class ParwiseDistancePreservation_a:
     "rmpflowの距離維持"
-    def __init__(self, d, c, alpha, eta,):
-        self.d = d #desired distance
+    def __init__(self, c, alpha, eta,):
+        #self.d = d #desired distance
         self.c = c #weight
         self.alpha = alpha #attract gain
         self.eta = eta #dampping gaio
     
-    def calc_rmp(self, x, x_dot, y, y_dot=np.zeros((2,1))):
+    def calc_rmp(self, d, x, x_dot, y, y_dot=np.zeros((2,1))):
         return ParwiseDistancePreservation_a_rmp_func(
-            x, x_dot, y, y_dot, self.d, self.c, self.alpha, self.eta
+            x, x_dot, y, y_dot, d, self.c, self.alpha, self.eta
         )
 
 
-@njit
+@njit(cache=True)
 def NeuralGoalAttractor_rmp_func(x, x_dot, xg, gain, damp, epsilon):
     F = gain * (xg-x) / (LA.norm(xg-x) + epsilon) - damp*x_dot
     M = np.eye(x.shape[0])
@@ -150,7 +150,7 @@ class NeuralGoalAttractor:
         return NeuralGoalAttractor_rmp_func(x, x_dot, xg, self.gain, self.damp, self.epsilon)
 
 
-@njit
+@njit(cache=True)
 def NeuralObstacleAvoidancermp_func(x, x_dot, xo, gain, damp, gamma):
     u = (xo - x) / LA.norm(xo - x)
     F = - gain / LA.norm(xo-x) * (damp * (u.T @ x_dot)[0,0] + gamma) * u
