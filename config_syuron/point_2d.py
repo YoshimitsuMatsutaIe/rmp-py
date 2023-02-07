@@ -42,7 +42,7 @@ PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
     "trial" : 10,  #実験回数
-    "time_span" : 30,
+    "time_span" : 60,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
     "robot_num" : ROBOT_NUM,
@@ -164,11 +164,11 @@ sim_param = {
     "obstacle" : {
         "type" : "random",
         "value" : {
-            "n" : 5,
-            # "x_max" : X_MAX, "x_min" : X_MIN,
-            # "y_max" : Y_MAX, "y_min" : Y_MIN
-            "x_max" : 0.8, "x_min" : 0,
-            "y_max" : 0.8, "y_min" : 0
+            "n" : 0,
+            "x_max" : X_MAX, "x_min" : X_MIN,
+            "y_max" : Y_MAX, "y_min" : Y_MIN
+            # "x_max" : 0.8, "x_min" : 0,
+            # "y_max" : 0.8, "y_min" : 0
         }
     },
     # "obstacle" : {
