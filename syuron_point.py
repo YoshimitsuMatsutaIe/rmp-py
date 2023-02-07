@@ -642,8 +642,8 @@ def test(dir_base, sim_param, index, rand):
 
 
 
-    for sim_name in ["fabric"]:
-    #for sim_name in ["rmp", "fabric"]:
+    #for sim_name in ["fabric"]:
+    for sim_name in ["rmp", "fabric"]:
         t0 = time.perf_counter()
         if sim_name == "rmp":
             sol = integrate.solve_ivp(
@@ -656,7 +656,7 @@ def test(dir_base, sim_param, index, rand):
         elif sim_name == "fabric":
             
             # 5角形のとき
-            _pentagon = pentagon(FORMATION_PRESERVARION_R, x0[0], x0[1])
+            _pentagon = pentagon(FORMATION_PRESERVARION_R, x0[0], x0[1]-FORMATION_PRESERVARION_R)
             _x0_fab = []
             for _x in _x0_s:
                 _x0_fab.extend([_x[0], _x[1], 0, 0])
@@ -679,6 +679,34 @@ def test(dir_base, sim_param, index, rand):
         with open("{0}/message/{1}-{2}.txt".format(dir_base, sim_name, index), 'w') as f:
             f.write(sol.message)
         print("time = ", time.perf_counter() - t0)
+        
+        
+        
+        # スコアを記録
+        if sol.success:
+            x_s_last = []
+            for i in range(ROBOT_NUM):
+                x_ = []
+                for j in range(TASK_DIM):
+                    x_.append(sol.y[TASK_DIM*(i+j)][-1])
+                x_s_last.append(np.array([x_]).T)
+        
+            eg = LA.norm(xg_s[0] - x_s_last[0])
+            ef = 0
+            count_ = 0
+            for i in range(ROBOT_NUM):
+                for p in pres_pair[i]:
+                    j, d = p
+                    ef += (abs(d - LA.norm(x_s_last[i] - x_s_last[j]))) / d
+                    count_ += 1
+            ef /= count_
+            
+            with open("{0}/score/{1}/{2}-{3}.csv".format(dir_base, sim_name, sim_name, index), 'w') as f:
+                f.write("{0},{1},{2}".format(index, eg, ef))
+        else:
+            # with open("{0}/score/{1}/{2}-{3}.csv".format(dir_base, sim_name, sim_name, index), 'w') as f:
+            #     f.write("{0},NULL,NULL".format(index))
+            pass
 
         ## CSV保存
         # まずはヘッダーを準備
@@ -715,7 +743,7 @@ def test(dir_base, sim_param, index, rand):
             axes[2].plot(sol.t, sol.y[2*i+2], label="dx{0}".format(i))
             axes[3].plot(sol.t, sol.y[2*i+3], label="dy{0}".format(i))
         
-        if len(sol.y) != ROBOT_NUM:  # 仮想ロボットあり
+        if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
             for i in range(ROBOT_NUM, 2*ROBOT_NUM-1):
                 axes[0].plot(sol.t, sol.y[2*i], label="xg{0}".format(i-(ROBOT_NUM-1)))
                 axes[1].plot(sol.t, sol.y[2*i+1], label="yg{0}".format(i-(ROBOT_NUM-1)))
@@ -775,6 +803,15 @@ def test(dir_base, sim_param, index, rand):
             for i in range(ROBOT_NUM):
                 ax.plot(sol.y[4*i], sol.y[4*i+1], label="r{0}".format(i), color=color_list[i])
 
+            if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
+                for i in range(ROBOT_NUM, 2*ROBOT_NUM-1):
+                    ax.plot(
+                        sol.y[4*i], sol.y[4*i+1],
+                        label="v{0}".format(i+1), color=color_list[i-(ROBOT_NUM-1)],
+                        linestyle="dashed"
+                    )
+
+
             for j in range(ROBOT_NUM):
                 for p in pres_pair[j]:
                     k, _ = p
@@ -829,6 +866,22 @@ def test(dir_base, sim_param, index, rand):
                 p, = ax.plot(sol.y[4*j][:0], sol.y[4*j+1][:0], label="r{0}".format(j), color=color_list[j])
                 traj_s.append(p)
 
+            if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
+                v_robot_s = []
+                v_traj_s = []
+                for j in range(ROBOT_NUM, 2*ROBOT_NUM-1):
+                    c = patches.Circle(xy=(sol.y[4*j][0], sol.y[4*j+1][0]), radius=ROBOT_R, ec='k', fill=False, linestyle="dashed")
+                    ax.add_patch(c)
+                    v_robot_s.append(c)
+                    p, = ax.plot(
+                        sol.y[4*j][:0], sol.y[4*j+1][:0],
+                        label="v{0}".format(j+1), color=color_list[j-(ROBOT_NUM-1)],
+                        linestyle="dashed"
+                    )
+                    v_traj_s.append(p)
+
+
+
             pair_s = []
             for j in range(ROBOT_NUM):
                 for p in pres_pair[j]:
@@ -854,6 +907,13 @@ def test(dir_base, sim_param, index, rand):
                 for j in range(ROBOT_NUM):
                     robot_s[j].set_center([sol.y[4*j][i], sol.y[4*j+1][i]])
                     traj_s[j].set_data(sol.y[4*j][:i], sol.y[4*j+1][:i])
+
+                if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
+
+                    for j in range(ROBOT_NUM, 2*ROBOT_NUM-1):
+                        v_robot_s[j-(ROBOT_NUM)].set_center([sol.y[4*j][i], sol.y[4*j+1][i]])
+                        v_traj_s[j-(ROBOT_NUM)].set_data(sol.y[4*j][:i], sol.y[4*j+1][:i])
+
 
                 l = 0
                 for j in range(ROBOT_NUM):
@@ -1072,6 +1132,8 @@ def runner(sim_path, sim_param):
     os.makedirs(dir_base + "/config", exist_ok=True)
     os.makedirs(dir_base + "/message", exist_ok=True)
     os.makedirs(dir_base + "/condition", exist_ok=True)
+    os.makedirs(dir_base + "/score/rmp", exist_ok=True)
+    os.makedirs(dir_base + "/score/fabric", exist_ok=True)
 
     if sim_path is not None:
         assert sim_param is not None

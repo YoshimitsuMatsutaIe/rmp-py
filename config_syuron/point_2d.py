@@ -164,7 +164,7 @@ sim_param = {
     "obstacle" : {
         "type" : "random",
         "value" : {
-            "n" : 0,
+            "n" : 5,
             "x_max" : X_MAX, "x_min" : X_MIN,
             "y_max" : Y_MAX, "y_min" : Y_MIN
             # "x_max" : 0.8, "x_min" : 0,
@@ -211,7 +211,7 @@ sim_param = {
                 "m_u" : 10,
                 "m_l" : 0.1,
                 "alpha_m" : 0.75,
-                "k" : 5,
+                "k" : 2,
                 "alpha_psi" : 1,
                 "k_d" : 10,
             },
