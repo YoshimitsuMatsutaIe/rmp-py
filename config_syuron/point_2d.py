@@ -18,6 +18,13 @@ X_MIN = -0.5
 Y_MAX = 0.5
 Y_MIN = -0.5
 
+def rotate(theta):
+    return np.array([
+        [cos(theta), -sin(theta)],
+        [sin(theta), cos(theta)]
+    ])
+
+
 # 五角形の計算
 def pentagon():
     r = FORMATION_PRESERVATION_R/2/cos(54/180*pi)*1.2
@@ -32,10 +39,9 @@ def pentagon():
     return xs
 
 
-
 sim_param = {
     "trial" : 10,  #実験回数
-    "time_span" : 20,
+    "time_span" : 15,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
     "robot_num" : ROBOT_NUM,
@@ -102,39 +108,39 @@ sim_param = {
     
     "initial_condition" : {
         "position" : {
-            # "type" : "random",
-            # "value" : {
-            #     "x_max" : X_MAX,
-            #     "x_min" : X_MIN,
-            #     "y_max" : Y_MAX,
-            #     "y_min" : Y_MIN,
-            # }
-            "type" : "fixed",
-            "value" : pentagon()
+            "type" : "random",
+            "value" : {
+                "x_max" : X_MAX,
+                "x_min" : X_MIN,
+                "y_max" : Y_MAX,
+                "y_min" : Y_MIN,
+            }
+            # "type" : "fixed",
+            # "value" : pentagon()
         },
         "velocity" : {
             "type" : "zero"
         }
     },
-    # "goal" : {
-    #     "type" : "random",
-    #     "value" : {
-    #         "n" : ROBOT_NUM,
-    #         "x_max" : X_MAX,
-    #         "x_min" : X_MIN,
-    #         "y_max" : Y_MAX,
-    #         "y_min" : Y_MIN
-    #     }
-    # },
     "goal" : {
-        "type" : "fixed",
-        "value" : [
-            [1, 1], [], [], [], []
-        ]
-        # "value" : [
-        #     [], [], [], [], []
-        # ]
+        "type" : "random",
+        "value" : {
+            "point" : [True, None, None, None, None],
+            "x_max" : X_MAX,
+            "x_min" : X_MIN,
+            "y_max" : Y_MAX,
+            "y_min" : Y_MIN
+        }
     },
+    # "goal" : {
+    #     "type" : "fixed",
+    #     "value" : [
+    #         [1, 1], [], [], [], []
+    #     ]
+    #     # "value" : [
+    #     #     [], [], [], [], []
+    #     # ]
+    # },
     "obstacle" : {
         "type" : "random",
         "value" : {
