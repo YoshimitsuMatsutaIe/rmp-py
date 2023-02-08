@@ -100,7 +100,7 @@ def test(dir_base, sim_param, index, rand):
     data_label = str(index)
     ROBOT_NUM = sim_param["robot_num"]
     pres_pair = sim_param["pair"]
-    pres_angle_pair = sim_param["angle_pair"]
+    #pres_angle_pair = sim_param["angle_pair"]
 
     ### 環境構築 ###
     TASK_DIM = sim_param["task_dim"]
@@ -171,13 +171,6 @@ def test(dir_base, sim_param, index, rand):
     elif goal_type == "random" and obs_type != "random" and init_p_type == "random":
         _xo_s = obs_v
         _exist.extend(_xo_s)
-        # _xg_s = find_random_position(
-        #     xu=goal_v["x_max"], xl=goal_v["x_min"], yu=goal_v["y_max"], yl=goal_v["y_min"],
-        #     zu=goal_v["z_max"] if TASK_DIM==3 else None,
-        #     zl=goal_v["z_max"] if TASK_DIM==3 else None,
-        #     n=goal_v["n"], r=2*COLLISION_R, rand=rand
-        # )
-        # _exist.extend(_xg_s)
         
         _g_point = goal_v["point"]
         _g_num = 0
@@ -209,14 +202,6 @@ def test(dir_base, sim_param, index, rand):
     elif goal_type == "random" and obs_type == "random" and init_p_type != "random":
         _x0_s = init_p_v
         _exist.extend(_x0_s)
-        # _xg_s = find_random_position(
-        #     xu=goal_v["x_max"], xl=goal_v["x_min"], yu=goal_v["y_max"], yl=goal_v["y_min"],
-        #     zu=goal_v["z_max"] if TASK_DIM==3 else None,
-        #     zl=goal_v["z_min"] if TASK_DIM==3 else None,
-        #     n=goal_v["n"], r=2*COLLISION_R, rand=rand
-        # )
-        # _exist.extend(_xg_s)
-        
         
         _g_point = goal_v["point"]
         _g_num = 0
@@ -263,12 +248,6 @@ def test(dir_base, sim_param, index, rand):
         _exist.extend(_xo_s)
         _x0_s = init_p_v
         _exist.extend(_x0_s)
-        # _xg_s = find_random_position(
-        #     xu=goal_v["x_max"], xl=goal_v["x_min"], yu=goal_v["y_max"], yl=goal_v["y_min"],
-        #     zu=goal_v["z_max"] if TASK_DIM==3 else None,
-        #     zl=goal_v["z_min"] if TASK_DIM==3 else None,
-        #     n=goal_v["n"], r=2*COLLISION_R, rand=rand
-        # )
     
         _g_point = goal_v["point"]
         _g_num = 0
@@ -415,7 +394,7 @@ def test(dir_base, sim_param, index, rand):
     ### フォーメーション（位置）維持 ###
     distance_pres_rmp = multi_robot_rmp.ParwiseDistancePreservation_a(**rmp["formation_preservation"])
     distance_pres_fab = fabric.ParwiseDistancePreservation(**fab["formation_preservation"])
-    FORMATION_PRESERVARION_R = 0.2
+    FORMATION_PRESERVARION_R = sim_param["formation_preservation_r"]
     
     # ### フォーメーション（角度） ###
     # angle_pres_fab = fabric.AnglePreservation(**fab["angle_preservation"])
@@ -675,10 +654,13 @@ def test(dir_base, sim_param, index, rand):
             )
         else:
             assert False
+        calc_time = time.perf_counter() - t0
         #print(sol.message)
-        with open("{0}/message/{1}-{2}.txt".format(dir_base, sim_name, index), 'w') as f:
-            f.write(sol.message)
-        print("time = ", time.perf_counter() - t0)
+        print("{0}-{1}, time = {2}".format(sim_name, index, calc_time))
+        with open("{0}/message/{1}/{2}.csv".format(dir_base, sim_name, index), 'w') as f:
+            f.write("{0},{1}".format(index, sol.message))
+        with open("{0}/time/{1}/{2}.csv".format(dir_base, sim_name, index), 'w') as f:
+            f.write("{0},{1}".format(index, calc_time))
         
         
         
@@ -701,7 +683,7 @@ def test(dir_base, sim_param, index, rand):
                     count_ += 1
             ef /= count_
             
-            with open("{0}/score/{1}/{2}-{3}.csv".format(dir_base, sim_name, sim_name, index), 'w') as f:
+            with open("{0}/score/{1}/{2}.csv".format(dir_base, sim_name, index), 'w') as f:
                 f.write("{0},{1},{2}".format(index, eg, ef))
         else:
             # with open("{0}/score/{1}/{2}-{3}.csv".format(dir_base, sim_name, sim_name, index), 'w') as f:
@@ -716,14 +698,20 @@ def test(dir_base, sim_param, index, rand):
                 header += ",x{0},y{0},dx{0},dy{0}".format(i)
             else:
                 header += ",x{0},y{0},z{0},dx{0},dy{0},dz{0}".format(i)
+        if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:
+            for i in range(ROBOT_NUM, 2*ROBOT_NUM-1):
+                if TASK_DIM == 2:
+                    header += ",vx{0},vy{0},dvx{0},dvy{0}".format(i-(ROBOT_NUM-1))
+                else:
+                    header += ",vx{0},vy{0},vz{0},dvx{0},dvy{0},dvz{0}".format(i-(ROBOT_NUM-1))
 
         # 時刻歴tと解xを一つのndarrayにする
         data = np.concatenate(
-            [sol.t.reshape(1, len(sol.t)).T, sol.y.T],  # sol.tは1次元配列なので2次元化する
+            [sol.t.reshape(1, len(sol.t)).T, sol.y.T],  # sol_tは1次元配列なので2次元化する
             axis=1
         )
         np.savetxt(
-            "{0}/csv/{1}-{2}.csv".format(dir_base, sim_name, index),
+            "{0}/csv/{1}/{2}.csv".format(dir_base, sim_name, index),
             data,
             header = header,
             comments = '',
@@ -731,29 +719,38 @@ def test(dir_base, sim_param, index, rand):
         )
 
 
+        sol_t = sol.t
+        sol_y = [sol.y[i] for i in range(len(sol.y))]
+        
+
+
         ## 状態グラフ ########################################################################
+        
+        
+        
+        
         fig, axes = plt.subplots(
             nrows=4,
             ncols=1,
             figsize=(6, 12)
         )
         for i in range(ROBOT_NUM):
-            axes[0].plot(sol.t, sol.y[2*i], label="x{0}".format(i))
-            axes[1].plot(sol.t, sol.y[2*i+1], label="y{0}".format(i))
-            axes[2].plot(sol.t, sol.y[2*i+2], label="dx{0}".format(i))
-            axes[3].plot(sol.t, sol.y[2*i+3], label="dy{0}".format(i))
+            axes[0].plot(sol_t, sol_y[2*i], label="x{0}".format(i))
+            axes[1].plot(sol_t, sol_y[2*i+1], label="y{0}".format(i))
+            axes[2].plot(sol_t, sol_y[2*i+2], label="dx{0}".format(i))
+            axes[3].plot(sol_t, sol_y[2*i+3], label="dy{0}".format(i))
         
-        if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
+        if len(sol_y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
             for i in range(ROBOT_NUM, 2*ROBOT_NUM-1):
-                axes[0].plot(sol.t, sol.y[2*i], label="xg{0}".format(i-(ROBOT_NUM-1)))
-                axes[1].plot(sol.t, sol.y[2*i+1], label="yg{0}".format(i-(ROBOT_NUM-1)))
-                axes[2].plot(sol.t, sol.y[2*i+2], label="dxg{0}".format(i-(ROBOT_NUM-1)))
-                axes[3].plot(sol.t, sol.y[2*i+3], label="dyg{0}".format(i-(ROBOT_NUM-1)))
+                axes[0].plot(sol_t, sol_y[2*i], label="xg{0}".format(i-(ROBOT_NUM-1)))
+                axes[1].plot(sol_t, sol_y[2*i+1], label="yg{0}".format(i-(ROBOT_NUM-1)))
+                axes[2].plot(sol_t, sol_y[2*i+2], label="dxg{0}".format(i-(ROBOT_NUM-1)))
+                axes[3].plot(sol_t, sol_y[2*i+3], label="dyg{0}".format(i-(ROBOT_NUM-1)))
             
         for ax in axes.ravel():
             ax.legend()
             ax.grid()
-        fig.savefig("{0}/fig/state/{1}-{2}.jpg".format(dir_base, sim_name, index))
+        fig.savefig("{0}/fig/state/{1}/{2}.jpg".format(dir_base, sim_name, index))
         plt.clf(); plt.close()
 
 
@@ -761,10 +758,17 @@ def test(dir_base, sim_param, index, rand):
         ## 軌跡 ###########################################################################
         x_all, y_all, z_all = [], [], []
         for i in range(ROBOT_NUM):
-            x_all.extend(sol.y[2*TASK_DIM*i])
-            y_all.extend(sol.y[2*TASK_DIM*i+1])
+            x_all.extend(sol_y[2*TASK_DIM*i])
+            y_all.extend(sol_y[2*TASK_DIM*i+1])
             if TASK_DIM == 3:
-                z_all.extend(sol.y[2*TASK_DIM*i+2])
+                z_all.extend(sol_y[2*TASK_DIM*i+2])
+        
+        if len(sol_y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
+            for i in range(ROBOT_NUM, 2*ROBOT_NUM-1):
+                x_all.extend(sol_y[2*TASK_DIM*i])
+                y_all.extend(sol_y[2*TASK_DIM*i+1])
+                if TASK_DIM == 3:
+                    z_all.extend(sol_y[2*TASK_DIM*i+2])
         
         for g in xg_s:
             if g is not None:
@@ -791,32 +795,41 @@ def test(dir_base, sim_param, index, rand):
     
     
         epoch_max = 80
-        if len(sol.t) < epoch_max:
+        if len(sol_t) < epoch_max:
             step = 1
         else:
-            step = len(sol.t) // epoch_max
+            step = len(sol_t) // epoch_max
 
         ## グラフ ##########################################################################
-        if TASK_DIM == 2:
-            fig = plt.figure()
+        if TASK_DIM == 2:  ## 2次元 ############################################################
+            fig = plt.figure() ## 最後の静止画 ##########################################################
             ax = fig.add_subplot(111)
             for i in range(ROBOT_NUM):
-                ax.plot(sol.y[4*i], sol.y[4*i+1], label="r{0}".format(i), color=color_list[i])
+                ax.plot(sol_y[4*i], sol_y[4*i+1], label="r{0}".format(i), color=color_list[i])
+                ax.plot(
+                    sol_y[4*i][-1], sol_y[4*i+1][-1],
+                    label="r{0}".format(i), marker="o", color=color_list[i]
+                )
 
-            if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
+            if len(sol_y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
                 for i in range(ROBOT_NUM, 2*ROBOT_NUM-1):
                     ax.plot(
-                        sol.y[4*i], sol.y[4*i+1],
+                        sol_y[4*i], sol_y[4*i+1],
                         label="v{0}".format(i+1), color=color_list[i-(ROBOT_NUM-1)],
                         linestyle="dashed"
+                    )
+                    ax.plot(
+                        sol_y[4*i][-1], sol_y[4*i+1][-1],
+                        label="r{0}".format(i-(ROBOT_NUM-1)), marker="^", 
+                        color=color_list[i-(ROBOT_NUM-1)]
                     )
 
 
             for j in range(ROBOT_NUM):
                 for p in pres_pair[j]:
                     k, _ = p
-                    frame_x = [sol.y[4*k][-1], sol.y[4*j][-1]]
-                    frame_y = [sol.y[4*k+1][-1], sol.y[4*j+1][-1]]
+                    frame_x = [sol_y[4*k][-1], sol_y[4*j][-1]]
+                    frame_y = [sol_y[4*k+1][-1], sol_y[4*j+1][-1]]
                     ax.plot(frame_x, frame_y, color="k")
 
             for i, g in enumerate(xg_s):
@@ -829,12 +842,13 @@ def test(dir_base, sim_param, index, rand):
                     ax.add_patch(c)
                 ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
 
-            ax.set_title("t = {0}, and {1}".format(sol.t[-1], sol.success))
+            ax.set_title("t = {0}, and {1}".format(sol_t[-1], sol.success))
             ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
             ax.set_xlim(mid_x-max_range, mid_x+max_range)
             ax.set_ylim(mid_y-max_range, mid_y+max_range)
-            ax.grid();ax.set_aspect('equal'); ax.legend()
-            fig.savefig("{0}/fig/trajectry/{1}-{2}.jpg".format(dir_base, sim_name, index))
+            ax.grid();ax.set_aspect('equal')
+            ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+            fig.savefig("{0}/fig/trajectry/{1}/{2}.jpg".format(dir_base, sim_name, index))
             plt.clf(); plt.close()
 
 
@@ -858,36 +872,49 @@ def test(dir_base, sim_param, index, rand):
 
             robot_s = []
             traj_s = []
+            center_s = []
             for j in range(ROBOT_NUM):
-                c = patches.Circle(xy=(sol.y[4*j][0], sol.y[4*j+1][0]), radius=ROBOT_R, ec='k', fill=False)
+                c = patches.Circle(xy=(sol_y[4*j][0], sol_y[4*j+1][0]), radius=ROBOT_R, ec='k', fill=False)
                 ax.add_patch(c)
                 robot_s.append(c)
                 
-                p, = ax.plot(sol.y[4*j][:0], sol.y[4*j+1][:0], label="r{0}".format(j), color=color_list[j])
+                p, = ax.plot(sol_y[4*j][:0], sol_y[4*j+1][:0], label="r{0}".format(j), color=color_list[j])
                 traj_s.append(p)
+                
+                p, = ax.plot(
+                    sol_y[4*j][0], sol_y[4*j+1][0],
+                    label="r{0}".format(j), marker="o", color=color_list[j]
+                )
+                center_s.append(p)
 
-            if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
+            if len(sol_y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
                 v_robot_s = []
                 v_traj_s = []
+                v_center_s = []
                 for j in range(ROBOT_NUM, 2*ROBOT_NUM-1):
-                    c = patches.Circle(xy=(sol.y[4*j][0], sol.y[4*j+1][0]), radius=ROBOT_R, ec='k', fill=False, linestyle="dashed")
+                    c = patches.Circle(xy=(sol_y[4*j][0], sol_y[4*j+1][0]), radius=ROBOT_R, ec='r', fill=False, linestyle="dashed")
                     ax.add_patch(c)
                     v_robot_s.append(c)
                     p, = ax.plot(
-                        sol.y[4*j][:0], sol.y[4*j+1][:0],
+                        sol_y[4*j][:0], sol_y[4*j+1][:0],
                         label="v{0}".format(j+1), color=color_list[j-(ROBOT_NUM-1)],
                         linestyle="dashed"
                     )
                     v_traj_s.append(p)
 
+                    p, = ax.plot(
+                        sol_y[4*j][0], sol_y[4*j+1][0],
+                        label="r{0}".format(j-(ROBOT_NUM-1)), marker="^", color=color_list[j-(ROBOT_NUM-1)]
+                    )
+                    v_center_s.append(p)
 
 
             pair_s = []
             for j in range(ROBOT_NUM):
                 for p in pres_pair[j]:
                     k, _ = p
-                    frame_x = [sol.y[4*k][0], sol.y[4*j][0]]
-                    frame_y = [sol.y[4*k+1][0], sol.y[4*j+1][0]]
+                    frame_x = [sol_y[4*k][0], sol_y[4*j][0]]
+                    frame_y = [sol_y[4*k+1][0], sol_y[4*j+1][0]]
                     p, = ax.plot(frame_x, frame_y, color="k")
                     pair_s.append(p)
 
@@ -897,30 +924,31 @@ def test(dir_base, sim_param, index, rand):
             ax.set_ylim(mid_y-max_range, mid_y+max_range)
             ax.grid()
             ax.set_aspect('equal')
-            ax.legend()
+            ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
             time_template = 'time = %.2f [s]'
 
-            scale = 10
-            f_scale = 0.1
-
+            print(len(sol_y[4*0+1]))
             def update_2d(i):
+                #print("i = ", i)
                 for j in range(ROBOT_NUM):
-                    robot_s[j].set_center([sol.y[4*j][i], sol.y[4*j+1][i]])
-                    traj_s[j].set_data(sol.y[4*j][:i], sol.y[4*j+1][:i])
+                    robot_s[j].set_center([sol_y[4*j][i], sol_y[4*j+1][i]])
+                    traj_s[j].set_data(sol_y[4*j][:i], sol_y[4*j+1][:i])
+                    center_s[j].set_data(sol_y[4*j][i], sol_y[4*j+1][i])
 
-                if len(sol.y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
-
+                if len(sol_y) != 2*TASK_DIM*ROBOT_NUM:  # 仮想ロボットあり
                     for j in range(ROBOT_NUM, 2*ROBOT_NUM-1):
-                        v_robot_s[j-(ROBOT_NUM)].set_center([sol.y[4*j][i], sol.y[4*j+1][i]])
-                        v_traj_s[j-(ROBOT_NUM)].set_data(sol.y[4*j][:i], sol.y[4*j+1][:i])
+                        #print("  j = ", j)
+                        v_robot_s[j-(ROBOT_NUM)].set_center([sol_y[4*j][i], sol_y[4*j+1][i]])
+                        v_traj_s[j-(ROBOT_NUM)].set_data(sol_y[4*j][:i], sol_y[4*j+1][:i])
+                        #v_center_s[j].set_data(sol_y[4*j][i], sol_y[4*j+1][i])
 
 
                 l = 0
                 for j in range(ROBOT_NUM):
                     for p in pres_pair[j]:
                         k, _ = p
-                        frame_x = [sol.y[4*k][i], sol.y[4*j][i]]
-                        frame_y = [sol.y[4*k+1][i], sol.y[4*j+1][i]]
+                        frame_x = [sol_y[4*k][i], sol_y[4*j][i]]
+                        frame_y = [sol_y[4*k+1][i], sol_y[4*j+1][i]]
                         pair_s[l].set_data(frame_x, frame_y)
                         l += 1
 
@@ -928,19 +956,19 @@ def test(dir_base, sim_param, index, rand):
                 # o_s.set_offsets([(o_[0,0], o_[1,0])])
                 # o_c_s[0].set_center([o_[0,0], o_[1,0]])
 
-                ax.set_title(time_template % sol.t[i])
+                ax.set_title(time_template % sol_t[i])
                 return
             
             #t0 = time.perf_counter()
             ani = anm.FuncAnimation(
                 fig = fig,
                 func = update_2d,
-                frames = range(0, len(sol.t), step),
+                frames = range(0, len(sol_t), step),
                 interval=60
             )
             
-            ani.save("{0}/fig/animation/GIF/{1}-{2}.gif".format(dir_base, sim_name, index), writer="pillow")
-            ani.save("{0}/fig/animation/MP4/{1}-{2}.mp4".format(dir_base, sim_name, index), writer="ffmpeg")
+            ani.save("{0}/fig/animation/GIF/{1}/{2}.gif".format(dir_base, sim_name, index), writer="pillow")
+            ani.save("{0}/fig/animation/MP4/{1}/{2}.mp4".format(dir_base, sim_name, index), writer="ffmpeg")
             plt.clf(); plt.close()
         
     #     else:  ## 3次元 ###################################################################
@@ -955,19 +983,19 @@ def test(dir_base, sim_param, index, rand):
     #         ax = fig.add_subplot(projection="3d")
     #         for i in range(ROBOT_NUM):
     #             ax.plot(
-    #                 sol.y[2*TASK_DIM*i], sol.y[2*TASK_DIM*i+1], sol.y[2*TASK_DIM*i+2], 
+    #                 sol_y[2*TASK_DIM*i], sol_y[2*TASK_DIM*i+1], sol_y[2*TASK_DIM*i+2], 
     #                 label="r{0}".format(i), color=color_list[i]
     #             )
     #             ax.scatter(
-    #                 [sol.y[2*TASK_DIM*i][-1]], [sol.y[2*TASK_DIM*i+1][-1]], [sol.y[2*TASK_DIM*i+2][-1]], 
+    #                 [sol_y[2*TASK_DIM*i][-1]], [sol_y[2*TASK_DIM*i+1][-1]], [sol_y[2*TASK_DIM*i+2][-1]], 
     #                 label="r{0}".format(i), color=color_list[i]
     #             )
 
     #         for j in range(ROBOT_NUM):
     #             for k in pres_pair[j]:
-    #                 frame_x = [sol.y[2*TASK_DIM*k+0][-1], sol.y[2*TASK_DIM*j+0][-1]]
-    #                 frame_y = [sol.y[2*TASK_DIM*k+1][-1], sol.y[2*TASK_DIM*j+1][-1]]
-    #                 frame_z = [sol.y[2*TASK_DIM*k+2][-1], sol.y[2*TASK_DIM*j+2][-1]]
+    #                 frame_x = [sol_y[2*TASK_DIM*k+0][-1], sol_y[2*TASK_DIM*j+0][-1]]
+    #                 frame_y = [sol_y[2*TASK_DIM*k+1][-1], sol_y[2*TASK_DIM*j+1][-1]]
+    #                 frame_z = [sol_y[2*TASK_DIM*k+2][-1], sol_y[2*TASK_DIM*j+2][-1]]
     #                 ax.plot(frame_x, frame_y, frame_z, color="k")
 
     #         for i, g in enumerate(xg_s):
@@ -992,7 +1020,7 @@ def test(dir_base, sim_param, index, rand):
     #             marker="+", color="k", label="obs"
     #         )
 
-    #         ax.set_title("t = {0}, and {1}".format(sol.t[-1], sol.success))
+    #         ax.set_title("t = {0}, and {1}".format(sol_t[-1], sol.success))
     #         ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]"); ax.set_zlabel("Z [m]")
     #         ax.set_xlim(mid_x-max_range, mid_x+max_range)
     #         ax.set_ylim(mid_y-max_range, mid_y+max_range)
@@ -1035,19 +1063,19 @@ def test(dir_base, sim_param, index, rand):
     #         robot_s = []
     #         traj_s = []
     #         for j in range(ROBOT_NUM):
-    #             # _x = ball_x_r + sol.y[2*TASK_DIM*j+0][0]
-    #             # _y = ball_y_r + sol.y[2*TASK_DIM*j+1][0]
-    #             # _z = ball_z_r + sol.y[2*TASK_DIM*j+2][0]
+    #             # _x = ball_x_r + sol_y[2*TASK_DIM*j+0][0]
+    #             # _y = ball_y_r + sol_y[2*TASK_DIM*j+1][0]
+    #             # _z = ball_z_r + sol_y[2*TASK_DIM*j+2][0]
     #             # robot_s.append(ax.plot_surface(_x, _y, _z, color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,))
                 
     #             scat = ax.scatter(
-    #                 [sol.y[2*TASK_DIM*j][0]], [sol.y[2*TASK_DIM*j+1][0]], [sol.y[2*TASK_DIM*j+2][0]], 
+    #                 [sol_y[2*TASK_DIM*j][0]], [sol_y[2*TASK_DIM*j+1][0]], [sol_y[2*TASK_DIM*j+2][0]], 
     #                 label="r{0}".format(j), color=color_list[j]
     #             )
     #             robot_s.append(scat)
                 
     #             p, = ax.plot(
-    #                 sol.y[2*TASK_DIM*j][:0], sol.y[2*TASK_DIM*j+1][:0], sol.y[2*TASK_DIM*j+2][:0], 
+    #                 sol_y[2*TASK_DIM*j][:0], sol_y[2*TASK_DIM*j+1][:0], sol_y[2*TASK_DIM*j+2][:0], 
     #                 label="r{0}".format(j), color=color_list[j]
     #             )
     #             traj_s.append(p)
@@ -1055,9 +1083,9 @@ def test(dir_base, sim_param, index, rand):
     #         pair_s = []
     #         for j in range(ROBOT_NUM):
     #             for k in pres_pair[j]:
-    #                 frame_x = [sol.y[2*TASK_DIM*k+0][0], sol.y[2*TASK_DIM*j+0][0]]
-    #                 frame_y = [sol.y[2*TASK_DIM*k+1][0], sol.y[2*TASK_DIM*j+1][0]]
-    #                 frame_z = [sol.y[2*TASK_DIM*k+2][0], sol.y[2*TASK_DIM*j+2][0]]
+    #                 frame_x = [sol_y[2*TASK_DIM*k+0][0], sol_y[2*TASK_DIM*j+0][0]]
+    #                 frame_y = [sol_y[2*TASK_DIM*k+1][0], sol_y[2*TASK_DIM*j+1][0]]
+    #                 frame_z = [sol_y[2*TASK_DIM*k+2][0], sol_y[2*TASK_DIM*j+2][0]]
     #                 p, = ax.plot(frame_x, frame_y, frame_z, color="k")
     #                 pair_s.append(p)
 
@@ -1075,36 +1103,36 @@ def test(dir_base, sim_param, index, rand):
     #         def update_3d(i):
     #             for j in range(ROBOT_NUM):
     #                 #robot_s[j].remove()
-    #                 _x = ball_x_r + sol.y[2*TASK_DIM*j+0][0]
-    #                 _y = ball_y_r + sol.y[2*TASK_DIM*j+1][0]
-    #                 _z = ball_z_r + sol.y[2*TASK_DIM*j+2][0]
+    #                 _x = ball_x_r + sol_y[2*TASK_DIM*j+0][0]
+    #                 _y = ball_y_r + sol_y[2*TASK_DIM*j+1][0]
+    #                 _z = ball_z_r + sol_y[2*TASK_DIM*j+2][0]
     #                 #robot_s[j] = ax.plot_surface(_x, _y, _z, color="C7", alpha=0.3,rcount=100, ccount=100, antialiased=False,)
 
-    #                 traj_s[j].set_data(sol.y[2*TASK_DIM*j][:i], sol.y[2*TASK_DIM*j+1][:i])
-    #                 traj_s[j].set_3d_properties(sol.y[2*TASK_DIM*j+2][:i])
+    #                 traj_s[j].set_data(sol_y[2*TASK_DIM*j][:i], sol_y[2*TASK_DIM*j+1][:i])
+    #                 traj_s[j].set_3d_properties(sol_y[2*TASK_DIM*j+2][:i])
                     
-    #                 #print((sol.y[2*TASK_DIM*j][i], sol.y[2*TASK_DIM*j+1][i], sol.y[2*TASK_DIM*j+2][i]))
-    #                 #robot_s[j]._offsets3d = (sol.y[2*TASK_DIM*j][i], sol.y[2*TASK_DIM*j+1][i], sol.y[2*TASK_DIM*j+2][i])
+    #                 #print((sol_y[2*TASK_DIM*j][i], sol_y[2*TASK_DIM*j+1][i], sol_y[2*TASK_DIM*j+2][i]))
+    #                 #robot_s[j]._offsets3d = (sol_y[2*TASK_DIM*j][i], sol_y[2*TASK_DIM*j+1][i], sol_y[2*TASK_DIM*j+2][i])
 
     #             l = 0
     #             for j in range(ROBOT_NUM):
     #                 for k in pres_pair[j]:
-    #                     frame_x = [sol.y[2*TASK_DIM*k+0][i], sol.y[2*TASK_DIM*j+0][i]]
-    #                     frame_y = [sol.y[2*TASK_DIM*k+1][i], sol.y[2*TASK_DIM*j+1][i]]
-    #                     frame_z = [sol.y[2*TASK_DIM*k+2][i], sol.y[2*TASK_DIM*j+2][i]]
+    #                     frame_x = [sol_y[2*TASK_DIM*k+0][i], sol_y[2*TASK_DIM*j+0][i]]
+    #                     frame_y = [sol_y[2*TASK_DIM*k+1][i], sol_y[2*TASK_DIM*j+1][i]]
+    #                     frame_z = [sol_y[2*TASK_DIM*k+2][i], sol_y[2*TASK_DIM*j+2][i]]
     #                     pair_s[l].set_data(frame_x, frame_y)
     #                     pair_s[l].set_3d_properties(frame_z)
     #                     l += 1
 
 
 
-    #             ax.set_title(time_template % sol.t[i])
+    #             ax.set_title(time_template % sol_t[i])
     #             return
             
     #         ani = anm.FuncAnimation(
     #             fig = fig,
     #             func = update_3d,
-    #             frames = range(0, len(sol.t), step),
+    #             frames = range(0, len(sol_t), step),
     #             interval=60
     #         )
             
@@ -1123,17 +1151,19 @@ def runner(sim_path, sim_param):
     data_label = date_now.strftime('%Y-%m-%d--%H-%M-%S')
     dir_base = "../syuron/point/{0}/{1}".format(today_label, data_label)
     os.makedirs(dir_base, exist_ok=True)
-    os.makedirs(dir_base, exist_ok=True)
-    os.makedirs(dir_base + "/csv", exist_ok=True)
-    os.makedirs(dir_base + "/fig/trajectry", exist_ok=True)
-    os.makedirs(dir_base + "/fig/animation/GIF", exist_ok=True)
-    os.makedirs(dir_base + "/fig/animation/MP4", exist_ok=True)
-    os.makedirs(dir_base + "/fig/state", exist_ok=True)
-    os.makedirs(dir_base + "/config", exist_ok=True)
-    os.makedirs(dir_base + "/message", exist_ok=True)
+
+    for s in ["rmp", "fabric"]:
+        os.makedirs(dir_base + "/csv/" + s, exist_ok=True)
+        os.makedirs(dir_base + "/fig/trajectry/" + s, exist_ok=True)
+        os.makedirs(dir_base + "/fig/animation/GIF/" + s, exist_ok=True)
+        os.makedirs(dir_base + "/fig/animation/MP4/" + s, exist_ok=True)
+        os.makedirs(dir_base + "/fig/state/" + s, exist_ok=True)
+        os.makedirs(dir_base + "/message/" + s, exist_ok=True)
+        os.makedirs(dir_base + "/score/" + s, exist_ok=True)
+        os.makedirs(dir_base + "/time/" + s, exist_ok=True)
+    
     os.makedirs(dir_base + "/condition", exist_ok=True)
-    os.makedirs(dir_base + "/score/rmp", exist_ok=True)
-    os.makedirs(dir_base + "/score/fabric", exist_ok=True)
+    os.makedirs(dir_base + "/config", exist_ok=True)
 
     if sim_path is not None:
         assert sim_param is not None
