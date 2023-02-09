@@ -41,7 +41,7 @@ def pentagon():
 PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
-    "trial" : 60,  #実験回数
+    "trial" : 50,  #実験回数
     "time_span" : 30,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
@@ -150,29 +150,29 @@ sim_param = {
             "type" : "zero"
         }
     },
-    # "goal" : {
-    #     "type" : "random",
-    #     "value" : {
-    #         "point" : [True, None, None, None, None],
-    #         "x_max" : X_MAX,
-    #         "x_min" : X_MIN,
-    #         "y_max" : Y_MAX,
-    #         "y_min" : Y_MIN
-    #     }
-    # },
     "goal" : {
-        "type" : "fixed",
-        "value" : [
-            [0.6, 0.6], [], [], [], []
-        ]
-        # "value" : [
-        #     [], [], [], [], []
-        # ]
+        "type" : "random",
+        "value" : {
+            "point" : [True, None, None, None, None],
+            "x_max" : X_MAX-ROBOT_R,
+            "x_min" : X_MIN+ROBOT_R,
+            "y_max" : Y_MAX-ROBOT_R,
+            "y_min" : Y_MIN+ROBOT_R
+        }
     },
+    # "goal" : {
+    #     "type" : "fixed",
+    #     "value" : [
+    #         [0.6, 0.6], [], [], [], []
+    #     ]
+    #     # "value" : [
+    #     #     [], [], [], [], []
+    #     # ]
+    # },
     "obstacle" : {
         "type" : "random",
         "value" : {
-            "n" : 0,
+            "n" : 5,
             "x_max" : X_MAX, "x_min" : X_MIN,
             "y_max" : Y_MAX, "y_min" : Y_MIN
             # "x_max" : 0.8, "x_min" : 0,
