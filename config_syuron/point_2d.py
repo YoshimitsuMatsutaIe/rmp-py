@@ -3,9 +3,9 @@ from math import pi, cos, sin, sqrt
 import numpy as np
 
 
-COLLISION_R = 1
-ROBOT_R = 0.3
-FORMATION_PRESERVATION_R = 0.5
+COLLISION_R = 0.1
+ROBOT_R = 0.05
+FORMATION_PRESERVATION_R = 0.1
 PAIR_AVOIDANCE_R = ROBOT_R*2
 OBS_AVOIDANCE_R = ROBOT_R + COLLISION_R
 
@@ -13,10 +13,10 @@ OBS_AVOIDANCE_R = ROBOT_R + COLLISION_R
 ROBOT_NUM = 5
 
 TASK_DIM = 2
-X_MAX = 4
-X_MIN = -4
-Y_MAX = 4
-Y_MIN = -4
+X_MAX = 0.5
+X_MIN = -0.5
+Y_MAX = 0.5
+Y_MIN = -0.5
 
 def rotate(theta):
     return np.array([
@@ -41,8 +41,8 @@ def pentagon():
 PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
-    "trial" : 1,  #実験回数
-    "time_span" : 15,
+    "trial" : 5,  #実験回数
+    "time_span" : 60,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
     "robot_num" : ROBOT_NUM,
@@ -52,7 +52,7 @@ sim_param = {
     "pair" : [
         [
             [1, FORMATION_PRESERVATION_R],
-            [4, PENTA_R]
+            [4, FORMATION_PRESERVATION_R]
         ],
         [
             [0, FORMATION_PRESERVATION_R],
@@ -165,7 +165,7 @@ sim_param = {
     "obstacle" : {
         "type" : "random",
         "value" : {
-            "n" : 5,
+            "n" : 0,
             "x_max" : X_MAX, "x_min" : X_MIN,
             "y_max" : Y_MAX, "y_min" : Y_MIN
             # "x_max" : 0.8, "x_min" : 0,
@@ -181,7 +181,7 @@ sim_param = {
             "formation_preservation" : {
                 #"d" : FORMATION_PRESERVATION_R,
                 "c" : 1,
-                "alpha" : 50,
+                "alpha" : 20,
                 "eta" : 100,
             },
             "pair_avoidance" : {
@@ -199,11 +199,11 @@ sim_param = {
             "goal_attractor" : {
                 "wu" : 2,
                 "wl" : 0.2,
-                "gain" : 50,
+                "gain" : 200,
                 "sigma" : 1,
                 "alpha" : 1,
                 "tol" : 0.001,
-                "eta" : 50,
+                "eta" : 100,
             }
         },
         "fabric" : {
@@ -212,9 +212,9 @@ sim_param = {
                 "m_u" : 10,
                 "m_l" : 0.1,
                 "alpha_m" : 0.75,
-                "k" : 2,
+                "k" : 20,
                 "alpha_psi" : 1,
-                "k_d" : 10,
+                "k_d" : 100,
             },
             # "angle_preservation" : {
             #     "m_u" : 2,
@@ -249,7 +249,7 @@ sim_param = {
                 "m_u" : 2,
                 "m_l" : 0.2,
                 "alpha_m" : 1,
-                "k" : 20,
+                "k" : 200,
                 "alpha_psi" : 1,
                 "k_d" : 100,
                 "dim" : TASK_DIM

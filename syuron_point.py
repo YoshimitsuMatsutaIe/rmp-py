@@ -37,15 +37,12 @@ def rotate(theta):
 
 
 # 五角形の計算
-def pentagon(r, x, y):
+def pentagon(r, x, y, theta):
     r = r/2/cos(54/180*pi)*1.2
     xs = []
     for i in [0, 1, 2, 3, 4]:
-        _x = [
-            r*cos(2*pi/5*i + pi/2) + x,
-            r*sin(2*pi/5*i + pi/2) + y
-        ]
-        xs.append(_x)
+        _x = rotate(theta) @ (np.array([[r*cos(2*pi/5*i + pi/2), r*sin(2*pi/5*i + pi/2)]]).T) + np.array([[x,y]]).T
+        xs.append(np.ravel(_x).tolist())
     
     return xs
 
@@ -593,10 +590,11 @@ def test(dir_base, sim_param, index, rand):
                     root_M += M; root_F += F
 
             if i == 0:
-                # for j in pres_pair[0]:  #フォーメーション維持（距離）
-                #     #print(j)
-                #     M, F = distance_pres_fab.calc_rmp(x_s[i], x_dot_s[i], x_s[j+ROBOT_NUM-1])
-                #     root_M += M; root_F += F
+                for p in pres_pair[0]:  #フォーメーション維持（距離）
+                    j, d = p
+                    #print(j)
+                    M, F = distance_pres_fab.calc_rmp(d, x_s[i], x_dot_s[i], x_s[j+ROBOT_NUM-1])
+                    root_M += M; root_F += F
                 pass
             elif i < ROBOT_NUM:
                 pass
@@ -635,14 +633,18 @@ def test(dir_base, sim_param, index, rand):
         elif sim_name == "fabric":
             
             # 5角形のとき
-            _pentagon = pentagon(FORMATION_PRESERVARION_R, x0[0], x0[1]-FORMATION_PRESERVARION_R)
+            g_ = xg_s[0]
+            a_ =  g_[0,0] - x0[0]
+            b_ =  g_[1,0] - x0[1]
+            theta = np.arctan2(b_, a_) - pi/2
+            fc_x = x0[0] - FORMATION_PRESERVARION_R*cos(theta+ pi/2)
+            fc_y = x0[1] - FORMATION_PRESERVARION_R*sin(theta + pi/2)
+            _pentagon = pentagon(FORMATION_PRESERVARION_R, 0, 0, theta)
             _x0_fab = []
             for _x in _x0_s:
                 _x0_fab.extend([_x[0], _x[1], 0, 0])
-
             for _x in _pentagon[1:]:
-                #print(_x)
-                _x0_fab.extend([_x[0], _x[1], 0, 0])
+                _x0_fab.extend([_x[0]+fc_x, _x[1]+fc_y, 0, 0])
             x0_fab = np.array(_x0_fab)
             
             sol = integrate.solve_ivp(
@@ -679,7 +681,7 @@ def test(dir_base, sim_param, index, rand):
             for i in range(ROBOT_NUM):
                 for p in pres_pair[i]:
                     j, d = p
-                    ef += (abs(d - LA.norm(x_s_last[i] - x_s_last[j]))) / d
+                    ef += (abs(d - LA.norm(x_s_last[i] - x_s_last[j])))# / d
                     count_ += 1
             ef /= count_
             
@@ -927,7 +929,6 @@ def test(dir_base, sim_param, index, rand):
             ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
             time_template = 'time = %.2f [s]'
 
-            print(len(sol_y[4*0+1]))
             def update_2d(i):
                 #print("i = ", i)
                 for j in range(ROBOT_NUM):
@@ -940,7 +941,7 @@ def test(dir_base, sim_param, index, rand):
                         #print("  j = ", j)
                         v_robot_s[j-(ROBOT_NUM)].set_center([sol_y[4*j][i], sol_y[4*j+1][i]])
                         v_traj_s[j-(ROBOT_NUM)].set_data(sol_y[4*j][:i], sol_y[4*j+1][:i])
-                        #v_center_s[j].set_data(sol_y[4*j][i], sol_y[4*j+1][i])
+                        v_center_s[j-(ROBOT_NUM)].set_data(sol_y[4*j][i], sol_y[4*j+1][i])
 
 
                 l = 0
