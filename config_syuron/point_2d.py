@@ -42,13 +42,14 @@ PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
     "trial" : 10,  #実験回数
-    "time_span" : 60,
+    "time_span" : 30,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
     "robot_num" : ROBOT_NUM,
     "collision_r" : COLLISION_R,
     "robot_r" : ROBOT_R,
     "formation_preservation_r" : FORMATION_PRESERVATION_R,
+    "penta_r" : PENTA_R,
     "pair" : [
         [
             [1, FORMATION_PRESERVATION_R],
@@ -181,12 +182,12 @@ sim_param = {
             "formation_preservation" : {
                 #"d" : FORMATION_PRESERVATION_R,
                 "c" : 1,
-                "alpha" : 20,
+                "alpha" : 100,
                 "eta" : 100,
             },
             "pair_avoidance" : {
                 "Ds" : PAIR_AVOIDANCE_R,
-                "alpha" : 0.00001,
+                "alpha" : 0.0000001,
                 "eta" : 0.2,
                 "epsilon" : 0.00001,
             },

@@ -392,6 +392,10 @@ def test(dir_base, sim_param, index, rand):
     distance_pres_rmp = multi_robot_rmp.ParwiseDistancePreservation_a(**rmp["formation_preservation"])
     distance_pres_fab = fabric.ParwiseDistancePreservation(**fab["formation_preservation"])
     FORMATION_PRESERVARION_R = sim_param["formation_preservation_r"]
+    # 五角形のみ
+    PENTA_R = None
+    if "penta_r" in sim_param:
+        PENTA_R = sim_param["penta_r"]
     
     # ### フォーメーション（角度） ###
     # angle_pres_fab = fabric.AnglePreservation(**fab["angle_preservation"])
@@ -548,9 +552,6 @@ def test(dir_base, sim_param, index, rand):
         root_M_all = np.zeros((ROBOT_NUM2*TASK_DIM, ROBOT_NUM2*TASK_DIM))
         root_F_all = np.zeros((ROBOT_NUM2*TASK_DIM, 1))
         
-
-
-        
         for i in range(ROBOT_NUM2):
             #print("i = ", i)
             root_M = np.zeros((TASK_DIM, TASK_DIM)); root_F = np.zeros((TASK_DIM, 1))
@@ -677,24 +678,39 @@ def test(dir_base, sim_param, index, rand):
         
         
         
-        # スコアを記録
+        ## スコアを記録 ##############################################################################
         if sol.success:
             x_s_last = []
             for i in range(ROBOT_NUM):
                 x_ = []
                 for j in range(TASK_DIM):
-                    x_.append(sol.y[TASK_DIM*(i+j)][-1])
+                    x_.append(sol.y[2*TASK_DIM*i+j][-1])
                 x_s_last.append(np.array([x_]).T)
         
             eg = LA.norm(xg_s[0] - x_s_last[0])
+            
+            # # 五角形以外
+            # ef = 0
+            # for i in range(ROBOT_NUM):
+            #     for p in pres_pair[i]:
+            #         j, d = p
+            #         ef += (abs(d - LA.norm(x_s_last[i] - x_s_last[j])))# / d
+            
+            # 五角形のみ
+            
             ef = 0
-            count_ = 0
             for i in range(ROBOT_NUM):
-                for p in pres_pair[i]:
-                    j, d = p
-                    ef += (abs(d - LA.norm(x_s_last[i] - x_s_last[j])))# / d
-                    count_ += 1
-            ef /= count_
+                for j in range(ROBOT_NUM):
+                    if i == j:
+                        e_ = 0
+                    elif abs(i-j) == 1:
+                        e_ = (abs(FORMATION_PRESERVARION_R - LA.norm(x_s_last[i] - x_s_last[j])))
+                    elif (i == 0 and j == 4) or (i == 4 and j == 0):
+                        e_ = (abs(FORMATION_PRESERVARION_R - LA.norm(x_s_last[i] - x_s_last[j])))
+                    else:
+                        e_ = (abs(PENTA_R - LA.norm(x_s_last[i] - x_s_last[j])))
+
+                    ef += e_
             
             with open("{0}/score/{1}/{2}.csv".format(dir_base, sim_name, index), 'w') as f:
                 f.write("{0},{1},{2}".format(index, eg, ef))
@@ -1184,6 +1200,11 @@ def runner(sim_path, sim_param):
     
     with open(dir_base + "/config/config.yaml", 'w') as f:
         yaml.dump(sim_param, f)
+    
+    
+    shutil.copy2("score_count.ipynb", dir_base + "/score/")  # スコア計算の有れ
+    
+    
     
     trial = sim_param["trial"]  # 並列実行数
     
