@@ -1244,7 +1244,10 @@ def runner(sim_path, sim_param):
         # message = """
         # 修論のアトラクタ+フォーメーション維持+空間制約
         # """
-        message="test"
+        message = """
+        修論のアトラクタ+フォーメーション+空間制約
+        """
+        # message="test"
         f.write(message)
     
     
