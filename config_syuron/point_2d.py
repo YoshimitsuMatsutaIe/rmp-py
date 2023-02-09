@@ -41,7 +41,7 @@ def pentagon():
 PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
-    "trial" : 5,  #実験回数
+    "trial" : 10,  #実験回数
     "time_span" : 60,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
@@ -156,7 +156,7 @@ sim_param = {
     # "goal" : {
     #     "type" : "fixed",
     #     "value" : [
-    #         [1, 1], [], [], [], []
+    #         [0.6, 0.6], [], [], [], []
     #     ]
     #     # "value" : [
     #     #     [], [], [], [], []
@@ -253,6 +253,28 @@ sim_param = {
                 "alpha_psi" : 1,
                 "k_d" : 100,
                 "dim" : TASK_DIM
+            },
+            # "space_limit_avoidance" : {
+            #     "r" : 0.1,
+            #     "sigma" : 10,
+            #     "a" : 10,
+            #     "k" : 0.001,
+            #     "x_max" : X_MAX,
+            #     "x_min" : X_MIN,
+            #     "y_max" : Y_MAX,
+            #     "y_min" : Y_MIN
+            # }
+            "space_limit_avoidance" : {
+                "gamma_p" : 0.1,
+                "gamma_d" : 5,
+                "lam" : 100,
+                "sigma" : 0.75,
+                "x_max" : X_MAX - ROBOT_R,
+                "x_min" : X_MIN + ROBOT_R,
+                "x_0" : 0,
+                "y_max" : Y_MAX +  ROBOT_R,
+                "y_min" : Y_MIN + ROBOT_R,
+                "y_0" : 0
             }
         }
     }

@@ -285,13 +285,19 @@ def SpaceLimitAvoidance_func(q, q_dot, q_min, q_max, r, sigma, a, k):
     
     pi = -M @ grad
     F = pi - xi
+    if LA.norm(F) > 10:
+        print("F = ", F.T)
     return M, F
 
 
 class SpaceLimitAvoidance:
-    def __init__(self, q_min, q_max, r, sigma, a, k):
-        self.q_min = q_min
-        self.q_max = q_max
+    def __init__(self, r, sigma, a, k, x_max, x_min, y_max, y_min, z_max=None, z_min=None):
+        if z_max is None:
+            self.q_max = np.array([[x_max, y_max]]).T
+            self.q_min = np.array([[x_min, y_min]]).T
+        else:
+            self.q_max = np.array([[x_max, y_max, z_max]]).T
+            self.q_min = np.array([[x_min, y_min, z_min]]).T
         self.r = r
         self.sigma = sigma
         self.a = a
@@ -305,21 +311,77 @@ class SpaceLimitAvoidance:
 
 
 
-if __name__ == "__main__":
+def SpaceLimitAvoidance_func_2(x, x_dot, gamma_p, gamma_d, lam, sigma, q_max, q_min, q_neutral):
+    dim = x.shape[0]
+    xi = np.zeros(x.shape)
+    M = np.zeros((dim, dim))
+
+    for i in range(dim):
+        alpha_upper = 1 - exp(-max(x_dot[i, 0], 0)**2 / (2*sigma**2))
+        alpha_lower = 1 - exp(-min(x_dot[i, 0], 0)**2 / (2*sigma**2))
+        s = (x[i,0] - q_min[i,0]) / (q_max[i,0] - q_min[i,0])
+        s_dot = 1 / (q_max[i,0] - q_min[i,0])
+        d = 4*s*(1-s)
+        d_dot = (4 - 8*s) * s_dot
+        b =  s*(alpha_upper*d + (1-alpha_upper)) + (1-s)*(alpha_lower*d + (1-alpha_lower))
+        b_dot = (s_dot*(alpha_upper*d + (1-alpha_upper)) + s*d_dot) \
+            + -s_dot*(alpha_lower * d + (1-alpha_lower)) + (1-s) * d_dot
+        a = b**(-2)
+        a_dot = -2*b**(-3) * b_dot
+        
+        xi[i, 0] = 1/2 * a_dot * x_dot[i,0]**2
+        M[i,i] = lam * a
     
+    F = M @ (gamma_p*(q_neutral - x) - gamma_d*x_dot) - xi
+
+    return M, F
+
+
+class SpaceLimitAvoidance_2:
+    def __init__(
+        self,
+        gamma_p, gamma_d, lam, sigma,
+        x_max, x_min, x_0,
+        y_max, y_min, y_0,
+        z_max=None, z_min=None, z_0=None
+    ):
+        if z_max is None:
+            self.q_max = np.array([[x_max, y_max]]).T
+            self.q_min = np.array([[x_min, y_min]]).T
+            self.q_neutral = np.array([[x_0, y_0,]]).T
+        else:
+            self.q_max = np.array([[x_max, y_max, z_max]]).T
+            self.q_min = np.array([[x_min, y_min, z_min]]).T
+            self.q_neutral = np.array([[x_0, y_0, z_0]]).T
+        self.gamma_p = gamma_p
+        self.gamma_d = gamma_d
+        self.lam = lam
+        self.sigma = sigma
+
+    def calc_rmp(self, x, x_dot):
+        return SpaceLimitAvoidance_func_2(
+            x, x_dot, 
+            self.gamma_p, self.gamma_d, self.lam, self.sigma, 
+            self.q_max, self.q_min, self.q_neutral
+        )
+
+
+
+if __name__ == "__main__":
+    pass
     #obs = ObstacleAvoidance(1, 1, 1)
     
-    q1 = np.random.rand(2, 1)
-    q2 = np.random.rand(2, 1)
-    q3 = np.random.rand(2, 1)
-    q1_dot = np.random.rand(2, 1)
-    q2_dot = np.random.rand(2, 1)
-    q3_dot = np.random.rand(2, 1)
+    # q1 = np.random.rand(2, 1)
+    # q2 = np.random.rand(2, 1)
+    # q3 = np.random.rand(2, 1)
+    # q1_dot = np.random.rand(2, 1)
+    # q2_dot = np.random.rand(2, 1)
+    # q3_dot = np.random.rand(2, 1)
     
-    x, x_dot, J, J_dot = angle_taskmap(
-        cos(pi/2), q1, q2, q3, q1_dot, q2_dot, q3_dot
-    )
-    print(x)
-    print(x_dot)
-    print(J)
-    print(J_dot)
+    # x, x_dot, J, J_dot = angle_taskmap(
+    #     cos(pi/2), q1, q2, q3, q1_dot, q2_dot, q3_dot
+    # )
+    # print(x)
+    # print(x_dot)
+    # print(J)
+    # print(J_dot)

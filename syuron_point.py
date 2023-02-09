@@ -409,6 +409,13 @@ def test(dir_base, sim_param, index, rand):
     attractor_rmp = multi_robot_rmp.UnitaryGoalAttractor_a(**rmp["goal_attractor"])
     attractor_fab = fabric.GoalAttractor(**fab["goal_attractor"])
 
+    
+    # 移動空間制限
+    
+    #limit_avoidance_fab = fabric.SpaceLimitAvoidance(**fab["space_limit_avoidance"])
+    limit_avoidance_fab = fabric.SpaceLimitAvoidance_2(**fab["space_limit_avoidance"])
+    
+    
     time_interval = sim_param["time_interval"]
     time_span = sim_param["time_span"]
     tspan = (0, time_span)
@@ -605,6 +612,10 @@ def test(dir_base, sim_param, index, rand):
                     M, F = distance_pres_fab.calc_rmp(d, x_s[i], x_dot_s[i], x_s[j])
                     root_M += M; root_F += F
             
+            
+            # # 移動空間制限
+            # M, F = limit_avoidance_fab.calc_rmp(x_s[i], x_dot_s[i])
+            # root_M += M; root_F += F
             
             
             root_M_all[TASK_DIM*i:TASK_DIM*(i+1), TASK_DIM*i:TASK_DIM*(i+1)] = root_M
