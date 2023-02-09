@@ -1204,6 +1204,12 @@ def runner(sim_path, sim_param):
     
     shutil.copy2("score_count.ipynb", dir_base + "/score/")  # スコア計算の有れ
     
+    with open(dir_base + "/ex_message.txt", 'w') as f:
+        message = """
+        修論のアトラクタ+フォーメーション維持のみのもの
+        """
+        f.write(message)
+    
     
     
     trial = sim_param["trial"]  # 並列実行数
