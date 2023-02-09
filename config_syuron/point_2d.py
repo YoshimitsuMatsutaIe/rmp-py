@@ -41,7 +41,7 @@ def pentagon():
 PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
-    "trial" : 50,  #実験回数
+    "trial" : 1,  #実験回数
     "time_span" : 30,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
@@ -50,6 +50,12 @@ sim_param = {
     "robot_r" : ROBOT_R,
     "formation_preservation_r" : FORMATION_PRESERVATION_R,
     "penta_r" : PENTA_R,
+    "space_limit" : {
+        "x_max" : X_MAX,
+        "x_min" : X_MIN,
+        "y_max" : Y_MAX,
+        "y_min" : Y_MIN,
+    },
     "pair" : [
         [
             [1, FORMATION_PRESERVATION_R],
@@ -132,10 +138,10 @@ sim_param = {
         "position" : {
             "type" : "random",
             "value" : {
-                "x_max" : X_MAX,
-                "x_min" : X_MIN,
-                "y_max" : Y_MAX,
-                "y_min" : Y_MIN,
+                "x_max" : X_MAX-ROBOT_R,
+                "x_min" : X_MIN+ROBOT_R,
+                "y_max" : Y_MAX-ROBOT_R,
+                "y_min" : Y_MIN+ROBOT_R,
             }
             # "type" : "fixed",
             # "value" : pentagon()
@@ -144,25 +150,25 @@ sim_param = {
             "type" : "zero"
         }
     },
-    "goal" : {
-        "type" : "random",
-        "value" : {
-            "point" : [True, None, None, None, None],
-            "x_max" : X_MAX,
-            "x_min" : X_MIN,
-            "y_max" : Y_MAX,
-            "y_min" : Y_MIN
-        }
-    },
     # "goal" : {
-    #     "type" : "fixed",
-    #     "value" : [
-    #         [0.6, 0.6], [], [], [], []
-    #     ]
-    #     # "value" : [
-    #     #     [], [], [], [], []
-    #     # ]
+    #     "type" : "random",
+    #     "value" : {
+    #         "point" : [True, None, None, None, None],
+    #         "x_max" : X_MAX,
+    #         "x_min" : X_MIN,
+    #         "y_max" : Y_MAX,
+    #         "y_min" : Y_MIN
+    #     }
     # },
+    "goal" : {
+        "type" : "fixed",
+        "value" : [
+            [0.6, 0.6], [], [], [], []
+        ]
+        # "value" : [
+        #     [], [], [], [], []
+        # ]
+    },
     "obstacle" : {
         "type" : "random",
         "value" : {
@@ -266,9 +272,9 @@ sim_param = {
             #     "y_min" : Y_MIN
             # }
             "space_limit_avoidance" : {
-                "gamma_p" : 0.1,
+                "gamma_p" : 0.8,
                 "gamma_d" : 5,
-                "lam" : 100,
+                "lam" : 50,
                 "sigma" : 0.75,
                 "x_max" : X_MAX - ROBOT_R,
                 "x_min" : X_MIN + ROBOT_R,

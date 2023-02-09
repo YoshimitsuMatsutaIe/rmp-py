@@ -397,6 +397,14 @@ def test(dir_base, sim_param, index, rand):
     if "penta_r" in sim_param:
         PENTA_R = sim_param["penta_r"]
     
+    X_MAX, X_MIN, Y_MAX, Y_MIN, Z_MAX, Z_MIN = None, None, None, None, None, None
+    if "space_limit" in sim_param:
+        sl_ = sim_param["space_limit"]
+        X_MAX = sl_["x_max"]; X_MIN = sl_["x_min"]
+        Y_MAX = sl_["y_max"]; Y_MIN = sl_["y_min"]
+        if "z_max" in sl_:
+            Z_MAX = sl_["z_max"]; Z_MIN = sl_["z_min"]
+    
     # ### フォーメーション（角度） ###
     # angle_pres_fab = fabric.AnglePreservation(**fab["angle_preservation"])
 
@@ -614,9 +622,9 @@ def test(dir_base, sim_param, index, rand):
                     root_M += M; root_F += F
             
             
-            # # 移動空間制限
-            # M, F = limit_avoidance_fab.calc_rmp(x_s[i], x_dot_s[i])
-            # root_M += M; root_F += F
+            # 移動空間制限
+            M, F = limit_avoidance_fab.calc_rmp(x_s[i], x_dot_s[i])
+            root_M += M; root_F += F
             
             
             root_M_all[TASK_DIM*i:TASK_DIM*(i+1), TASK_DIM*i:TASK_DIM*(i+1)] = root_M
@@ -811,6 +819,14 @@ def test(dir_base, sim_param, index, rand):
                 if TASK_DIM == 3:
                     z_all.append(o[2,0])
         
+        
+        if X_MAX is not None:
+            x_all.append(X_MAX); x_all.append(X_MIN)
+            y_all.append(Y_MAX); y_all.append(Y_MAX)
+        if Z_MAX is not None:
+            z_all.append(Z_MAX); z_all.append(Z_MIN) 
+        
+        
         max_x = max(x_all); min_x = min(x_all)
         max_y = max(y_all); min_y = min(y_all)
         mid_x = (max_x + min_x) * 0.5
@@ -828,6 +844,8 @@ def test(dir_base, sim_param, index, rand):
             step = 1
         else:
             step = len(sol_t) // epoch_max
+
+
 
         ## グラフ ##########################################################################
         if TASK_DIM == 2:  ## 2次元 ############################################################
@@ -871,6 +889,16 @@ def test(dir_base, sim_param, index, rand):
                     ax.add_patch(c)
                 ax.scatter(_xo_con[:, 0], _xo_con[:, 1], marker="+", color="k", label="obs")
 
+
+            if X_MAX is not None:
+                ax.plot(
+                    [X_MIN, X_MIN, X_MAX, X_MAX, X_MIN],
+                    [Y_MIN, Y_MAX, Y_MAX, Y_MIN, Y_MIN],
+                    color = "r", label="limit"
+                )
+
+
+
             ax.set_title("t = {0}, and {1}".format(sol_t[-1], sol.success))
             ax.set_xlabel("X [m]"); ax.set_ylabel("Y [m]")
             ax.set_xlim(mid_x-max_range, mid_x+max_range)
@@ -884,6 +912,14 @@ def test(dir_base, sim_param, index, rand):
             ## アニメ ############################################################################
             fig = plt.figure()
             ax = fig.add_subplot(111)
+
+
+            if X_MAX is not None:
+                ax.plot(
+                    [X_MIN, X_MIN, X_MAX, X_MAX, X_MIN],
+                    [Y_MIN, Y_MAX, Y_MAX, Y_MIN, Y_MIN],
+                    color = "r", label="limit"
+                )
 
             for i, g in enumerate(xg_s):
                 if g is not None:
@@ -1205,9 +1241,10 @@ def runner(sim_path, sim_param):
     shutil.copy2("score_count.ipynb", dir_base + "/score/")  # スコア計算の有れ
     
     with open(dir_base + "/ex_message.txt", 'w') as f:
-        message = """
-        修論のアトラクタ+フォーメーション維持のみのもの
-        """
+        # message = """
+        # 修論のアトラクタ+フォーメーション維持+空間制約
+        # """
+        message="test"
         f.write(message)
     
     
