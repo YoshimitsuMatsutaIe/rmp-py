@@ -15,8 +15,8 @@ ROBOT_NUM = 5
 TASK_DIM = 2
 X_MAX = 0.5
 X_MIN = -0.5
-Y_MAX = 0.5
-Y_MIN = -0.5
+Y_MAX = 0.5*2
+Y_MIN = -0.5*2
 
 def rotate(theta):
     return np.array([
@@ -41,7 +41,7 @@ def pentagon():
 PENTA_R = FORMATION_PRESERVATION_R*cos(36/180*pi)*2
 
 sim_param = {
-    "trial" : 50,  #実験回数
+    "trial" : 5,  #実験回数
     "time_span" : 30,
     "time_interval" : 0.01,
     "task_dim" : TASK_DIM,
@@ -138,10 +138,10 @@ sim_param = {
         "position" : {
             "type" : "random",
             "value" : {
-                "x_max" : X_MAX-ROBOT_R,
-                "x_min" : X_MIN+ROBOT_R,
-                "y_max" : Y_MAX-ROBOT_R,
-                "y_min" : Y_MIN+ROBOT_R,
+                "x_max" : X_MAX-2*ROBOT_R,
+                "x_min" : X_MIN+2*ROBOT_R,
+                "y_max" : Y_MIN+6*ROBOT_R,
+                "y_min" : Y_MIN+2*ROBOT_R,
             }
             # "type" : "fixed",
             # "value" : pentagon()
@@ -154,10 +154,10 @@ sim_param = {
         "type" : "random",
         "value" : {
             "point" : [True, None, None, None, None],
-            "x_max" : X_MAX-ROBOT_R,
-            "x_min" : X_MIN+ROBOT_R,
-            "y_max" : Y_MAX-ROBOT_R,
-            "y_min" : Y_MIN+ROBOT_R
+            "x_max" : X_MAX-2*ROBOT_R,
+            "x_min" : X_MIN+2*ROBOT_R,
+            "y_max" : Y_MAX-2*ROBOT_R,
+            "y_min" : Y_MAX-6*ROBOT_R
         }
     },
     # "goal" : {
@@ -172,9 +172,9 @@ sim_param = {
     "obstacle" : {
         "type" : "random",
         "value" : {
-            "n" : 5,
+            "n" : 6,
             "x_max" : X_MAX, "x_min" : X_MIN,
-            "y_max" : Y_MAX, "y_min" : Y_MIN
+            "y_max" : Y_MAX/2, "y_min" : Y_MIN/2
             # "x_max" : 0.8, "x_min" : 0,
             # "y_max" : 0.8, "y_min" : 0
         }
@@ -199,7 +199,7 @@ sim_param = {
             },
             "obstacle_avoidance" : {
                 "Ds" : OBS_AVOIDANCE_R,
-                "alpha" : 0.00001,
+                "alpha" : 0.0000001,
                 "eta" : 0.2,
                 "epsilon" : 0.00001,
             },
@@ -274,8 +274,8 @@ sim_param = {
             "space_limit_avoidance" : {
                 "gamma_p" : 0.8,
                 "gamma_d" : 5,
-                "lam" : 50,
-                "sigma" : 0.75,
+                "lam" : 10,
+                "sigma" : 2,
                 "x_max" : X_MAX - ROBOT_R,
                 "x_min" : X_MIN + ROBOT_R,
                 "x_0" : 0,

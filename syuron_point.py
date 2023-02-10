@@ -622,9 +622,9 @@ def test(dir_base, sim_param, index, rand):
                     root_M += M; root_F += F
             
             
-            # # 移動空間制限
-            # M, F = limit_avoidance_fab.calc_rmp(x_s[i], x_dot_s[i])
-            # root_M += M; root_F += F
+            # 移動空間制限
+            M, F = limit_avoidance_fab.calc_rmp(x_s[i], x_dot_s[i])
+            root_M += M; root_F += F
             
             
             root_M_all[TASK_DIM*i:TASK_DIM*(i+1), TASK_DIM*i:TASK_DIM*(i+1)] = root_M
@@ -672,7 +672,9 @@ def test(dir_base, sim_param, index, rand):
                 t_span=tspan, 
                 y0=x0_fab, 
                 t_eval=teval, 
-                args=(sim_name,)
+                args=(sim_name,),
+                rtol=1e-2,
+                atol=1e-5
             )
         else:
             assert False
@@ -1244,10 +1246,10 @@ def runner(sim_path, sim_param):
         # message = """
         # 修論のアトラクタ+フォーメーション維持+空間制約
         # """
-        message = """
-        修論のアトラクタ+フォーメーション+障害物かいひ
-        """
-        # message="test"
+        # message = """
+        # 修論のアトラクタ+フォーメーション+障害物かいひ
+        # """
+        message="test"
         f.write(message)
     
     
